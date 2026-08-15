@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "exceptions": [
+    {
+      "id": "rowtool-mobsf-viewmodel-key",
+      "tool": "mobsfscan",
+      "rule": "android_kotlin_hardcoded",
+      "scope": "RowToolNavHost counter ViewModel key",
+      "reason": "The matched value is a per-project Android ViewModel identifier, not a credential or other secret.",
+      "owner": "project-maintainers",
+      "added": "2026-08-10",
+      "expires": "2026-11-10",
+      "tracking": "local-review:rowtool-mobsf-viewmodel-key",
+      "sourcePath": "app/src/main/java/com/finnvek/rowtool/ui/navigation/RowToolNavHost.kt",
+      "selector": "key = \"counter:$projectId\"",
+      "findingPath": "app/src/main/java/com/finnvek/rowtool/ui/navigation/RowToolNavHost.kt"
+    },
+    {
+      "id": "rowtool-mobsf-target-sdk",
+      "tool": "mobsfscan",
+      "rule": "android_task_hijacking2",
+      "scope": "app/src/main/AndroidManifest.xml targetSdk inference",
+      "reason": "mobsfscan reads the source manifest and does not resolve the Gradle targetSdk value.",
+      "owner": "project-maintainers",
+      "added": "2026-08-10",
+      "expires": "2026-11-10",
+      "tracking": "local-review:rowtool-mobsf-target-sdk",
+      "sourcePath": "app/build.gradle.kts",
+      "selector": "targetSdk = 37",
+      "findingPath": "app/src/main/AndroidManifest.xml"
+    }
+  ]
+}

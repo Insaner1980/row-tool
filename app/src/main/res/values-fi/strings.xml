@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">RowTool</string>
+    <string name="action_back">Takaisin</string>
+    <string name="action_settings">Asetukset</string>
+    <string name="action_more">Lisää vaihtoehtoja</string>
+    <string name="action_new_project">Uusi projekti</string>
+    <string name="action_edit">Muokkaa</string>
+    <string name="action_archive">Arkistoi</string>
+    <string name="action_restore">Palauta</string>
+    <string name="action_delete">Poista</string>
+    <string name="action_cancel">Peruuta</string>
+    <string name="action_save">Tallenna</string>
+    <string name="action_reset">Nollaa laskuri</string>
+    <string name="action_set_count">Aseta lukema</string>
+    <string name="action_export">Vie tiedot</string>
+    <string name="action_import">Tuo tiedot</string>
+
+    <string name="projects_empty_title">Luo ensimmäinen projektisi</string>
+    <string name="projects_empty_body">RowTool muistaa kerroksesi ja kierroksesi, jotta voit jatkaa seuraavasta silmukasta.</string>
+    <string name="projects_empty_privacy">Ei tiliä. Ei mainoksia. Projektisi pysyvät tällä laitteella.</string>
+    <string name="projects_active_title">Aktiiviset projektit</string>
+    <string name="projects_archived_title">Arkistoidut</string>
+    <string name="projects_show_archived">Näytä arkistoidut projektit</string>
+    <string name="projects_hide_archived">Piilota arkistoidut projektit</string>
+    <string name="project_archived">Arkistoitu</string>
+    <string name="project_target_summary">Tavoite %1$s</string>
+    <string name="project_repeat_summary">Toisto %1$d välein</string>
+    <string name="project_options">Projektin %1$s vaihtoehdot</string>
+
+    <string name="project_new_title">Uusi projekti</string>
+    <string name="project_edit_title">Muokkaa projektia</string>
+    <string name="project_name_label">Projektin nimi</string>
+    <string name="project_name_required">Anna projektin nimi.</string>
+    <string name="project_name_too_long">Käytä enintään 60 merkkiä.</string>
+    <string name="project_counter_type">Laskentatapa</string>
+    <string name="project_rows">Kerrokset</string>
+    <string name="project_rounds">Kierrokset</string>
+    <string name="project_starting_value">Aloitusarvo</string>
+    <string name="project_start_zero">0</string>
+    <string name="project_start_one">1</string>
+    <string name="project_target_enabled">Aseta tavoite</string>
+    <string name="project_target_label">Tavoitelukema</string>
+    <string name="project_target_error">Anna kokonaisluku väliltä 1–999 999.</string>
+    <string name="project_repeat_enabled">Seuraa toistoa</string>
+    <string name="project_repeat_label">Toiston pituus</string>
+    <string name="project_repeat_error">Anna kokonaisluku väliltä 2–999.</string>
+
+    <string name="counter_rows_label">KERROKSET</string>
+    <string name="counter_rounds_label">KIERROKSET</string>
+    <string name="counter_add_row">Lisää yksi kerros</string>
+    <string name="counter_add_round">Lisää yksi kierros</string>
+    <string name="counter_remove_row">Vähennä yksi kerros</string>
+    <string name="counter_remove_round">Vähennä yksi kierros</string>
+    <string name="counter_undo">Kumoa viimeisin laskurin muutos</string>
+    <string name="counter_edit_count">Muokkaa lukemaa, nykyinen lukema %1$s</string>
+    <string name="counter_repeat_progress">Toisto %1$d/%2$d</string>
+    <plurals name="counter_target_rows">
+        <item quantity="one">%1$s/%2$s kerros</item>
+        <item quantity="other">%1$s/%2$s kerrosta</item>
+    </plurals>
+    <plurals name="counter_target_rounds">
+        <item quantity="one">%1$s/%2$s kierros</item>
+        <item quantity="other">%1$s/%2$s kierrosta</item>
+    </plurals>
+    <string name="counter_target_reached">Tavoite saavutettu</string>
+    <string name="counter_set_title">Aseta lukema</string>
+    <string name="counter_set_label">Lukema</string>
+    <string name="counter_set_error">Anna kokonaisluku väliltä 0–999 999.</string>
+    <string name="counter_reset_title">Nollataanko laskuri?</string>
+    <string name="counter_reset_message">Palautetaanko tämän projektin lukemaksi %1$d? Voit kumota tämän muutoksen.</string>
+    <string name="counter_archive_title">Arkistoidaanko projekti?</string>
+    <string name="counter_archive_message">%1$s siirretään Arkistoidut-osioon, eikä laskuria voi enää käyttää.</string>
+    <string name="counter_delete_title">Poistetaanko projekti?</string>
+    <string name="counter_delete_message">Poistetaanko %1$s ja sen laskentahistoria pysyvästi?</string>
+    <string name="counter_max_reached">Suurin mahdollinen lukema on 999 999.</string>
+    <string name="counter_project_missing">Tämä projekti ei ole enää käytettävissä.</string>
+
+    <string name="settings_title">Asetukset</string>
+    <string name="settings_appearance">Ulkoasu</string>
+    <string name="settings_theme_system">Järjestelmän oletus</string>
+    <string name="settings_theme_light">Vaalea</string>
+    <string name="settings_theme_dark">Tumma</string>
+    <string name="settings_counter">Laskuri</string>
+    <string name="settings_haptics">Haptinen palaute</string>
+    <string name="settings_haptics_summary">Tunne hyväksytyt laskurin muutokset ja välitavoitteet värähtelynä.</string>
+    <string name="settings_keep_awake">Pidä näyttö päällä</string>
+    <string name="settings_keep_awake_summary">Pidä näyttö päällä laskurin ollessa avoinna.</string>
+    <string name="settings_data">Tiedot</string>
+    <string name="settings_export_summary">Tallenna kaikki RowTool-projektit JSON-tiedostoon.</string>
+    <string name="settings_import_summary">Korvaa nykyiset projektit RowTool-varmuuskopiolla.</string>
+    <string name="settings_about">Tietoja sovelluksesta</string>
+    <string name="settings_version">Versio %1$s</string>
+    <string name="settings_finnvek">Finnvekin sovellus</string>
+    <string name="settings_privacy">Projektitietosi pysyvät tällä laitteella, ellet vie niitä.</string>
+    <string name="settings_business_model">Ei mainoksia, tilejä, analytiikkaa eikä tilauksia.</string>
+
+    <string name="backup_file_name">rowtool-backup-%1$s.json</string>
+    <string name="backup_export_success">Tiedot vietiin.</string>
+    <string name="backup_export_failed">Tietojen vienti epäonnistui. Valitse tiedosto ja yritä uudelleen.</string>
+    <string name="backup_import_failed_open">Tiedostoa ei voitu avata.</string>
+    <string name="backup_import_too_large">Tiedosto on suurempi kuin 5 Mt.</string>
+    <string name="backup_import_invalid_json">Tiedosto ei ole kelvollista RowTool-JSON-dataa.</string>
+    <string name="backup_import_unsupported">Tätä varmuuskopion versiota ei tueta.</string>
+    <string name="backup_import_invalid_data">Varmuuskopio sisältää virheellisiä projektitietoja.</string>
+    <string name="backup_import_failed_write">Nykyisiä projekteja ei voitu korvata. Mitään ei muutettu.</string>
+    <string name="backup_import_title">Korvataanko kaikki projektit?</string>
+    <string name="backup_import_summary">Varmuuskopio %1$s sisältää %2$s: %3$s ja %4$s.</string>
+    <string name="backup_import_unknown_date">tuntematon päivämäärä</string>
+    <string name="backup_import_warning">Tuonti korvaa kaikki nykyiset RowTool-projektit ja tyhjentää kumoamishistorian.</string>
+    <string name="backup_import_confirm">Korvaa projektit</string>
+    <string name="backup_import_success">Projektit tuotiin.</string>
+
+    <string name="error_database_write">Muutosta ei voitu tallentaa. Yritä uudelleen.</string>
+    <string name="error_archived_project">Palauta tämä projekti ennen sen lukeman muuttamista.</string>
+
+    <plurals name="row_count">
+        <item quantity="one">%1$d kerros</item>
+        <item quantity="other">%1$d kerrosta</item>
+    </plurals>
+    <plurals name="round_count">
+        <item quantity="one">%1$d kierros</item>
+        <item quantity="other">%1$d kierrosta</item>
+    </plurals>
+    <plurals name="repeat_count">
+        <item quantity="one">%1$d toisto suoritettu</item>
+        <item quantity="other">%1$d toistoa suoritettu</item>
+    </plurals>
+    <plurals name="project_count">
+        <item quantity="one">%1$d projekti</item>
+        <item quantity="other">%1$d projektia</item>
+    </plurals>
+    <plurals name="active_project_count">
+        <item quantity="one">%1$d aktiivinen projekti</item>
+        <item quantity="other">%1$d aktiivista projektia</item>
+    </plurals>
+    <plurals name="archived_project_count">
+        <item quantity="one">%1$d arkistoitu projekti</item>
+        <item quantity="other">%1$d arkistoitua projektia</item>
+    </plurals>
+</resources>

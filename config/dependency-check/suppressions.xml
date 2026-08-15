@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.4.xsd">
+  <suppress until="2026-11-09Z">
+    <notes>AndroidX SQLite 2.6.2 is a library release, not SQLite engine 2.6.2; Dependency-Check maps the Maven version to the unrelated SQLite CPE.</notes>
+    <packageUrl>pkg:maven/androidx.sqlite/sqlite-android@2.6.2</packageUrl>
+    <cpe>cpe:/a:sqlite:sqlite:2.6.2</cpe>
+  </suppress>
+  <suppress until="2026-11-09Z">
+    <notes>AndroidX SQLite Framework 2.6.2 uses Android framework APIs and is not SQLite engine 2.6.2; Dependency-Check maps the Maven version to the unrelated SQLite CPE.</notes>
+    <packageUrl>pkg:maven/androidx.sqlite/sqlite-framework-android@2.6.2</packageUrl>
+    <cpe>cpe:/a:sqlite:sqlite:2.6.2</cpe>
+  </suppress>
+  <suppress until="2026-08-31Z">
+    <notes>CVE-2026-53914 affects Kotlin build-cache metadata, not the application runtime kotlin-stdlib artifact. Gradle build caching is disabled until stable Kotlin 2.4.20 or newer is available.</notes>
+    <packageUrl>pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@2.4.10</packageUrl>
+    <cve>CVE-2026-53914</cve>
+  </suppress>
+  <suppress until="2026-11-14Z">
+    <notes>Compose Stability Analyzer 0.12.0 is an Android library, not the GitHub server product; Dependency-Check maps the library version to the unrelated GitHub CPE.</notes>
+    <packageUrl>pkg:maven/com.github.skydoves/compose-stability-runtime-android@0.12.0</packageUrl>
+    <cpe>cpe:/a:github:github:0.12.0</cpe>
+  </suppress>
+</suppressions>

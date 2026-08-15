@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">RowTool</string>
+    <string name="action_back">Tilbake</string>
+    <string name="action_settings">Innstillinger</string>
+    <string name="action_more">Flere alternativer</string>
+    <string name="action_new_project">Nytt prosjekt</string>
+    <string name="action_edit">Rediger</string>
+    <string name="action_archive">Arkiver</string>
+    <string name="action_restore">Gjenopprett</string>
+    <string name="action_delete">Slett</string>
+    <string name="action_cancel">Avbryt</string>
+    <string name="action_save">Lagre</string>
+    <string name="action_reset">Nullstill telleren</string>
+    <string name="action_set_count">Angi antall</string>
+    <string name="action_export">Eksporter data</string>
+    <string name="action_import">Importer data</string>
+
+    <string name="projects_empty_title">Opprett ditt første prosjekt</string>
+    <string name="projects_empty_body">RowTool husker radene og omgangene dine, slik at du kan fortsette med neste maske.</string>
+    <string name="projects_empty_privacy">Ingen konto. Ingen annonser. Prosjektene dine blir værende på denne enheten.</string>
+    <string name="projects_active_title">Aktive prosjekter</string>
+    <string name="projects_archived_title">Arkiverte</string>
+    <string name="projects_show_archived">Vis arkiverte prosjekter</string>
+    <string name="projects_hide_archived">Skjul arkiverte prosjekter</string>
+    <string name="project_archived">Arkivert</string>
+    <string name="project_target_summary">Mål %1$s</string>
+    <string name="project_repeat_summary">Repetisjonsintervall %1$d</string>
+    <string name="project_options">Alternativer for %1$s</string>
+
+    <string name="project_new_title">Nytt prosjekt</string>
+    <string name="project_edit_title">Rediger prosjekt</string>
+    <string name="project_name_label">Prosjektnavn</string>
+    <string name="project_name_required">Angi et prosjektnavn.</string>
+    <string name="project_name_too_long">Bruk maksimalt 60 tegn.</string>
+    <string name="project_counter_type">Telling</string>
+    <string name="project_rows">Rader</string>
+    <string name="project_rounds">Omganger</string>
+    <string name="project_starting_value">Startverdi</string>
+    <string name="project_start_zero">0</string>
+    <string name="project_start_one">1</string>
+    <string name="project_target_enabled">Angi et mål</string>
+    <string name="project_target_label">Målverdi</string>
+    <string name="project_target_error">Angi et heltall fra 1 til 999 999.</string>
+    <string name="project_repeat_enabled">Følg en repetisjon</string>
+    <string name="project_repeat_label">Repetisjonslengde</string>
+    <string name="project_repeat_error">Angi et heltall fra 2 til 999.</string>
+
+    <string name="counter_rows_label">RADER</string>
+    <string name="counter_rounds_label">OMGANGER</string>
+    <string name="counter_add_row">Legg til én rad</string>
+    <string name="counter_add_round">Legg til én omgang</string>
+    <string name="counter_remove_row">Fjern én rad</string>
+    <string name="counter_remove_round">Fjern én omgang</string>
+    <string name="counter_undo">Angre den siste endringen av telleren</string>
+    <string name="counter_edit_count">Rediger antallet, nå %1$s</string>
+    <string name="counter_repeat_progress">Repetisjon %1$d/%2$d</string>
+    <plurals name="counter_target_rows">
+        <item quantity="one">%1$s av %2$s rad</item>
+        <item quantity="other">%1$s av %2$s rader</item>
+    </plurals>
+    <plurals name="counter_target_rounds">
+        <item quantity="one">%1$s av %2$s omgang</item>
+        <item quantity="other">%1$s av %2$s omganger</item>
+    </plurals>
+    <string name="counter_target_reached">Målet er nådd</string>
+    <string name="counter_set_title">Angi antall</string>
+    <string name="counter_set_label">Antall</string>
+    <string name="counter_set_error">Angi et heltall fra 0 til 999 999.</string>
+    <string name="counter_reset_title">Nullstille telleren?</string>
+    <string name="counter_reset_message">Tilbakestille dette prosjektet til %1$d? Du kan angre denne endringen.</string>
+    <string name="counter_archive_title">Arkivere prosjektet?</string>
+    <string name="counter_archive_message">%1$s flyttes til Arkiverte, og telling deaktiveres.</string>
+    <string name="counter_delete_title">Slette prosjektet?</string>
+    <string name="counter_delete_message">Slette %1$s og tellehistorikken permanent?</string>
+    <string name="counter_max_reached">Maksimalt antall er 999 999.</string>
+    <string name="counter_project_missing">Dette prosjektet er ikke lenger tilgjengelig.</string>
+
+    <string name="settings_title">Innstillinger</string>
+    <string name="settings_appearance">Utseende</string>
+    <string name="settings_theme_system">Systemstandard</string>
+    <string name="settings_theme_light">Lyst</string>
+    <string name="settings_theme_dark">Mørkt</string>
+    <string name="settings_counter">Teller</string>
+    <string name="settings_haptics">Haptisk tilbakemelding</string>
+    <string name="settings_haptics_summary">Få vibrasjon for godkjente telleendringer og milepæler.</string>
+    <string name="settings_keep_awake">Hold skjermen på</string>
+    <string name="settings_keep_awake_summary">La skjermen være på mens en teller er åpen.</string>
+    <string name="settings_data">Data</string>
+    <string name="settings_export_summary">Lagre alle RowTool-prosjekter som en JSON-fil.</string>
+    <string name="settings_import_summary">Erstatt gjeldende prosjekter med en sikkerhetskopi fra RowTool.</string>
+    <string name="settings_about">Om appen</string>
+    <string name="settings_version">Versjon %1$s</string>
+    <string name="settings_finnvek">En app fra Finnvek</string>
+    <string name="settings_privacy">Prosjektdataene dine blir på denne enheten med mindre du eksporterer dem.</string>
+    <string name="settings_business_model">Ingen annonser, kontoer, analyse eller abonnementer.</string>
+
+    <string name="backup_file_name">rowtool-backup-%1$s.json</string>
+    <string name="backup_export_success">Dataene er eksportert.</string>
+    <string name="backup_export_failed">Kunne ikke eksportere data. Velg en fil og prøv på nytt.</string>
+    <string name="backup_import_failed_open">Kunne ikke åpne filen.</string>
+    <string name="backup_import_too_large">Filen er større enn 5 MB.</string>
+    <string name="backup_import_invalid_json">Filen inneholder ikke gyldig RowTool-JSON.</string>
+    <string name="backup_import_unsupported">Denne versjonen av sikkerhetskopien støttes ikke.</string>
+    <string name="backup_import_invalid_data">Sikkerhetskopien inneholder ugyldige prosjektdata.</string>
+    <string name="backup_import_failed_write">Kunne ikke erstatte gjeldende prosjekter. Ingenting ble endret.</string>
+    <string name="backup_import_title">Erstatte alle prosjekter?</string>
+    <string name="backup_import_summary">Sikkerhetskopien fra %1$s inneholder %2$s: %3$s og %4$s.</string>
+    <string name="backup_import_unknown_date">ukjent dato</string>
+    <string name="backup_import_warning">Importen erstatter alle gjeldende RowTool-prosjekter og sletter angrehistorikken.</string>
+    <string name="backup_import_confirm">Erstatt prosjekter</string>
+    <string name="backup_import_success">Prosjektene er importert.</string>
+
+    <string name="error_database_write">Kunne ikke lagre endringen. Prøv på nytt.</string>
+    <string name="error_archived_project">Gjenopprett dette prosjektet før du endrer antallet.</string>
+
+    <plurals name="row_count">
+        <item quantity="one">%1$d rad</item>
+        <item quantity="other">%1$d rader</item>
+    </plurals>
+    <plurals name="round_count">
+        <item quantity="one">%1$d omgang</item>
+        <item quantity="other">%1$d omganger</item>
+    </plurals>
+    <plurals name="repeat_count">
+        <item quantity="one">%1$d gjennomført repetisjon</item>
+        <item quantity="other">%1$d gjennomførte repetisjoner</item>
+    </plurals>
+    <plurals name="project_count">
+        <item quantity="one">%1$d prosjekt</item>
+        <item quantity="other">%1$d prosjekter</item>
+    </plurals>
+    <plurals name="active_project_count">
+        <item quantity="one">%1$d aktivt prosjekt</item>
+        <item quantity="other">%1$d aktive prosjekter</item>
+    </plurals>
+    <plurals name="archived_project_count">
+        <item quantity="one">%1$d arkivert prosjekt</item>
+        <item quantity="other">%1$d arkiverte prosjekter</item>
+    </plurals>
+</resources>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+    <!-- Gradle 9.7.0 is currently a milestone release, not a stable distribution. -->
+    <issue id="AndroidGradlePluginVersion">
+        <ignore regexp="A newer version of Gradle than 9\.6\.1 is available: 9\.7\.0" />
+    </issue>
+</lint>

@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">RowTool</string>
+    <string name="action_back">Terug</string>
+    <string name="action_settings">Instellingen</string>
+    <string name="action_more">Meer opties</string>
+    <string name="action_new_project">Nieuw project</string>
+    <string name="action_edit">Bewerken</string>
+    <string name="action_archive">Archiveren</string>
+    <string name="action_restore">Herstellen</string>
+    <string name="action_delete">Verwijderen</string>
+    <string name="action_cancel">Annuleren</string>
+    <string name="action_save">Opslaan</string>
+    <string name="action_reset">Teller resetten</string>
+    <string name="action_set_count">Aantal instellen</string>
+    <string name="action_export">Gegevens exporteren</string>
+    <string name="action_import">Gegevens importeren</string>
+
+    <string name="projects_empty_title">Maak je eerste project</string>
+    <string name="projects_empty_body">RowTool onthoudt je rijen en rondes, zodat je klaar bent voor de volgende steek.</string>
+    <string name="projects_empty_privacy">Geen account. Geen advertenties. Je projecten blijven op dit apparaat.</string>
+    <string name="projects_active_title">Actieve projecten</string>
+    <string name="projects_archived_title">Gearchiveerd</string>
+    <string name="projects_show_archived">Gearchiveerde projecten tonen</string>
+    <string name="projects_hide_archived">Gearchiveerde projecten verbergen</string>
+    <string name="project_archived">Gearchiveerd</string>
+    <string name="project_target_summary">Doel %1$s</string>
+    <string name="project_repeat_summary">Herhalingsinterval %1$d</string>
+    <string name="project_options">Opties voor %1$s</string>
+
+    <string name="project_new_title">Nieuw project</string>
+    <string name="project_edit_title">Project bewerken</string>
+    <string name="project_name_label">Projectnaam</string>
+    <string name="project_name_required">Voer een projectnaam in.</string>
+    <string name="project_name_too_long">Gebruik niet meer dan 60 tekens.</string>
+    <string name="project_counter_type">Type teller</string>
+    <string name="project_rows">Rijen</string>
+    <string name="project_rounds">Rondes</string>
+    <string name="project_starting_value">Beginwaarde</string>
+    <string name="project_start_zero">0</string>
+    <string name="project_start_one">1</string>
+    <string name="project_target_enabled">Een doel instellen</string>
+    <string name="project_target_label">Doelaantal</string>
+    <string name="project_target_error">Voer een geheel getal in van 1 t/m 999.999.</string>
+    <string name="project_repeat_enabled">Een herhaling bijhouden</string>
+    <string name="project_repeat_label">Lengte van herhaling</string>
+    <string name="project_repeat_error">Voer een geheel getal in van 2 t/m 999.</string>
+
+    <string name="counter_rows_label">RIJEN</string>
+    <string name="counter_rounds_label">RONDES</string>
+    <string name="counter_add_row">Eén rij toevoegen</string>
+    <string name="counter_add_round">Eén ronde toevoegen</string>
+    <string name="counter_remove_row">Eén rij aftrekken</string>
+    <string name="counter_remove_round">Eén ronde aftrekken</string>
+    <string name="counter_undo">Laatste tellerwijziging ongedaan maken</string>
+    <string name="counter_edit_count">Aantal bewerken, momenteel %1$s</string>
+    <string name="counter_repeat_progress">Herhaling %1$d/%2$d</string>
+    <plurals name="counter_target_rows">
+        <item quantity="one">%1$s van %2$s rij</item>
+        <item quantity="other">%1$s van %2$s rijen</item>
+    </plurals>
+    <plurals name="counter_target_rounds">
+        <item quantity="one">%1$s van %2$s ronde</item>
+        <item quantity="other">%1$s van %2$s rondes</item>
+    </plurals>
+    <string name="counter_target_reached">Doel bereikt</string>
+    <string name="counter_set_title">Aantal instellen</string>
+    <string name="counter_set_label">Aantal</string>
+    <string name="counter_set_error">Voer een geheel getal in van 0 t/m 999.999.</string>
+    <string name="counter_reset_title">Teller resetten?</string>
+    <string name="counter_reset_message">Dit project resetten naar %1$d? Je kunt deze wijziging ongedaan maken.</string>
+    <string name="counter_archive_title">Project archiveren?</string>
+    <string name="counter_archive_message">%1$s wordt naar Gearchiveerd verplaatst en tellen wordt uitgeschakeld.</string>
+    <string name="counter_delete_title">Project verwijderen?</string>
+    <string name="counter_delete_message">%1$s en de telgeschiedenis permanent verwijderen?</string>
+    <string name="counter_max_reached">Het maximale aantal is 999.999.</string>
+    <string name="counter_project_missing">Dit project is niet meer beschikbaar.</string>
+
+    <string name="settings_title">Instellingen</string>
+    <string name="settings_appearance">Weergave</string>
+    <string name="settings_theme_system">Systeemstandaard</string>
+    <string name="settings_theme_light">Licht</string>
+    <string name="settings_theme_dark">Donker</string>
+    <string name="settings_counter">Teller</string>
+    <string name="settings_haptics">Haptische feedback</string>
+    <string name="settings_haptics_summary">Voel een trilling bij geaccepteerde tellerwijzigingen en mijlpalen.</string>
+    <string name="settings_keep_awake">Scherm actief houden</string>
+    <string name="settings_keep_awake_summary">Houd het scherm aan zolang een teller geopend is.</string>
+    <string name="settings_data">Gegevens</string>
+    <string name="settings_export_summary">Sla alle RowTool-projecten op als een JSON-bestand.</string>
+    <string name="settings_import_summary">Vervang de huidige projecten door een back-up van RowTool.</string>
+    <string name="settings_about">Over de app</string>
+    <string name="settings_version">Versie %1$s</string>
+    <string name="settings_finnvek">Een app van Finnvek</string>
+    <string name="settings_privacy">Je projectgegevens blijven op dit apparaat, tenzij je ze exporteert.</string>
+    <string name="settings_business_model">Geen advertenties, accounts, analyses of abonnementen.</string>
+
+    <string name="backup_file_name">rowtool-backup-%1$s.json</string>
+    <string name="backup_export_success">Gegevens geëxporteerd.</string>
+    <string name="backup_export_failed">Kan gegevens niet exporteren. Kies een bestand en probeer het opnieuw.</string>
+    <string name="backup_import_failed_open">Kan dit bestand niet openen.</string>
+    <string name="backup_import_too_large">Dit bestand is groter dan 5 MB.</string>
+    <string name="backup_import_invalid_json">Dit bestand bevat geen geldige RowTool-JSON.</string>
+    <string name="backup_import_unsupported">Deze versie van de back-up wordt niet ondersteund.</string>
+    <string name="backup_import_invalid_data">De back-up bevat ongeldige projectgegevens.</string>
+    <string name="backup_import_failed_write">Kan de huidige projecten niet vervangen. Er is niets gewijzigd.</string>
+    <string name="backup_import_title">Alle projecten vervangen?</string>
+    <string name="backup_import_summary">De back-up van %1$s bevat %2$s: %3$s en %4$s.</string>
+    <string name="backup_import_unknown_date">onbekende datum</string>
+    <string name="backup_import_warning">Importeren vervangt alle huidige RowTool-projecten en wist de geschiedenis voor ongedaan maken.</string>
+    <string name="backup_import_confirm">Projecten vervangen</string>
+    <string name="backup_import_success">Projecten geïmporteerd.</string>
+
+    <string name="error_database_write">Kan de wijziging niet opslaan. Probeer het opnieuw.</string>
+    <string name="error_archived_project">Herstel dit project voordat je het aantal wijzigt.</string>
+
+    <plurals name="row_count">
+        <item quantity="one">%1$d rij</item>
+        <item quantity="other">%1$d rijen</item>
+    </plurals>
+    <plurals name="round_count">
+        <item quantity="one">%1$d ronde</item>
+        <item quantity="other">%1$d rondes</item>
+    </plurals>
+    <plurals name="repeat_count">
+        <item quantity="one">%1$d herhaling voltooid</item>
+        <item quantity="other">%1$d herhalingen voltooid</item>
+    </plurals>
+    <plurals name="project_count">
+        <item quantity="one">%1$d project</item>
+        <item quantity="other">%1$d projecten</item>
+    </plurals>
+    <plurals name="active_project_count">
+        <item quantity="one">%1$d actief project</item>
+        <item quantity="other">%1$d actieve projecten</item>
+    </plurals>
+    <plurals name="archived_project_count">
+        <item quantity="one">%1$d gearchiveerd project</item>
+        <item quantity="other">%1$d gearchiveerde projecten</item>
+    </plurals>
+</resources>

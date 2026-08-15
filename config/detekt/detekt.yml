@@ -1,0 +1,23 @@
+config:
+  validation: true
+  warningsAsErrors: false
+
+naming:
+  FunctionNaming:
+    ignoreAnnotated:
+      - Composable
+
+complexity:
+  CyclomaticComplexMethod:
+    ignoreAnnotated:
+      - Composable
+  LongMethod:
+    ignoreAnnotated:
+      - Composable
+
+style:
+  MagicNumber:
+    ignoreAnnotated:
+      - Composable
+  MaxLineLength:
+    maxLineLength: 140

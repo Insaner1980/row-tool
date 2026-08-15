@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">RowTool</string>
+    <string name="action_back">Back</string>
+    <string name="action_settings">Settings</string>
+    <string name="action_more">More options</string>
+    <string name="action_new_project">New project</string>
+    <string name="action_edit">Edit</string>
+    <string name="action_archive">Archive</string>
+    <string name="action_restore">Restore</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_save">Save</string>
+    <string name="action_reset">Reset count</string>
+    <string name="action_set_count">Set count</string>
+    <string name="action_export">Export data</string>
+    <string name="action_import">Import data</string>
+
+    <string name="projects_empty_title">Create your first project</string>
+    <string name="projects_empty_body">RowTool remembers your rows and rounds, ready for the next stitch.</string>
+    <string name="projects_empty_privacy">No account. No ads. Your projects stay on this device.</string>
+    <string name="projects_active_title">Active projects</string>
+    <string name="projects_archived_title">Archived</string>
+    <string name="projects_show_archived">Show archived projects</string>
+    <string name="projects_hide_archived">Hide archived projects</string>
+    <string name="project_archived">Archived</string>
+    <string name="project_target_summary">Target %1$s</string>
+    <string name="project_repeat_summary">Repeat every %1$d</string>
+    <string name="project_options">Options for %1$s</string>
+
+    <string name="project_new_title">New project</string>
+    <string name="project_edit_title">Edit project</string>
+    <string name="project_name_label">Project name</string>
+    <string name="project_name_required">Enter a project name.</string>
+    <string name="project_name_too_long">Use no more than 60 characters.</string>
+    <string name="project_counter_type">Count</string>
+    <string name="project_rows">Rows</string>
+    <string name="project_rounds">Rounds</string>
+    <string name="project_starting_value">Starting value</string>
+    <string name="project_start_zero">0</string>
+    <string name="project_start_one">1</string>
+    <string name="project_target_enabled">Set a target</string>
+    <string name="project_target_label">Target count</string>
+    <string name="project_target_error">Enter a whole number from 1 to 999,999.</string>
+    <string name="project_repeat_enabled">Track a repeat</string>
+    <string name="project_repeat_label">Repeat length</string>
+    <string name="project_repeat_error">Enter a whole number from 2 to 999.</string>
+
+    <string name="counter_rows_label">ROWS</string>
+    <string name="counter_rounds_label">ROUNDS</string>
+    <string name="counter_add_row">Add one row</string>
+    <string name="counter_add_round">Add one round</string>
+    <string name="counter_remove_row">Remove one row</string>
+    <string name="counter_remove_round">Remove one round</string>
+    <string name="counter_undo">Undo last count change</string>
+    <string name="counter_edit_count">Edit count, currently %1$s</string>
+    <string name="counter_repeat_progress">Repeat %1$d/%2$d</string>
+    <plurals name="counter_target_rows">
+        <item quantity="one">%1$s of %2$s row</item>
+        <item quantity="other">%1$s of %2$s rows</item>
+    </plurals>
+    <plurals name="counter_target_rounds">
+        <item quantity="one">%1$s of %2$s round</item>
+        <item quantity="other">%1$s of %2$s rounds</item>
+    </plurals>
+    <string name="counter_target_reached">Target reached</string>
+    <string name="counter_set_title">Set count</string>
+    <string name="counter_set_label">Count</string>
+    <string name="counter_set_error">Enter a whole number from 0 to 999,999.</string>
+    <string name="counter_reset_title">Reset count?</string>
+    <string name="counter_reset_message">Reset this project to %1$d? You can undo this change.</string>
+    <string name="counter_archive_title">Archive project?</string>
+    <string name="counter_archive_message">%1$s will move to Archived and counting will be disabled.</string>
+    <string name="counter_delete_title">Delete project?</string>
+    <string name="counter_delete_message">Delete %1$s and its count history permanently?</string>
+    <string name="counter_max_reached">The maximum count is 999,999.</string>
+    <string name="counter_project_missing">That project is no longer available.</string>
+
+    <string name="settings_title">Settings</string>
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_theme_system">System default</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_counter">Counter</string>
+    <string name="settings_haptics">Haptic feedback</string>
+    <string name="settings_haptics_summary">Feel accepted count changes and milestones.</string>
+    <string name="settings_keep_awake">Keep screen awake</string>
+    <string name="settings_keep_awake_summary">Keep the display on while a counter is open.</string>
+    <string name="settings_data">Data</string>
+    <string name="settings_export_summary">Save all RowTool projects as a JSON file.</string>
+    <string name="settings_import_summary">Replace current projects from a RowTool backup.</string>
+    <string name="settings_about">About</string>
+    <string name="settings_version">Version %1$s</string>
+    <string name="settings_finnvek">A Finnvek app</string>
+    <string name="settings_privacy">Your project data stays on this device unless you export it.</string>
+    <string name="settings_business_model">No ads, accounts, analytics, or subscriptions.</string>
+
+    <string name="backup_file_name">rowtool-backup-%1$s.json</string>
+    <string name="backup_export_success">Data exported.</string>
+    <string name="backup_export_failed">Could not export data. Choose a file and try again.</string>
+    <string name="backup_import_failed_open">Could not open that file.</string>
+    <string name="backup_import_too_large">That file is larger than 5 MB.</string>
+    <string name="backup_import_invalid_json">That file is not valid RowTool JSON.</string>
+    <string name="backup_import_unsupported">This backup version is not supported.</string>
+    <string name="backup_import_invalid_data">The backup contains invalid project data.</string>
+    <string name="backup_import_failed_write">Could not replace the current projects. Nothing was changed.</string>
+    <string name="backup_import_title">Replace all projects?</string>
+    <string name="backup_import_summary">Backup from %1$s contains %2$s: %3$s and %4$s.</string>
+    <string name="backup_import_unknown_date">unknown date</string>
+    <string name="backup_import_warning">Importing replaces every current RowTool project and clears undo history.</string>
+    <string name="backup_import_confirm">Replace projects</string>
+    <string name="backup_import_success">Projects imported.</string>
+
+    <string name="error_database_write">Could not save the change. Try again.</string>
+    <string name="error_archived_project">Restore this project before changing its count.</string>
+
+    <plurals name="row_count">
+        <item quantity="one">%1$d row</item>
+        <item quantity="other">%1$d rows</item>
+    </plurals>
+    <plurals name="round_count">
+        <item quantity="one">%1$d round</item>
+        <item quantity="other">%1$d rounds</item>
+    </plurals>
+    <plurals name="repeat_count">
+        <item quantity="one">%1$d repeat completed</item>
+        <item quantity="other">%1$d repeats completed</item>
+    </plurals>
+    <plurals name="project_count">
+        <item quantity="one">%1$d project</item>
+        <item quantity="other">%1$d projects</item>
+    </plurals>
+    <plurals name="active_project_count">
+        <item quantity="one">%1$d active project</item>
+        <item quantity="other">%1$d active projects</item>
+    </plurals>
+    <plurals name="archived_project_count">
+        <item quantity="one">%1$d archived project</item>
+        <item quantity="other">%1$d archived projects</item>
+    </plurals>
+</resources>

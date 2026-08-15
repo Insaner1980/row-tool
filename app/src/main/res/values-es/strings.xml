@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">RowTool</string>
+    <string name="action_back">Atrás</string>
+    <string name="action_settings">Ajustes</string>
+    <string name="action_more">Más opciones</string>
+    <string name="action_new_project">Nuevo proyecto</string>
+    <string name="action_edit">Editar</string>
+    <string name="action_archive">Archivar</string>
+    <string name="action_restore">Restaurar</string>
+    <string name="action_delete">Eliminar</string>
+    <string name="action_cancel">Cancelar</string>
+    <string name="action_save">Guardar</string>
+    <string name="action_reset">Restablecer recuento</string>
+    <string name="action_set_count">Establecer recuento</string>
+    <string name="action_export">Exportar datos</string>
+    <string name="action_import">Importar datos</string>
+
+    <string name="projects_empty_title">Crea tu primer proyecto</string>
+    <string name="projects_empty_body">RowTool recuerda tus filas y vueltas para que sigas con el siguiente punto.</string>
+    <string name="projects_empty_privacy">Sin cuenta. Sin anuncios. Tus proyectos se quedan en este dispositivo.</string>
+    <string name="projects_active_title">Proyectos activos</string>
+    <string name="projects_archived_title">Archivados</string>
+    <string name="projects_show_archived">Mostrar proyectos archivados</string>
+    <string name="projects_hide_archived">Ocultar proyectos archivados</string>
+    <string name="project_archived">Archivado</string>
+    <string name="project_target_summary">Objetivo: %1$s</string>
+    <string name="project_repeat_summary">Intervalo de repetición: %1$d</string>
+    <string name="project_options">Opciones de %1$s</string>
+
+    <string name="project_new_title">Nuevo proyecto</string>
+    <string name="project_edit_title">Editar proyecto</string>
+    <string name="project_name_label">Nombre del proyecto</string>
+    <string name="project_name_required">Introduce un nombre para el proyecto.</string>
+    <string name="project_name_too_long">Usa 60 caracteres como máximo.</string>
+    <string name="project_counter_type">Tipo de recuento</string>
+    <string name="project_rows">Filas</string>
+    <string name="project_rounds">Vueltas</string>
+    <string name="project_starting_value">Valor inicial</string>
+    <string name="project_start_zero">0</string>
+    <string name="project_start_one">1</string>
+    <string name="project_target_enabled">Establecer un objetivo</string>
+    <string name="project_target_label">Recuento objetivo</string>
+    <string name="project_target_error">Introduce un número entero entre 1 y 999.999.</string>
+    <string name="project_repeat_enabled">Registrar una repetición</string>
+    <string name="project_repeat_label">Longitud de la repetición</string>
+    <string name="project_repeat_error">Introduce un número entero entre 2 y 999.</string>
+
+    <string name="counter_rows_label">FILAS</string>
+    <string name="counter_rounds_label">VUELTAS</string>
+    <string name="counter_add_row">Añadir una fila</string>
+    <string name="counter_add_round">Añadir una vuelta</string>
+    <string name="counter_remove_row">Restar una fila</string>
+    <string name="counter_remove_round">Restar una vuelta</string>
+    <string name="counter_undo">Deshacer el último cambio del recuento</string>
+    <string name="counter_edit_count">Editar recuento, ahora en %1$s</string>
+    <string name="counter_repeat_progress">Repetición %1$d/%2$d</string>
+    <plurals name="counter_target_rows">
+        <item quantity="one">%1$s de %2$s fila</item>
+        <item quantity="other">%1$s de %2$s filas</item>
+        <item quantity="many">%1$s de %2$s filas</item>
+    </plurals>
+    <plurals name="counter_target_rounds">
+        <item quantity="one">%1$s de %2$s vuelta</item>
+        <item quantity="other">%1$s de %2$s vueltas</item>
+        <item quantity="many">%1$s de %2$s vueltas</item>
+    </plurals>
+    <string name="counter_target_reached">Objetivo alcanzado</string>
+    <string name="counter_set_title">Establecer recuento</string>
+    <string name="counter_set_label">Recuento</string>
+    <string name="counter_set_error">Introduce un número entero entre 0 y 999.999.</string>
+    <string name="counter_reset_title">¿Restablecer el recuento?</string>
+    <string name="counter_reset_message">¿Restablecer este proyecto a %1$d? Puedes deshacer este cambio.</string>
+    <string name="counter_archive_title">¿Archivar el proyecto?</string>
+    <string name="counter_archive_message">%1$s se moverá a Archivados y se desactivará el recuento.</string>
+    <string name="counter_delete_title">¿Eliminar el proyecto?</string>
+    <string name="counter_delete_message">¿Eliminar permanentemente %1$s y su historial de recuento?</string>
+    <string name="counter_max_reached">El recuento máximo es 999.999.</string>
+    <string name="counter_project_missing">Ese proyecto ya no está disponible.</string>
+
+    <string name="settings_title">Ajustes</string>
+    <string name="settings_appearance">Apariencia</string>
+    <string name="settings_theme_system">Predeterminado del sistema</string>
+    <string name="settings_theme_light">Claro</string>
+    <string name="settings_theme_dark">Oscuro</string>
+    <string name="settings_counter">Contador</string>
+    <string name="settings_haptics">Respuesta háptica</string>
+    <string name="settings_haptics_summary">Siente las confirmaciones del recuento y los hitos.</string>
+    <string name="settings_keep_awake">Mantener la pantalla encendida</string>
+    <string name="settings_keep_awake_summary">Mantén la pantalla encendida mientras haya un contador abierto.</string>
+    <string name="settings_data">Datos</string>
+    <string name="settings_export_summary">Guarda todos los proyectos de RowTool en un archivo JSON.</string>
+    <string name="settings_import_summary">Sustituye los proyectos actuales desde una copia de seguridad de RowTool.</string>
+    <string name="settings_about">Acerca de</string>
+    <string name="settings_version">Versión %1$s</string>
+    <string name="settings_finnvek">Una aplicación de Finnvek</string>
+    <string name="settings_privacy">Los datos de tus proyectos se quedan en este dispositivo a menos que los exportes.</string>
+    <string name="settings_business_model">Sin anuncios, cuentas, analíticas ni suscripciones.</string>
+
+    <string name="backup_file_name">rowtool-backup-%1$s.json</string>
+    <string name="backup_export_success">Datos exportados.</string>
+    <string name="backup_export_failed">No se han podido exportar los datos. Elige un archivo e inténtalo de nuevo.</string>
+    <string name="backup_import_failed_open">No se ha podido abrir ese archivo.</string>
+    <string name="backup_import_too_large">Ese archivo ocupa más de 5 MB.</string>
+    <string name="backup_import_invalid_json">Ese archivo no es un JSON de RowTool válido.</string>
+    <string name="backup_import_unsupported">Esta versión de la copia de seguridad no es compatible.</string>
+    <string name="backup_import_invalid_data">La copia de seguridad contiene datos de proyecto no válidos.</string>
+    <string name="backup_import_failed_write">No se han podido sustituir los proyectos actuales. No se ha cambiado nada.</string>
+    <string name="backup_import_title">¿Sustituir todos los proyectos?</string>
+    <string name="backup_import_summary">La copia de seguridad del %1$s contiene %2$s: %3$s y %4$s.</string>
+    <string name="backup_import_unknown_date">fecha desconocida</string>
+    <string name="backup_import_warning">La importación sustituye todos los proyectos actuales de RowTool y borra el historial de deshacer.</string>
+    <string name="backup_import_confirm">Sustituir proyectos</string>
+    <string name="backup_import_success">Proyectos importados.</string>
+
+    <string name="error_database_write">No se ha podido guardar el cambio. Inténtalo de nuevo.</string>
+    <string name="error_archived_project">Restaura este proyecto antes de cambiar su recuento.</string>
+
+    <plurals name="row_count">
+        <item quantity="one">%1$d fila</item>
+        <item quantity="other">%1$d filas</item>
+        <item quantity="many">%1$d filas</item>
+    </plurals>
+    <plurals name="round_count">
+        <item quantity="one">%1$d vuelta</item>
+        <item quantity="other">%1$d vueltas</item>
+        <item quantity="many">%1$d vueltas</item>
+    </plurals>
+    <plurals name="repeat_count">
+        <item quantity="one">%1$d repetición completada</item>
+        <item quantity="other">%1$d repeticiones completadas</item>
+        <item quantity="many">%1$d repeticiones completadas</item>
+    </plurals>
+    <plurals name="project_count">
+        <item quantity="one">%1$d proyecto</item>
+        <item quantity="other">%1$d proyectos</item>
+        <item quantity="many">%1$d proyectos</item>
+    </plurals>
+    <plurals name="active_project_count">
+        <item quantity="one">%1$d proyecto activo</item>
+        <item quantity="other">%1$d proyectos activos</item>
+        <item quantity="many">%1$d proyectos activos</item>
+    </plurals>
+    <plurals name="archived_project_count">
+        <item quantity="one">%1$d proyecto archivado</item>
+        <item quantity="other">%1$d proyectos archivados</item>
+        <item quantity="many">%1$d proyectos archivados</item>
+    </plurals>
+</resources>

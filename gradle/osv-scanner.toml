@@ -1,0 +1,4 @@
+[[IgnoredVulns]]
+id = "GHSA-r937-wjx7-w2jp"
+ignoreUntil = 2026-09-30
+reason = "Kotlin 2.4.10 is the latest stable toolchain; the fixed 2.4.20 line is still pre-release. Gradle build caching is disabled through org.gradle.caching=false, so the vulnerable build-cache deserialization path is not enabled. Revisit when a stable fixed Kotlin release is available."
