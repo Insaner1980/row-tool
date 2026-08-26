@@ -87,6 +87,7 @@ val instrumentDataForCoverage =
     tasks.register("instrumentDataForCoverage") {
         group = "verification"
         description = "Instruments data classes for Robolectric coverage"
+        notCompatibleWithConfigurationCache("Uses the Ant JaCoCo instrumenter at execution time")
         dependsOn("compileDebugKotlin")
         val compiledClasses =
             layout.buildDirectory.dir("intermediates/built_in_kotlinc/debug/compileDebugKotlin/classes")
@@ -111,6 +112,7 @@ val instrumentDataForCoverage =
 
 tasks.withType<Test>().configureEach {
     if (name == "testDebugUnitTest") {
+        notCompatibleWithConfigurationCache("Prepends offline-instrumented data classes at execution time")
         dependsOn(instrumentDataForCoverage)
         doFirst {
             classpath = files(dataCoverageClasses, classpath)

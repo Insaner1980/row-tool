@@ -3,7 +3,6 @@ package com.finnvek.rowtool.ui.screens.counter
 import android.annotation.SuppressLint
 import android.os.Build
 import android.view.HapticFeedbackConstants
-import android.view.View
 import androidx.activity.compose.BackHandler
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
@@ -23,7 +22,6 @@ import com.finnvek.rowtool.R
 import com.finnvek.rowtool.domain.model.CounterProject
 import com.finnvek.rowtool.ui.screens.projects.ProjectEditorDialog
 import com.finnvek.rowtool.ui.screens.projects.ProjectEditorValues
-import kotlinx.coroutines.flow.Flow
 
 private enum class CounterDialog {
     SET_COUNT,
@@ -62,6 +60,9 @@ fun CounterRoute(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val preferences by viewModel.preferences.collectAsStateWithLifecycle()
     val view = LocalView.current
+    val currentHapticsEnabled by rememberUpdatedState(preferences.hapticFeedbackEnabled)
+    val currentOnMessage by rememberUpdatedState(onMessage)
+    val currentOnProjects by rememberUpdatedState(onProjects)
     var activeDialog by rememberSaveable { mutableStateOf<CounterDialog?>(null) }
 
     BackHandler(onBack = onProjects)
@@ -71,13 +72,26 @@ fun CounterRoute(
         onDispose { view.keepScreenOn = false }
     }
 
-    CollectCounterEffects(
-        effects = viewModel.effects,
-        view = view,
-        hapticsEnabled = preferences.hapticFeedbackEnabled,
-        onMessage = onMessage,
-        onProjects = onProjects,
-    )
+    LaunchedEffect(viewModel) {
+        viewModel.effects.collect { effect ->
+            when (effect) {
+                is CounterEffect.ShowMessage -> {
+                    currentOnMessage(effect.message)
+                }
+
+                is CounterEffect.Haptic -> {
+                    if (currentHapticsEnabled) {
+                        view.performHapticFeedback(hapticFeedbackConstant(effect.strong))
+                    }
+                }
+
+                is CounterEffect.ReturnToProjects -> {
+                    effect.message?.let { currentOnMessage(it) }
+                    currentOnProjects()
+                }
+            }
+        }
+    }
 
     CounterScreenContent(
         state = state,
@@ -115,39 +129,6 @@ fun CounterRoute(
                 ),
             onDismiss = { activeDialog = null },
         )
-    }
-}
-
-@Composable
-private fun CollectCounterEffects(
-    effects: Flow<CounterEffect>,
-    view: View,
-    hapticsEnabled: Boolean,
-    onMessage: suspend (Int) -> Unit,
-    onProjects: () -> Unit,
-) {
-    val currentHapticsEnabled by rememberUpdatedState(hapticsEnabled)
-    val currentOnMessage by rememberUpdatedState(onMessage)
-    val currentOnProjects by rememberUpdatedState(onProjects)
-    LaunchedEffect(effects) {
-        effects.collect { effect ->
-            when (effect) {
-                is CounterEffect.ShowMessage -> {
-                    currentOnMessage(effect.message)
-                }
-
-                is CounterEffect.Haptic -> {
-                    if (currentHapticsEnabled) {
-                        view.performHapticFeedback(hapticFeedbackConstant(effect.strong))
-                    }
-                }
-
-                is CounterEffect.ReturnToProjects -> {
-                    effect.message?.let { currentOnMessage(it) }
-                    currentOnProjects()
-                }
-            }
-        }
     }
 }
 

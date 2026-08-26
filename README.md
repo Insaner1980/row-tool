@@ -28,7 +28,7 @@ Android system backup and device-transfer backup are disabled. Moving data betwe
 - Coroutines, Flow, lifecycle-aware state collection, and Kotlin serialization
 - Android SplashScreen API and manual application-container/ViewModel construction
 - `minSdk 29`, `compileSdk 37`, and `targetSdk 37`
-- Java/JVM 17, Gradle 9.6.1, AGP 9.3.1, and Kotlin 2.4.10
+- Java/JVM 17, Gradle 9.7.1, AGP 9.3.2, and Kotlin 2.4.10
 
 Dependency versions are centralized in [`gradle/libs.versions.toml`](gradle/libs.versions.toml).
 

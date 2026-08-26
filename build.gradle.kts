@@ -1,3 +1,18 @@
+buildscript {
+    configurations.classpath {
+        resolutionStrategy.eachDependency {
+            when {
+                requested.group == "org.bitbucket.b_c" && requested.name == "jose4j" ->
+                    useVersion("0.9.6")
+                requested.group == "org.bouncycastle" && requested.name.endsWith("-jdk18on") ->
+                    useVersion("1.84")
+                requested.group == "org.jdom" && requested.name == "jdom2" ->
+                    useVersion("2.0.6.1")
+            }
+        }
+    }
+}
+
 plugins {
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.kotlin.compose) apply false
@@ -64,7 +79,7 @@ allprojects {
             when {
                 requested.group == "ch.qos.logback" -> useVersion("1.5.34")
                 requested.group == "io.netty" && requested.version?.startsWith("4.1.") == true ->
-                    useVersion("4.1.136.Final")
+                    useVersion("4.1.137.Final")
                 requested.group == "org.apache.commons" && requested.name == "commons-lang3" ->
                     useVersion("3.20.0")
                 requested.group == "org.apache.httpcomponents" && requested.name == "httpclient" ->

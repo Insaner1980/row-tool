@@ -59,6 +59,16 @@ class PreferencesRepository(
         }
     }
 
+    suspend fun clearLastActiveProjectIdIfMatching(projectId: String) {
+        if (preferences.first().lastActiveProjectId == projectId) {
+            try {
+                setLastActiveProjectId(null)
+            } catch (_: IOException) {
+                // Startup repairs stale last-active state against Room.
+            }
+        }
+    }
+
     suspend fun resolveLastActiveProjectId(): String? {
         val storedId = preferences.first().lastActiveProjectId
         if (storedId != null && projectDao.getById(storedId)?.isArchived == false) {

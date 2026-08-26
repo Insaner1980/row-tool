@@ -25,8 +25,8 @@ Room is the persistent source of truth for projects and undo history. Preference
 
 | Component | Version |
 |---|---|
-| Gradle wrapper | 9.6.1 |
-| Android Gradle Plugin | 9.3.1 |
+| Gradle wrapper | 9.7.1 |
+| Android Gradle Plugin | 9.3.2 |
 | Kotlin / Compose plugin | 2.4.10 |
 | KSP | 2.3.11 |
 | Compose BOM | 2026.06.01 |

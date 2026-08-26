@@ -14,7 +14,6 @@ import com.finnvek.rowtool.domain.model.CounterProject
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
@@ -99,7 +98,7 @@ class ProjectsViewModel(
         viewModelScope.launch {
             try {
                 if (counterRepository.setArchived(project.id, archived) && archived) {
-                    clearLastActiveIfMatching(project.id)
+                    preferencesRepository.clearLastActiveProjectIdIfMatching(project.id)
                 }
             } catch (_: SQLException) {
                 effectChannel.send(ProjectsEffect.ShowMessage(R.string.error_database_write))
@@ -111,19 +110,9 @@ class ProjectsViewModel(
         viewModelScope.launch {
             try {
                 counterRepository.deleteProject(project.id)
-                clearLastActiveIfMatching(project.id)
+                preferencesRepository.clearLastActiveProjectIdIfMatching(project.id)
             } catch (_: SQLException) {
                 effectChannel.send(ProjectsEffect.ShowMessage(R.string.error_database_write))
-            }
-        }
-    }
-
-    private suspend fun clearLastActiveIfMatching(projectId: String) {
-        if (preferencesRepository.preferences.first().lastActiveProjectId == projectId) {
-            try {
-                preferencesRepository.setLastActiveProjectId(null)
-            } catch (_: IOException) {
-                // A stale preference is repaired by the startup resolver.
             }
         }
     }

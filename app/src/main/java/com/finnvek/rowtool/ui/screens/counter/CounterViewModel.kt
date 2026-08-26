@@ -19,7 +19,6 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
@@ -132,7 +131,7 @@ class CounterViewModel(
         viewModelScope.launch {
             try {
                 if (counterRepository.setArchived(projectId, true)) {
-                    clearLastActive()
+                    preferencesRepository.clearLastActiveProjectIdIfMatching(projectId)
                     effectChannel.send(CounterEffect.ReturnToProjects())
                 }
             } catch (_: SQLException) {
@@ -145,7 +144,7 @@ class CounterViewModel(
         viewModelScope.launch {
             try {
                 counterRepository.deleteProject(projectId)
-                clearLastActive()
+                preferencesRepository.clearLastActiveProjectIdIfMatching(projectId)
                 effectChannel.send(CounterEffect.ReturnToProjects())
             } catch (_: SQLException) {
                 effectChannel.send(CounterEffect.ShowMessage(R.string.error_database_write))
@@ -211,16 +210,6 @@ class CounterViewModel(
                 effectChannel.send(
                     CounterEffect.ShowMessage(R.string.counter_set_error),
                 )
-            }
-        }
-    }
-
-    private suspend fun clearLastActive() {
-        if (preferencesRepository.preferences.first().lastActiveProjectId == projectId) {
-            try {
-                preferencesRepository.setLastActiveProjectId(null)
-            } catch (_: IOException) {
-                // Startup repairs stale last-active state against Room.
             }
         }
     }
