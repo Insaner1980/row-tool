@@ -12,7 +12,7 @@ RowTool is a calm, tactile, completely offline row and round counter for knittin
 - Automatic reopening of the last valid active project.
 - System, light, and dark themes; optional haptic feedback; and optional keep-screen-awake behavior.
 - Manual JSON export and validated replacement import through Android's system document picker.
-- English plus Finnish, Swedish, German, French, Spanish, Portuguese, Italian, Norwegian Bokmal, Danish, and Dutch resources.
+- English plus Finnish, Swedish, German, French, Spanish, Portuguese, Italian, Norwegian Bokmål, Danish, and Dutch resources.
 
 ## Privacy and offline operation
 
@@ -36,7 +36,7 @@ Dependency versions are centralized in [`gradle/libs.versions.toml`](gradle/libs
 
 Prerequisites:
 
-- JDK 17
+- JDK 21 for the full local build and test commands; the application Java/JVM target remains 17
 - Android SDK Platform 37
 - An Android SDK path configured through the normal Android Gradle mechanisms, such as `local.properties` or `ANDROID_HOME`
 

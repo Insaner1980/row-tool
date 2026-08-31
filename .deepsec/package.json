@@ -16,7 +16,7 @@
     "deepsec:report:custom": "pnpm run deepsec:report"
   },
   "dependencies": {
-    "deepsec": "2.2.9"
+    "deepsec": "2.3.8"
   },
   "pnpm": {
     "overrides": {

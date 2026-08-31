@@ -27,7 +27,7 @@ import java.util.Date
 fun SettingsRoute(
     viewModel: SettingsViewModel,
     onBack: () -> Unit,
-    onMessage: suspend (Int) -> Unit,
+    onMessage: (Int) -> Unit,
     onImportComplete: (String?) -> Unit,
 ) {
     val context = LocalContext.current

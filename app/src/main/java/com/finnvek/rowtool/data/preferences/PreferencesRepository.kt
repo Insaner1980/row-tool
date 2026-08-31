@@ -60,12 +60,10 @@ class PreferencesRepository(
     }
 
     suspend fun clearLastActiveProjectIdIfMatching(projectId: String) {
-        if (preferences.first().lastActiveProjectId == projectId) {
-            try {
-                setLastActiveProjectId(null)
-            } catch (_: IOException) {
-                // Startup repairs stale last-active state against Room.
-            }
+        try {
+            setLastActiveProjectIdIfMatching(expectedId = projectId, projectId = null)
+        } catch (_: IOException) {
+            // Startup repairs stale last-active state against Room.
         }
     }
 
@@ -78,12 +76,28 @@ class PreferencesRepository(
         val replacement = projectDao.getMostRecentlyUpdatedActive()?.id
         if (replacement != storedId) {
             try {
-                setLastActiveProjectId(replacement)
+                setLastActiveProjectIdIfMatching(expectedId = storedId, projectId = replacement)
             } catch (_: IOException) {
                 // The database result is still safe to use for this session.
             }
         }
         return replacement
+    }
+
+    private suspend fun setLastActiveProjectIdIfMatching(
+        expectedId: String?,
+        projectId: String?,
+    ) {
+        dataStore.edit { values ->
+            if (values[LAST_ACTIVE_PROJECT_ID] != expectedId) {
+                return@edit
+            }
+            if (projectId == null) {
+                values.remove(LAST_ACTIVE_PROJECT_ID)
+            } else {
+                values[LAST_ACTIVE_PROJECT_ID] = projectId
+            }
+        }
     }
 
     private companion object {

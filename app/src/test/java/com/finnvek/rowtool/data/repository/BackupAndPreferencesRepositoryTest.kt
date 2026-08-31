@@ -19,7 +19,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -149,6 +151,22 @@ class BackupAndPreferencesRepositoryTest {
             val repository = PreferencesRepository(failingDataStore, database.projectDao())
 
             assertEquals(newest.id, repository.resolveLastActiveProjectId())
+        }
+
+    @Test
+    fun clearingLastActiveProjectDoesNotOverwriteConcurrentReplacement() =
+        runTest {
+            val racingDataStore = StaleReadDataStore()
+            val repository = PreferencesRepository(racingDataStore, database.projectDao())
+            repository.setLastActiveProjectId("old")
+            val stalePreferences = racingDataStore.current
+            repository.setLastActiveProjectId("replacement")
+            racingDataStore.staleRead = stalePreferences
+
+            repository.clearLastActiveProjectIdIfMatching("old")
+
+            racingDataStore.staleRead = null
+            assertEquals("replacement", repository.preferences.first().lastActiveProjectId)
         }
 
     @Test
@@ -293,6 +311,26 @@ class BackupAndPreferencesRepositoryTest {
             override suspend fun updateData(transform: suspend (t: Preferences) -> Preferences): Preferences =
                 throw IOException("simulated preference write failure")
         }
+
+    private class StaleReadDataStore : DataStore<Preferences> {
+        private val state = MutableStateFlow<Preferences>(emptyPreferences())
+
+        var staleRead: Preferences? = null
+
+        val current: Preferences
+            get() = state.value
+
+        override val data =
+            flow {
+                emit(staleRead ?: state.value)
+            }
+
+        override suspend fun updateData(transform: suspend (Preferences) -> Preferences): Preferences {
+            val updated = transform(state.value)
+            state.value = updated
+            return updated
+        }
+    }
 
     private fun importedProject(
         id: String,

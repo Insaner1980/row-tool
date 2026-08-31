@@ -10,6 +10,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.finnvek.rowtool.R
 import com.finnvek.rowtool.data.preferences.PreferencesRepository
 import com.finnvek.rowtool.data.repository.CounterRepository
+import com.finnvek.rowtool.data.repository.ProjectLimitReachedException
 import com.finnvek.rowtool.domain.model.CounterProject
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
@@ -72,6 +73,8 @@ class ProjectsViewModel(
                     // The persisted project remains usable and startup can resolve it from Room.
                 }
                 effectChannel.send(ProjectsEffect.OpenProject(project.id))
+            } catch (_: ProjectLimitReachedException) {
+                effectChannel.send(ProjectsEffect.ShowMessage(R.string.error_database_write))
             } catch (_: SQLException) {
                 effectChannel.send(ProjectsEffect.ShowMessage(R.string.error_database_write))
             }

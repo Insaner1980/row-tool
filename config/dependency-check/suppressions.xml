@@ -10,7 +10,7 @@
     <packageUrl>pkg:maven/androidx.sqlite/sqlite-framework-android@2.6.2</packageUrl>
     <cpe>cpe:/a:sqlite:sqlite:2.6.2</cpe>
   </suppress>
-  <suppress until="2026-08-31Z">
+  <suppress until="2026-09-30Z">
     <notes>CVE-2026-53914 affects Kotlin build-cache metadata, not the application runtime kotlin-stdlib artifact. Gradle build caching is disabled until stable Kotlin 2.4.20 or newer is available.</notes>
     <packageUrl>pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@2.4.10</packageUrl>
     <cve>CVE-2026-53914</cve>

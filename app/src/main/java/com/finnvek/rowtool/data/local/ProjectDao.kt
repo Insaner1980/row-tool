@@ -21,6 +21,9 @@ interface ProjectDao {
     @Query("SELECT * FROM projects ORDER BY isArchived ASC, updatedAt DESC, id ASC")
     suspend fun getAll(): List<ProjectEntity>
 
+    @Query("SELECT COUNT(*) FROM projects")
+    suspend fun count(): Int
+
     @Query("SELECT * FROM projects WHERE isArchived = 0 ORDER BY updatedAt DESC, id ASC LIMIT 1")
     suspend fun getMostRecentlyUpdatedActive(): ProjectEntity?
 

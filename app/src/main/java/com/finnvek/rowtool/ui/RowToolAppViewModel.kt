@@ -1,6 +1,5 @@
 package com.finnvek.rowtool.ui
 
-import android.database.SQLException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -40,8 +39,6 @@ class RowToolAppViewModel(
                 try {
                     preferencesRepository.resolveLastActiveProjectId()
                 } catch (_: IOException) {
-                    null
-                } catch (_: SQLException) {
                     null
                 }
             _startupState.value =

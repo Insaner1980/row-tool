@@ -13,22 +13,31 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.finnvek.rowtool.R
-import com.finnvek.rowtool.domain.model.CounterProject
 
 @Composable
 fun ProjectsRoute(
     viewModel: ProjectsViewModel,
     onOpenProject: (String) -> Unit,
     onSettings: () -> Unit,
-    onMessage: suspend (Int) -> Unit,
+    onMessage: (Int) -> Unit,
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val currentOnOpenProject by rememberUpdatedState(onOpenProject)
     val currentOnMessage by rememberUpdatedState(onMessage)
     var archivedExpanded by rememberSaveable { mutableStateOf(false) }
     var createProject by rememberSaveable { mutableStateOf(false) }
-    var editingProject by rememberSaveable { mutableStateOf<CounterProject?>(null) }
-    var deleteProject by rememberSaveable { mutableStateOf<CounterProject?>(null) }
+    var editingProjectId by rememberSaveable { mutableStateOf<String?>(null) }
+    var deleteProjectId by rememberSaveable { mutableStateOf<String?>(null) }
+    val editingProject =
+        editingProjectId?.let { id ->
+            state.activeProjects.firstOrNull { it.id == id }
+                ?: state.archivedProjects.firstOrNull { it.id == id }
+        }
+    val deleteProject =
+        deleteProjectId?.let { id ->
+            state.activeProjects.firstOrNull { it.id == id }
+                ?: state.archivedProjects.firstOrNull { it.id == id }
+        }
 
     LaunchedEffect(viewModel) {
         viewModel.effects.collect { effect ->
@@ -54,10 +63,10 @@ fun ProjectsRoute(
                 project =
                     ProjectCardActions(
                         onOpen = { onOpenProject(it.id) },
-                        onEdit = { editingProject = it },
+                        onEdit = { editingProjectId = it.id },
                         onArchive = { viewModel.setArchived(it, true) },
                         onRestore = { viewModel.setArchived(it, false) },
-                        onDelete = { deleteProject = it },
+                        onDelete = { deleteProjectId = it.id },
                     ),
             ),
     )
@@ -76,9 +85,9 @@ fun ProjectsRoute(
     editingProject?.let { project ->
         ProjectEditorDialog(
             project = project,
-            onDismiss = { editingProject = null },
+            onDismiss = { editingProjectId = null },
             onSave = { values ->
-                editingProject = null
+                editingProjectId = null
                 viewModel.update(project.id, values)
             },
         )
@@ -86,13 +95,13 @@ fun ProjectsRoute(
 
     deleteProject?.let { project ->
         AlertDialog(
-            onDismissRequest = { deleteProject = null },
+            onDismissRequest = { deleteProjectId = null },
             title = { Text(stringResource(R.string.counter_delete_title)) },
             text = { Text(stringResource(R.string.counter_delete_message, project.name)) },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        deleteProject = null
+                        deleteProjectId = null
                         viewModel.delete(project)
                     },
                 ) {
@@ -100,7 +109,7 @@ fun ProjectsRoute(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { deleteProject = null }) {
+                TextButton(onClick = { deleteProjectId = null }) {
                     Text(stringResource(R.string.action_cancel))
                 }
             },

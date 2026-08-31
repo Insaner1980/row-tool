@@ -55,7 +55,7 @@ fun CounterRoute(
     viewModel: CounterViewModel,
     onProjects: () -> Unit,
     onSettings: () -> Unit,
-    onMessage: suspend (Int) -> Unit,
+    onMessage: (Int) -> Unit,
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val preferences by viewModel.preferences.collectAsStateWithLifecycle()
@@ -64,32 +64,26 @@ fun CounterRoute(
     val currentOnMessage by rememberUpdatedState(onMessage)
     val currentOnProjects by rememberUpdatedState(onProjects)
     var activeDialog by rememberSaveable { mutableStateOf<CounterDialog?>(null) }
+    val shouldKeepScreenOn = preferences.keepScreenAwake && state.project?.isArchived == false
 
     BackHandler(onBack = onProjects)
 
-    DisposableEffect(view, preferences.keepScreenAwake, state.project?.id) {
-        view.keepScreenOn = preferences.keepScreenAwake && state.project != null
+    DisposableEffect(view, shouldKeepScreenOn) {
+        view.keepScreenOn = shouldKeepScreenOn
         onDispose { view.keepScreenOn = false }
     }
 
     LaunchedEffect(viewModel) {
         viewModel.effects.collect { effect ->
-            when (effect) {
-                is CounterEffect.ShowMessage -> {
-                    currentOnMessage(effect.message)
-                }
-
-                is CounterEffect.Haptic -> {
-                    if (currentHapticsEnabled) {
-                        view.performHapticFeedback(hapticFeedbackConstant(effect.strong))
-                    }
-                }
-
-                is CounterEffect.ReturnToProjects -> {
-                    effect.message?.let { currentOnMessage(it) }
-                    currentOnProjects()
-                }
-            }
+            handleCounterEffect(
+                effect = effect,
+                hapticsEnabled = currentHapticsEnabled,
+                onMessage = currentOnMessage,
+                onProjects = currentOnProjects,
+                onHaptic = { strong ->
+                    view.performHapticFeedback(hapticFeedbackConstant(strong))
+                },
+            )
         }
     }
 
@@ -129,6 +123,29 @@ fun CounterRoute(
                 ),
             onDismiss = { activeDialog = null },
         )
+    }
+}
+
+internal fun handleCounterEffect(
+    effect: CounterEffect,
+    hapticsEnabled: Boolean,
+    onMessage: (Int) -> Unit,
+    onProjects: () -> Unit,
+    onHaptic: (Boolean) -> Unit,
+) {
+    when (effect) {
+        is CounterEffect.ShowMessage -> {
+            onMessage(effect.message)
+        }
+
+        is CounterEffect.Haptic -> {
+            if (hapticsEnabled) onHaptic(effect.strong)
+        }
+
+        is CounterEffect.ReturnToProjects -> {
+            onProjects()
+            effect.message?.let(onMessage)
+        }
     }
 }
 

@@ -44,4 +44,19 @@ class CounterPresentationTest {
         assertEquals(HapticFeedbackConstants.LONG_PRESS, hapticFeedbackConstant(strong = true, sdkInt = 29))
         assertEquals(HapticFeedbackConstants.CONFIRM, hapticFeedbackConstant(strong = true, sdkInt = 30))
     }
+
+    @Test
+    fun returnToProjectsNavigatesBeforePostingMessage() {
+        val events = mutableListOf<String>()
+
+        handleCounterEffect(
+            effect = CounterEffect.ReturnToProjects(R.string.counter_project_missing),
+            hapticsEnabled = true,
+            onMessage = { events += "message" },
+            onProjects = { events += "projects" },
+            onHaptic = { events += "haptic" },
+        )
+
+        assertEquals(listOf("projects", "message"), events)
+    }
 }

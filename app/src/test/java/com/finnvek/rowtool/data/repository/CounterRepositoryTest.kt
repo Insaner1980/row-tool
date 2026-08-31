@@ -2,6 +2,7 @@ package com.finnvek.rowtool.data.repository
 
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
+import com.finnvek.rowtool.data.local.ProjectEntity
 import com.finnvek.rowtool.data.local.RowToolDatabase
 import com.finnvek.rowtool.domain.model.CounterConstants
 import com.finnvek.rowtool.domain.model.CounterMutation
@@ -225,6 +226,32 @@ class CounterRepositoryTest {
                 }.awaitAll()
 
             assertEquals(200L, repository.getProject(project.id)?.count)
+        }
+
+    @Test
+    fun creatingProjectBeyondBackupLimitIsRejected() =
+        runTest {
+            database.projectDao().insertAll(
+                (0 until CounterConstants.MAX_PROJECTS_IN_BACKUP).map { index ->
+                    ProjectEntity(
+                        id = "project-$index",
+                        name = "Project $index",
+                        counterUnit = CounterUnit.ROWS.name,
+                        count = 0,
+                        startValue = 0,
+                        targetCount = null,
+                        repeatLength = null,
+                        isArchived = false,
+                        createdAt = index.toLong(),
+                        updatedAt = index.toLong(),
+                    )
+                },
+            )
+
+            val failure = runCatching { createProject() }.exceptionOrNull()
+
+            assertTrue(failure is ProjectLimitReachedException)
+            assertEquals(CounterConstants.MAX_PROJECTS_IN_BACKUP, database.projectDao().getAll().size)
         }
 
     @Test

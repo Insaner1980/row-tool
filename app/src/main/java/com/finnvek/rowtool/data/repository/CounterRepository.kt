@@ -54,31 +54,36 @@ class CounterRepository(
         repeatLength: Int?,
     ): CounterProject =
         mutationMutex.withLock {
-            val validated =
-                requireValid(
-                    name = name,
-                    counterUnit = counterUnit,
-                    count = startValue.toLong(),
-                    startValue = startValue,
-                    targetCount = targetCount,
-                    repeatLength = repeatLength,
-                )
-            val timestamp = clock()
-            val entity =
-                ProjectEntity(
-                    id = idGenerator(),
-                    name = validated.name,
-                    counterUnit = validated.counterUnit.name,
-                    count = validated.count,
-                    startValue = validated.startValue,
-                    targetCount = validated.targetCount,
-                    repeatLength = validated.repeatLength,
-                    isArchived = false,
-                    createdAt = timestamp,
-                    updatedAt = timestamp,
-                )
-            projectDao.insert(entity)
-            entity.toDomain()
+            database.withTransaction {
+                if (projectDao.count() >= CounterConstants.MAX_PROJECTS_IN_BACKUP) {
+                    throw ProjectLimitReachedException()
+                }
+                val validated =
+                    requireValid(
+                        name = name,
+                        counterUnit = counterUnit,
+                        count = startValue.toLong(),
+                        startValue = startValue,
+                        targetCount = targetCount,
+                        repeatLength = repeatLength,
+                    )
+                val timestamp = clock()
+                val entity =
+                    ProjectEntity(
+                        id = idGenerator(),
+                        name = validated.name,
+                        counterUnit = validated.counterUnit.name,
+                        count = validated.count,
+                        startValue = validated.startValue,
+                        targetCount = validated.targetCount,
+                        repeatLength = validated.repeatLength,
+                        isArchived = false,
+                        createdAt = timestamp,
+                        updatedAt = timestamp,
+                    )
+                projectDao.insert(entity)
+                entity.toDomain()
+            }
         }
 
     suspend fun updateProject(
@@ -265,3 +270,5 @@ class CounterRepository(
         ) : CalculatedMutation
     }
 }
+
+internal class ProjectLimitReachedException : IllegalStateException("Project limit reached")

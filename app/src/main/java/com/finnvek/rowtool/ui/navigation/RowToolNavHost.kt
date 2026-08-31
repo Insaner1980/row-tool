@@ -21,7 +21,7 @@ import com.finnvek.rowtool.ui.screens.settings.SettingsViewModel
 fun RowToolNavHost(
     container: AppContainer,
     startProjectId: String?,
-    onMessage: suspend (Int) -> Unit,
+    onMessage: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val navController = rememberNavController()

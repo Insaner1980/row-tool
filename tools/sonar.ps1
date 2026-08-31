@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 
 [CmdletBinding()]
 param(
@@ -15,6 +15,7 @@ $ProjectRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path
 $PropertiesPath = Join-Path $ProjectRoot "sonar-project.properties"
 $ReportsDirectory = Join-Path $ProjectRoot "reports"
 $ReportPath = Join-Path $ReportsDirectory "sonar.txt"
+Import-Module (Join-Path $PSScriptRoot "SonarToken.psm1") -Force -ErrorAction Stop
 
 if (-not (Test-Path -LiteralPath $PropertiesPath -PathType Leaf)) {
     throw "sonar-project.properties ei löytynyt: $PropertiesPath"
@@ -69,21 +70,14 @@ if ([string]::IsNullOrWhiteSpace($env:SONAR_TOKEN) -and -not [string]::IsNullOrW
     $env:SONAR_TOKEN = $UserSonarToken
 }
 
-$TokenConfigured = -not [string]::IsNullOrWhiteSpace($env:SONAR_TOKEN)
-if (-not $TokenConfigured) {
-    foreach ($Path in @(
+$TokenConfigured =
+    Test-SonarTokenConfigured `
+        -ProcessToken $env:SONAR_TOKEN `
+        -UserToken $UserSonarToken `
+        -PropertyPaths @(
         (Join-Path $env:USERPROFILE ".gradle\gradle.properties"),
         (Join-Path $ProjectRoot "gradle.properties")
-    )) {
-        if (
-            (Test-Path -LiteralPath $Path -PathType Leaf) -and
-            (Select-String -LiteralPath $Path -Pattern "^\s*systemProp\.sonar\.token\s*=" -Quiet)
-        ) {
-            $TokenConfigured = $true
-            break
-        }
-    }
-}
+        )
 
 if (-not $TokenConfigured) {
     Add-Content -LiteralPath $ReportPath -Encoding utf8 -Value "ERROR: SONAR_TOKEN_MISSING"
