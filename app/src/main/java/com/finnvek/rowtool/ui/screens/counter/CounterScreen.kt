@@ -43,6 +43,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
@@ -173,7 +174,7 @@ fun CounterScreenContent(
                     Box {
                         IconButton(
                             onClick = { menuExpanded = true },
-                            enabled = project != null,
+                            enabled = project?.isArchived == false,
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.ic_more),
@@ -181,7 +182,7 @@ fun CounterScreenContent(
                             )
                         }
                         DropdownMenu(
-                            expanded = menuExpanded,
+                            expanded = menuExpanded && project?.isArchived == false,
                             onDismissRequest = { menuExpanded = false },
                         ) {
                             CounterMenuItem(R.string.action_edit, R.drawable.ic_edit) {
@@ -318,6 +319,7 @@ private fun CounterWorkspace(
         )
         ResponsiveCount(
             formattedCount = formattedCount,
+            enabled = !project.isArchived,
             onSetCount = actions.onSetCount,
             modifier =
                 Modifier
@@ -369,6 +371,7 @@ private fun CounterWorkspace(
 @Composable
 private fun ResponsiveCount(
     formattedCount: String,
+    enabled: Boolean,
     onSetCount: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -393,14 +396,18 @@ private fun ResponsiveCount(
             maxLines = 1,
             modifier =
                 Modifier
-                    .clickable(role = Role.Button, onClick = onSetCount)
+                    .clickable(enabled = enabled, role = Role.Button, onClick = onSetCount)
                     .semantics {
                         role = Role.Button
                         stateDescription = editDescription
                         heading()
-                        onClick(label = editAction) {
-                            onSetCount()
-                            true
+                        if (enabled) {
+                            onClick(label = editAction) {
+                                onSetCount()
+                                true
+                            }
+                        } else {
+                            disabled()
                         }
                     }.padding(horizontal = RowToolDimens.Space8, vertical = RowToolDimens.Space4),
         )

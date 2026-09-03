@@ -54,6 +54,7 @@ fun ProjectsRoute(
                 activeProjects = state.activeProjects,
                 archivedProjects = state.archivedProjects,
                 archivedExpanded = archivedExpanded,
+                isLoading = state.isLoading,
             ),
         actions =
             ProjectsScreenActions(

@@ -87,6 +87,29 @@ class CounterScreenContentTest {
         composeRule.onNodeWithText("Target reached").assertIsDisplayed()
     }
 
+    @Test
+    fun archivedProjectDisablesCountEditingAndProjectMenu() {
+        var countEdits = 0
+
+        composeRule.setContent {
+            RowToolTheme {
+                CounterScreenContent(
+                    state =
+                        CounterUiState(
+                            project = project(count = 5, target = null, repeat = null).copy(isArchived = true),
+                            canUndo = true,
+                        ),
+                    actions = counterActions(onSetCount = { countEdits += 1 }),
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("5").assertIsNotEnabled().performClick()
+        composeRule.onNodeWithContentDescription("More options").assertIsNotEnabled()
+
+        assertEquals(0, countEdits)
+    }
+
     private fun project(
         count: Long,
         target: Long?,

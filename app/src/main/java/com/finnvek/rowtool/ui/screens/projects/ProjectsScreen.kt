@@ -21,6 +21,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -34,6 +35,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -56,6 +58,7 @@ data class ProjectsScreenState(
     val activeProjects: List<CounterProject>,
     val archivedProjects: List<CounterProject>,
     val archivedExpanded: Boolean,
+    val isLoading: Boolean = false,
 )
 
 data class ProjectCardActions(
@@ -138,7 +141,9 @@ private fun ProjectsBody(
                 .padding(contentPadding),
         contentAlignment = Alignment.TopCenter,
     ) {
-        if (state.activeProjects.isEmpty() && state.archivedProjects.isEmpty()) {
+        if (state.isLoading) {
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+        } else if (state.activeProjects.isEmpty() && state.archivedProjects.isEmpty()) {
             EmptyProjects(
                 onNewProject = actions.onNewProject,
                 modifier =
@@ -223,7 +228,9 @@ private fun LazyListScope.archivedProjectItems(
         AnimatedVisibility(visible = expanded) {
             Column(verticalArrangement = Arrangement.spacedBy(RowToolDimens.Space12)) {
                 projects.forEach { project ->
-                    ProjectCard(project = project, actions = actions)
+                    key(project.id) {
+                        ProjectCard(project = project, actions = actions)
+                    }
                 }
             }
         }

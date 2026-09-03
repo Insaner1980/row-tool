@@ -46,11 +46,7 @@ fun CountEditorDialog(
         text = {
             OutlinedTextField(
                 value = value,
-                onValueChange = { newValue ->
-                    if (newValue.text.all(Char::isDigit) && newValue.text.length <= 6) {
-                        value = newValue
-                    }
-                },
+                onValueChange = { value = it },
                 label = { Text(stringResource(R.string.counter_set_label)) },
                 singleLine = true,
                 isError = !valid,

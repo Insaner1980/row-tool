@@ -133,9 +133,7 @@ fun ProjectEditorDialog(
                     checked = targetEnabled,
                     onCheckedChange = { targetEnabled = it },
                     value = targetText,
-                    onValueChange = { newValue ->
-                        if (newValue.all(Char::isDigit)) targetText = newValue.take(6)
-                    },
+                    onValueChange = { targetText = it },
                     isValid = validation.targetValid,
                     config =
                         ToggleNumberFieldConfig(
@@ -149,9 +147,7 @@ fun ProjectEditorDialog(
                     checked = repeatEnabled,
                     onCheckedChange = { repeatEnabled = it },
                     value = repeatText,
-                    onValueChange = { newValue ->
-                        if (newValue.all(Char::isDigit)) repeatText = newValue.take(3)
-                    },
+                    onValueChange = { repeatText = it },
                     isValid = validation.repeatValid,
                     config =
                         ToggleNumberFieldConfig(

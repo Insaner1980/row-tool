@@ -67,15 +67,7 @@ class BackupRepository(
                 )
             }
 
-            val lastActiveProjectId =
-                backup.projects
-                    .asSequence()
-                    .filterNot { it.isArchived }
-                    .maxWithOrNull(
-                        compareBy<CounterProject> { it.updatedAt }
-                            .thenBy { it.createdAt }
-                            .thenBy { it.id },
-                    )?.id
+            val lastActiveProjectId = database.projectDao().getMostRecentlyUpdatedActive()?.id
             try {
                 preferencesRepository.setLastActiveProjectId(lastActiveProjectId)
             } catch (_: IOException) {

@@ -9,6 +9,7 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.InputStream
+import java.nio.charset.CharacterCodingException
 
 object BackupCodec {
     private const val SUPPORTED_SCHEMA_VERSION = 1
@@ -58,8 +59,10 @@ object BackupCodec {
 
     private fun parseFile(bytes: ByteArray): BackupFile? =
         try {
-            json.decodeFromString<BackupFile>(bytes.decodeToString())
+            json.decodeFromString<BackupFile>(bytes.decodeToString(throwOnInvalidSequence = true))
         } catch (_: SerializationException) {
+            null
+        } catch (_: CharacterCodingException) {
             null
         } catch (_: IllegalArgumentException) {
             null

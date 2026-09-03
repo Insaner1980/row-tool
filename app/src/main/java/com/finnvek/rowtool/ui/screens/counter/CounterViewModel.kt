@@ -48,6 +48,7 @@ class CounterViewModel(
     private val effectChannel = Channel<CounterEffect>(Channel.BUFFERED)
     val effects = effectChannel.receiveAsFlow()
     private val routeResolved = AtomicBoolean()
+    private val returnToProjectsSent = AtomicBoolean()
 
     val preferences: StateFlow<AppPreferences> =
         preferencesRepository.preferences.stateIn(
@@ -63,15 +64,11 @@ class CounterViewModel(
                 if (routeResolved.compareAndSet(false, true)) {
                     when {
                         project == null -> {
-                            effectChannel.send(
-                                CounterEffect.ReturnToProjects(R.string.counter_project_missing),
-                            )
+                            returnToProjects(R.string.counter_project_missing)
                         }
 
                         project.isArchived -> {
-                            effectChannel.send(
-                                CounterEffect.ReturnToProjects(R.string.error_archived_project),
-                            )
+                            returnToProjects(R.string.error_archived_project)
                         }
 
                         else -> {
@@ -83,7 +80,7 @@ class CounterViewModel(
                         }
                     }
                 } else if (project == null) {
-                    effectChannel.send(CounterEffect.ReturnToProjects())
+                    returnToProjects()
                 }
             }
 
@@ -132,7 +129,7 @@ class CounterViewModel(
             try {
                 if (counterRepository.setArchived(projectId, true)) {
                     preferencesRepository.clearLastActiveProjectIdIfMatching(projectId)
-                    effectChannel.send(CounterEffect.ReturnToProjects())
+                    returnToProjects()
                 }
             } catch (_: SQLException) {
                 effectChannel.send(CounterEffect.ShowMessage(R.string.error_database_write))
@@ -145,7 +142,7 @@ class CounterViewModel(
             try {
                 counterRepository.deleteProject(projectId)
                 preferencesRepository.clearLastActiveProjectIdIfMatching(projectId)
-                effectChannel.send(CounterEffect.ReturnToProjects())
+                returnToProjects()
             } catch (_: SQLException) {
                 effectChannel.send(CounterEffect.ShowMessage(R.string.error_database_write))
             }
@@ -195,15 +192,11 @@ class CounterViewModel(
             }
 
             CounterMutationResult.ProjectMissing -> {
-                effectChannel.send(
-                    CounterEffect.ReturnToProjects(R.string.counter_project_missing),
-                )
+                returnToProjects(R.string.counter_project_missing)
             }
 
             CounterMutationResult.ProjectArchived -> {
-                effectChannel.send(
-                    CounterEffect.ReturnToProjects(R.string.error_archived_project),
-                )
+                returnToProjects(R.string.error_archived_project)
             }
 
             is CounterMutationResult.Invalid -> {
@@ -211,6 +204,14 @@ class CounterViewModel(
                     CounterEffect.ShowMessage(R.string.counter_set_error),
                 )
             }
+        }
+    }
+
+    private suspend fun returnToProjects(
+        @StringRes message: Int? = null,
+    ) {
+        if (returnToProjectsSent.compareAndSet(false, true)) {
+            effectChannel.send(CounterEffect.ReturnToProjects(message))
         }
     }
 

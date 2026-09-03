@@ -278,6 +278,30 @@ class CounterRepositoryTest {
             assertEquals(1, database.counterHistoryDao().countForProject(project.id))
         }
 
+    @Test
+    fun updatingProjectWithSameValuesPreservesUpdatedAtAndHistory() =
+        runTest {
+            val project = createProject()
+            repository.mutate(project.id, CounterMutation.Increment)
+            val before = requireNotNull(repository.getProject(project.id))
+            val clockBeforeUpdate = now.get()
+
+            val updated =
+                repository.updateProject(
+                    id = project.id,
+                    name = project.name,
+                    counterUnit = project.counterUnit,
+                    startValue = project.startValue,
+                    targetCount = project.targetCount,
+                    repeatLength = project.repeatLength,
+                )
+
+            assertEquals(before, updated)
+            assertEquals(before.updatedAt, updated?.updatedAt)
+            assertEquals(clockBeforeUpdate, now.get())
+            assertEquals(1, database.counterHistoryDao().countForProject(project.id))
+        }
+
     private suspend fun createProject(startValue: Int = 0) =
         repository.createProject(
             name = "Project",

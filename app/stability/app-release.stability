@@ -40,7 +40,7 @@ internal fun com.finnvek.rowtool.ui.RowToolDropdownMenuItem(label: kotlin.String
     - onClick: STABLE (function type)
 
 @Composable
-public fun com.finnvek.rowtool.ui.navigation.RowToolNavHost(container: com.finnvek.rowtool.AppContainer, startProjectId: kotlin.String?, onMessage: kotlin.coroutines.SuspendFunction1<kotlin.Int, kotlin.Unit>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
+public fun com.finnvek.rowtool.ui.navigation.RowToolNavHost(container: com.finnvek.rowtool.AppContainer, startProjectId: kotlin.String?, onMessage: kotlin.Function1<kotlin.Int, kotlin.Unit>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
   skippable: false
   restartable: true
   params:
@@ -114,7 +114,7 @@ private fun com.finnvek.rowtool.ui.screens.counter.CounterMenuItem(labelRes: kot
     - onClick: STABLE (function type)
 
 @Composable
-public fun com.finnvek.rowtool.ui.screens.counter.CounterRoute(viewModel: com.finnvek.rowtool.ui.screens.counter.CounterViewModel, onProjects: kotlin.Function0<kotlin.Unit>, onSettings: kotlin.Function0<kotlin.Unit>, onMessage: kotlin.coroutines.SuspendFunction1<kotlin.Int, kotlin.Unit>): kotlin.Unit
+public fun com.finnvek.rowtool.ui.screens.counter.CounterRoute(viewModel: com.finnvek.rowtool.ui.screens.counter.CounterViewModel, onProjects: kotlin.Function0<kotlin.Unit>, onSettings: kotlin.Function0<kotlin.Unit>, onMessage: kotlin.Function1<kotlin.Int, kotlin.Unit>): kotlin.Unit
   skippable: false
   restartable: true
   params:
@@ -143,11 +143,12 @@ private fun com.finnvek.rowtool.ui.screens.counter.CounterWorkspace(project: com
     - modifier: STABLE (marked @Stable or @Immutable)
 
 @Composable
-private fun com.finnvek.rowtool.ui.screens.counter.ResponsiveCount(formattedCount: kotlin.String, onSetCount: kotlin.Function0<kotlin.Unit>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
+private fun com.finnvek.rowtool.ui.screens.counter.ResponsiveCount(formattedCount: kotlin.String, enabled: kotlin.Boolean, onSetCount: kotlin.Function0<kotlin.Unit>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
   skippable: true
   restartable: true
   params:
     - formattedCount: STABLE (String is immutable)
+    - enabled: STABLE (primitive type)
     - onSetCount: STABLE (function type)
     - modifier: STABLE (marked @Stable or @Immutable)
 
@@ -250,7 +251,7 @@ private fun com.finnvek.rowtool.ui.screens.projects.ProjectsList(state: com.finn
     - actions: STABLE (class with no mutable properties)
 
 @Composable
-public fun com.finnvek.rowtool.ui.screens.projects.ProjectsRoute(viewModel: com.finnvek.rowtool.ui.screens.projects.ProjectsViewModel, onOpenProject: kotlin.Function1<kotlin.String, kotlin.Unit>, onSettings: kotlin.Function0<kotlin.Unit>, onMessage: kotlin.coroutines.SuspendFunction1<kotlin.Int, kotlin.Unit>): kotlin.Unit
+public fun com.finnvek.rowtool.ui.screens.projects.ProjectsRoute(viewModel: com.finnvek.rowtool.ui.screens.projects.ProjectsViewModel, onOpenProject: kotlin.Function1<kotlin.String, kotlin.Unit>, onSettings: kotlin.Function0<kotlin.Unit>, onMessage: kotlin.Function1<kotlin.Int, kotlin.Unit>): kotlin.Unit
   skippable: false
   restartable: true
   params:
@@ -303,7 +304,7 @@ private fun com.finnvek.rowtool.ui.screens.settings.SectionTitle(text: kotlin.St
     - text: STABLE (String is immutable)
 
 @Composable
-public fun com.finnvek.rowtool.ui.screens.settings.SettingsRoute(viewModel: com.finnvek.rowtool.ui.screens.settings.SettingsViewModel, onBack: kotlin.Function0<kotlin.Unit>, onMessage: kotlin.coroutines.SuspendFunction1<kotlin.Int, kotlin.Unit>, onImportComplete: kotlin.Function1<kotlin.String?, kotlin.Unit>): kotlin.Unit
+public fun com.finnvek.rowtool.ui.screens.settings.SettingsRoute(viewModel: com.finnvek.rowtool.ui.screens.settings.SettingsViewModel, onBack: kotlin.Function0<kotlin.Unit>, onMessage: kotlin.Function1<kotlin.Int, kotlin.Unit>, onImportComplete: kotlin.Function1<kotlin.String?, kotlin.Unit>): kotlin.Unit
   skippable: false
   restartable: true
   params:

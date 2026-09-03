@@ -106,15 +106,18 @@ class CounterRepository(
                         targetCount = targetCount,
                         repeatLength = repeatLength,
                     )
-                val updated =
+                val candidate =
                     current.copy(
                         name = validated.name,
                         counterUnit = validated.counterUnit.name,
                         startValue = validated.startValue,
                         targetCount = validated.targetCount,
                         repeatLength = validated.repeatLength,
-                        updatedAt = clock(),
                     )
+                if (candidate == current) {
+                    return@withTransaction current.toDomain()
+                }
+                val updated = candidate.copy(updatedAt = clock())
                 projectDao.update(updated)
                 updated.toDomain()
             }

@@ -31,6 +31,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.FileNotFoundException
 import java.io.IOException
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 
 data class ImportPreview(
     val backup: ValidatedBackup,
@@ -65,6 +67,8 @@ class SettingsViewModel(
 
     private val effectChannel = Channel<SettingsEffect>(Channel.BUFFERED)
     val effects = effectChannel.receiveAsFlow()
+    private val importInProgress = AtomicBoolean()
+    private val importRequestSequence = AtomicLong()
 
     fun setThemeMode(mode: ThemeMode) =
         updatePreference {
@@ -113,6 +117,8 @@ class SettingsViewModel(
         contentResolver: ContentResolver,
         uri: Uri,
     ) {
+        val requestId = importRequestSequence.incrementAndGet()
+        _importPreview.value = null
         viewModelScope.launch {
             val result =
                 try {
@@ -122,16 +128,17 @@ class SettingsViewModel(
                         } ?: throw FileNotFoundException()
                     }
                 } catch (_: FileNotFoundException) {
-                    effectChannel.send(SettingsEffect.ShowMessage(R.string.backup_import_failed_open))
+                    sendImportOpenFailureIfCurrent(requestId)
                     return@launch
                 } catch (_: IOException) {
-                    effectChannel.send(SettingsEffect.ShowMessage(R.string.backup_import_failed_open))
+                    sendImportOpenFailureIfCurrent(requestId)
                     return@launch
                 } catch (_: SecurityException) {
-                    effectChannel.send(SettingsEffect.ShowMessage(R.string.backup_import_failed_open))
+                    sendImportOpenFailureIfCurrent(requestId)
                     return@launch
                 }
 
+            if (requestId != importRequestSequence.get()) return@launch
             when (result) {
                 is BackupDecodeResult.Valid -> {
                     _importPreview.value =
@@ -155,21 +162,32 @@ class SettingsViewModel(
         _importPreview.value = null
     }
 
+    private suspend fun sendImportOpenFailureIfCurrent(requestId: Long) {
+        if (requestId == importRequestSequence.get()) {
+            effectChannel.send(SettingsEffect.ShowMessage(R.string.backup_import_failed_open))
+        }
+    }
+
     fun confirmImport() {
         val preview = _importPreview.value ?: return
+        if (!importInProgress.compareAndSet(false, true)) return
         viewModelScope.launch {
-            when (val result = backupRepository.replaceWith(preview.backup)) {
-                is BackupImportResult.Success -> {
-                    _importPreview.value = null
-                    effectChannel.send(SettingsEffect.ShowMessage(R.string.backup_import_success))
-                    effectChannel.send(SettingsEffect.ImportComplete(result.lastActiveProjectId))
-                }
+            try {
+                when (val result = backupRepository.replaceWith(preview.backup)) {
+                    is BackupImportResult.Success -> {
+                        _importPreview.value = null
+                        effectChannel.send(SettingsEffect.ShowMessage(R.string.backup_import_success))
+                        effectChannel.send(SettingsEffect.ImportComplete(result.lastActiveProjectId))
+                    }
 
-                is BackupImportResult.Failure -> {
-                    effectChannel.send(
-                        SettingsEffect.ShowMessage(R.string.backup_import_failed_write),
-                    )
+                    is BackupImportResult.Failure -> {
+                        effectChannel.send(
+                            SettingsEffect.ShowMessage(R.string.backup_import_failed_write),
+                        )
+                    }
                 }
+            } finally {
+                importInProgress.set(false)
             }
         }
     }

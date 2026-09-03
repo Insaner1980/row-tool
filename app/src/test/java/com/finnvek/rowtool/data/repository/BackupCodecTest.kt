@@ -163,6 +163,17 @@ class BackupCodecTest {
     }
 
     @Test
+    fun malformedUtf8IsRejectedInsteadOfReplacingInvalidBytes() {
+        val json = backupJson(validProjectJson(id = "p1"))
+        val bytes = json.encodeToByteArray()
+        val projectNameStart = json.indexOf("\"Project\"") + 1
+        bytes[projectNameStart] = 0xc3.toByte()
+        bytes[projectNameStart + 1] = 0x28
+
+        assertInvalid(BackupValidationError.MALFORMED_JSON, BackupCodec.decode(bytes))
+    }
+
+    @Test
     fun oversizedInputIsRejectedBeforeParsing() {
         val bytes = ByteArray(CounterConstants.MAX_BACKUP_BYTES + 1) { 'x'.code.toByte() }
 

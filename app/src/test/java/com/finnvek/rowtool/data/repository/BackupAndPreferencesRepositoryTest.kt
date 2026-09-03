@@ -226,6 +226,24 @@ class BackupAndPreferencesRepositoryTest {
         }
 
     @Test
+    fun importedLastActiveSelectionUsesTheSameTieBreakAsStartup() =
+        runTest {
+            val firstByDaoOrder = importedProject(id = "a", name = "First", updatedAt = 300)
+            val secondByDaoOrder = importedProject(id = "z", name = "Second", updatedAt = 300)
+
+            val result =
+                backupRepository.replaceWith(
+                    ValidatedBackup(
+                        exportedAt = 400,
+                        projects = listOf(secondByDaoOrder, firstByDaoOrder),
+                    ),
+                )
+
+            assertEquals(BackupImportResult.Success(2, firstByDaoOrder.id), result)
+            assertEquals(firstByDaoOrder.id, preferencesRepository.resolveLastActiveProjectId())
+        }
+
+    @Test
     fun databaseFailureRollsBackImportReplacement() =
         runTest {
             val existing = createProject("Existing")

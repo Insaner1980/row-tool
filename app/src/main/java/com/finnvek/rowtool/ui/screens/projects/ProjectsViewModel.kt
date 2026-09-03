@@ -24,6 +24,7 @@ import java.io.IOException
 data class ProjectsUiState(
     val activeProjects: List<CounterProject> = emptyList(),
     val archivedProjects: List<CounterProject> = emptyList(),
+    val isLoading: Boolean = true,
 )
 
 sealed interface ProjectsEffect {
@@ -46,6 +47,7 @@ class ProjectsViewModel(
                 ProjectsUiState(
                     activeProjects = projects.filterNot(CounterProject::isArchived),
                     archivedProjects = projects.filter(CounterProject::isArchived),
+                    isLoading = false,
                 )
             }.stateIn(
                 scope = viewModelScope,
