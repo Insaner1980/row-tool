@@ -145,7 +145,7 @@ Tässä osassa ei tehty lähdekoodi-, asetus-, testi- tai PROJECT.md-muutoksia, 
 - adb devices -l ei löytänyt laitetta tai emulaattoria. Android-testit vain käännettiin; niitä ei suoritettu.
 - Resurssien kieliavain-, placeholder-, plural- ja kuvahajautukset tarkistettiin erikseen.
 - Release-merged-manifest, varmistussäännöt ja julkaisuartefaktien resurssit tarkistettiin muodostetuista tiedostoista.
-- git diff --check ja git diff --cached --check ajettiin raportin lisäämisen jälkeen. Molemmat palauttivat exit-koodin 0; Git ilmoitti vain ennestään muokattujen tiedostojen LF–CRLF-normalisointivaroituksia.
+- git diff --check ja git diff --cached --check ajettiin raportin lisäämisen jälkeen. Molemmat palauttivat exit-koodin 0; Git ilmoitti vain ennestään muokattujen tiedostojen LF–CRLF-normalisointivaroituksia. Komennot kattoivat tracked-diffit, eivät tuolloin untracked-tilassa olleita raporttitiedostoja.
 - Mikään suoritettu validointi ei epäonnistunut. Lintin viisi versiovaroitusta olivat informatiivisia eivätkä tämän tehtävän aiheuttamia virheitä.
 
 ## Aidosti avoimeksi jääneet asiat

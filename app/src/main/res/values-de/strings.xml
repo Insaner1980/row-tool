@@ -112,6 +112,7 @@
     <string name="backup_import_success">Projekte importiert.</string>
 
     <string name="error_database_write">Die Änderung konnte nicht gespeichert werden. Versuche es erneut.</string>
+    <string name="error_project_limit">Das Projektlimit wurde erreicht.</string>
     <string name="error_archived_project">Stelle dieses Projekt wieder her, bevor du seinen Zählerstand änderst.</string>
 
     <plurals name="row_count">

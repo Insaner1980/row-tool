@@ -119,6 +119,7 @@ After this prompt's inspection, any justified minimal correction, targeted valid
 
 If execution limits prevent continuing through the document, stop only at a clear numbered boundary. State the last prompt completed in full, the prompt that remains incomplete or is next, every file changed so far, and every validation command actually run with its result. Do not skip prompts, compress unprocessed prompts into a claim of completion, or state that the whole audit is complete.
 ```
+
 ## Prompt 182: Import byte-count boundary and early termination
 
 ```text

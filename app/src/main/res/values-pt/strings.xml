@@ -114,6 +114,7 @@
     <string name="backup_import_success">Projetos importados.</string>
 
     <string name="error_database_write">Não foi possível guardar a alteração. Tenta novamente.</string>
+    <string name="error_project_limit">O limite de projetos foi atingido.</string>
     <string name="error_archived_project">Restaura este projeto antes de alterares a contagem.</string>
 
     <plurals name="row_count">

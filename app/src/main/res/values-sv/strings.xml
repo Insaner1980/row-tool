@@ -112,6 +112,7 @@
     <string name="backup_import_success">Projekten har importerats.</string>
 
     <string name="error_database_write">Det gick inte att spara ändringen. Försök igen.</string>
+    <string name="error_project_limit">Projektgränsen har nåtts.</string>
     <string name="error_archived_project">Återställ projektet innan du ändrar antalet.</string>
 
     <plurals name="row_count">

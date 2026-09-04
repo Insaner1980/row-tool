@@ -24,4 +24,4 @@ Uninstalling RowTool removes its local application data through the Android plat
 
 ## Contact
 
-For privacy questions, use the Finnvek contact information shown on RowTool's Google Play listing.
+For privacy questions or data requests, email [contact@finnvek.com](mailto:contact@finnvek.com).

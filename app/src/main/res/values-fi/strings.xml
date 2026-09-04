@@ -112,6 +112,7 @@
     <string name="backup_import_success">Projektit tuotiin.</string>
 
     <string name="error_database_write">Muutosta ei voitu tallentaa. Yritä uudelleen.</string>
+    <string name="error_project_limit">Projektiraja on saavutettu.</string>
     <string name="error_archived_project">Palauta tämä projekti ennen sen lukeman muuttamista.</string>
 
     <plurals name="row_count">

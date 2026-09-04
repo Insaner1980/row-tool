@@ -85,7 +85,9 @@ if (-not $TokenConfigured) {
     exit 2
 }
 
-Import-Module "C:\Dev\Android-check\tools\CheckRuntime.psm1" -Force -ErrorAction Stop
+. "$PSScriptRoot\Resolve-RowToolAndroidCheck.ps1"
+$CheckRuntimeModule = Resolve-RowToolAndroidCheckFile -RelativePath "tools\CheckRuntime.psm1"
+Import-Module $CheckRuntimeModule -Force -ErrorAction Stop
 $Result = Invoke-ManagedProcess `
     -Executable (Join-Path $ProjectRoot "gradlew.bat") `
     -Arguments @("sonar", "--console=plain", "--no-configuration-cache") `

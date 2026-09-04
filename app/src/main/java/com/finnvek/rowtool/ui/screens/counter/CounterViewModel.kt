@@ -79,8 +79,11 @@ class CounterViewModel(
                             }
                         }
                     }
-                } else if (project == null) {
-                    returnToProjects()
+                } else {
+                    when {
+                        project == null -> returnToProjects()
+                        project.isArchived -> returnToProjects(R.string.error_archived_project)
+                    }
                 }
             }
 

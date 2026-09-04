@@ -76,7 +76,7 @@ class ProjectsViewModel(
                 }
                 effectChannel.send(ProjectsEffect.OpenProject(project.id))
             } catch (_: ProjectLimitReachedException) {
-                effectChannel.send(ProjectsEffect.ShowMessage(R.string.error_database_write))
+                effectChannel.send(ProjectsEffect.ShowMessage(R.string.error_project_limit))
             } catch (_: SQLException) {
                 effectChannel.send(ProjectsEffect.ShowMessage(R.string.error_database_write))
             }

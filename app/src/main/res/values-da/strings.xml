@@ -112,6 +112,7 @@
     <string name="backup_import_success">Projekterne er importeret.</string>
 
     <string name="error_database_write">Ændringen kunne ikke gemmes. Prøv igen.</string>
+    <string name="error_project_limit">Projektgrænsen er nået.</string>
     <string name="error_archived_project">Gendan dette projekt, før du ændrer antallet.</string>
 
     <plurals name="row_count">

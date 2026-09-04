@@ -29,17 +29,17 @@ The UI follows a Route/Content split. `ProjectsRoute`, `CounterRoute`, and `Sett
 
 ## Technology versions
 
-| Component | Version |
+| Component | Declared version |
 |---|---|
 | Gradle wrapper | 9.7.1 |
-| Android Gradle Plugin | 9.3.2 |
+| Android Gradle Plugin | 9.4.0 |
 | Kotlin / Compose plugin | 2.4.10 |
 | KSP | 2.3.11 |
 | Compose BOM | 2026.08.00 |
 | Activity Compose | 1.13.0 |
 | AndroidX Core | 1.19.0 |
 | Lifecycle | 2.11.0 |
-| Navigation Compose | 2.9.8 |
+| Navigation Compose | 2.10.0 |
 | Room | 2.8.4 |
 | Preferences DataStore | 1.2.1 |
 | SplashScreen | 1.2.0 |
@@ -205,7 +205,7 @@ Test sources are split between host-side JUnit tests under `app/src/test/` and A
 - Privacy/security review must re-check the manifest, dependencies, backup rules, SAF-only file access, and obscured-touch filtering whenever permissions, SDKs, storage, networking, analytics, billing, backup, or activity touch handling changes.
 - `ktlintCheck` is blocking. Detekt uses the repository config and Compose rules but has `ignoreFailures = true`, so its exit code alone is not proof of a clean report. Android lint aborts on errors, checks release builds when requested, and includes the Google Android security lint ruleset.
 - Sonar is configured by `sonar-project.properties`; the `sonar` task depends on the debug build and JaCoCo XML generation. Coverage excludes `MainActivity`, `RowToolApplication`, and all `ui/**`, so the coverage percentage is not evidence of UI coverage.
-- `tools/*.ps1` are thin project wrappers around `C:\Dev\Android-check\tools\InvokeProjectCheck.ps1` with project ID `rowtool`; `tools/sonar.ps1` is the local Sonar wrapper. A plan-only wrapper run proves routing/configuration, not that the underlying scan executed or was clean; use the produced report artifact for result claims.
+- `tools/*.ps1` are thin project wrappers around the shared Android-check installation with project ID `rowtool`; `tools/sonar.ps1` is the local Sonar wrapper. `tools/Resolve-RowToolAndroidCheck.ps1` resolves an explicit `ANDROID_CHECK_ROOT` first, then the established `C:\Dev\Android-check` or sibling checkout. A plan-only wrapper run proves routing/configuration, not that the underlying scan executed or was clean; use the produced report artifact for result claims.
 
 ## Source-of-truth locations
 

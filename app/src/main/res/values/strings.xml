@@ -112,6 +112,7 @@
     <string name="backup_import_success">Projects imported.</string>
 
     <string name="error_database_write">Could not save the change. Try again.</string>
+    <string name="error_project_limit">Project limit reached.</string>
     <string name="error_archived_project">Restore this project before changing its count.</string>
 
     <plurals name="row_count">

@@ -1,18 +1,14 @@
 package com.finnvek.rowtool.ui.screens.settings
 
 import android.net.Uri
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.emptyPreferences
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.finnvek.rowtool.data.local.RowToolDatabase
 import com.finnvek.rowtool.data.preferences.PreferencesRepository
 import com.finnvek.rowtool.data.repository.BackupRepository
+import com.finnvek.rowtool.test.InMemoryPreferencesDataStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
@@ -157,17 +153,3 @@ private class ControlledInputStream(
         if (result < 0) finished.countDown()
     }
 }
-
-// CPD-OFF: This small in-memory DataStore intentionally mirrors the counter test fixture.
-private class InMemoryPreferencesDataStore : DataStore<Preferences> {
-    private val state = MutableStateFlow<Preferences>(emptyPreferences())
-
-    override val data: Flow<Preferences> = state
-
-    override suspend fun updateData(transform: suspend (Preferences) -> Preferences): Preferences {
-        val updated = transform(state.value)
-        state.value = updated
-        return updated
-    }
-}
-// CPD-ON

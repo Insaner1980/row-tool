@@ -112,6 +112,7 @@
     <string name="backup_import_success">Projecten geïmporteerd.</string>
 
     <string name="error_database_write">Kan de wijziging niet opslaan. Probeer het opnieuw.</string>
+    <string name="error_project_limit">De projectlimiet is bereikt.</string>
     <string name="error_archived_project">Herstel dit project voordat je het aantal wijzigt.</string>
 
     <plurals name="row_count">

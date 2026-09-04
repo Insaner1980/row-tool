@@ -1,4 +1,6 @@
 $ProjectCheckCommand = "codeql-check"
 $ProjectRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path
-& "C:\Dev\Android-check\tools\InvokeProjectCheck.ps1" -ProjectCheckCommand $ProjectCheckCommand -Root $ProjectRoot -ProjectId "rowtool" @args
+. "$PSScriptRoot\Resolve-RowToolAndroidCheck.ps1"
+$ProjectCheckScript = Resolve-RowToolAndroidCheckFile -RelativePath "tools\InvokeProjectCheck.ps1"
+& $ProjectCheckScript -ProjectCheckCommand $ProjectCheckCommand -Root $ProjectRoot -ProjectId "rowtool" @args
 exit $LASTEXITCODE
