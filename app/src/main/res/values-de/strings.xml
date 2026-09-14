@@ -32,7 +32,7 @@
     <string name="project_edit_title">Projekt bearbeiten</string>
     <string name="project_name_label">Projektname</string>
     <string name="project_name_required">Gib einen Projektnamen ein.</string>
-    <string name="project_name_too_long">Verwende höchstens 60 Zeichen.</string>
+    <string name="project_name_too_long">Verwende höchstens %1$d Zeichen.</string>
     <string name="project_counter_type">Zählweise</string>
     <string name="project_rows">Reihen</string>
     <string name="project_rounds">Runden</string>
@@ -41,10 +41,10 @@
     <string name="project_start_one">1</string>
     <string name="project_target_enabled">Ziel festlegen</string>
     <string name="project_target_label">Zielwert</string>
-    <string name="project_target_error">Gib eine ganze Zahl von 1 bis 999.999 ein.</string>
+    <string name="project_target_error">Gib eine ganze Zahl von %1$d bis %2$,d ein.</string>
     <string name="project_repeat_enabled">Wiederholungen verfolgen</string>
     <string name="project_repeat_label">Länge der Wiederholung</string>
-    <string name="project_repeat_error">Gib eine ganze Zahl von 2 bis 999 ein.</string>
+    <string name="project_repeat_error">Gib eine ganze Zahl von %1$d bis %2$d ein.</string>
 
     <string name="counter_rows_label">REIHEN</string>
     <string name="counter_rounds_label">RUNDEN</string>
@@ -66,14 +66,14 @@
     <string name="counter_target_reached">Ziel erreicht</string>
     <string name="counter_set_title">Zählerstand festlegen</string>
     <string name="counter_set_label">Zählerstand</string>
-    <string name="counter_set_error">Gib eine ganze Zahl von 0 bis 999.999 ein.</string>
+    <string name="counter_set_error">Gib eine ganze Zahl von %1$d bis %2$,d ein.</string>
     <string name="counter_reset_title">Zählerstand zurücksetzen?</string>
     <string name="counter_reset_message">Dieses Projekt auf %1$d zurücksetzen? Diese Änderung kann rückgängig gemacht werden.</string>
     <string name="counter_archive_title">Projekt archivieren?</string>
     <string name="counter_archive_message">%1$s wird ins Archiv verschoben und der Zähler wird deaktiviert.</string>
     <string name="counter_delete_title">Projekt löschen?</string>
     <string name="counter_delete_message">%1$s und den gesamten Zählverlauf endgültig löschen?</string>
-    <string name="counter_max_reached">Der maximale Zählerstand ist 999.999.</string>
+    <string name="counter_max_reached">Der maximale Zählerstand ist %1$,d.</string>
     <string name="counter_project_missing">Dieses Projekt ist nicht mehr verfügbar.</string>
 
     <string name="settings_title">Einstellungen</string>
@@ -99,7 +99,7 @@
     <string name="backup_export_success">Daten exportiert.</string>
     <string name="backup_export_failed">Daten konnten nicht exportiert werden. Wähle eine Datei aus und versuche es erneut.</string>
     <string name="backup_import_failed_open">Diese Datei konnte nicht geöffnet werden.</string>
-    <string name="backup_import_too_large">Diese Datei ist größer als 5 MB.</string>
+    <string name="backup_import_too_large">Diese Datei ist größer als %1$d MiB.</string>
     <string name="backup_import_invalid_json">Diese Datei enthält kein gültiges RowTool-JSON.</string>
     <string name="backup_import_unsupported">Diese Sicherungsversion wird nicht unterstützt.</string>
     <string name="backup_import_invalid_data">Die Sicherung enthält ungültige Projektdaten.</string>

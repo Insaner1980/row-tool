@@ -1,12 +1,36 @@
 package com.finnvek.rowtool.ui.screens.counter
 
 import android.view.HapticFeedbackConstants
+import androidx.compose.ui.unit.dp
 import com.finnvek.rowtool.R
 import com.finnvek.rowtool.domain.model.CounterUnit
+import com.finnvek.rowtool.ui.theme.RowToolDimens
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class CounterPresentationTest {
+    @Test
+    fun controlsKeepReferenceSizeWhenPrimaryPairFits() {
+        listOf(288, 320, 360, 600).forEach { width ->
+            assertEquals(1f, counterControlScale(width.dp), 0f)
+        }
+    }
+
+    @Test
+    fun narrowControlsFitWithoutNegativeSizesOrUndersizedTouchTargets() {
+        listOf(-1, 0, 48, 96, 120, 200, 280).forEach { width ->
+            val scale = counterControlScale(width.dp)
+            val primaryTouchSize = RowToolDimens.CounterPrimaryTouchSize * scale
+            assertTrue(scale.isFinite() && scale > 0f && scale <= 1f)
+            assertTrue(primaryTouchSize >= RowToolDimens.MinimumTouchSize)
+            if (width >= 96) {
+                assertTrue(primaryTouchSize * 2 <= width.dp)
+            }
+        }
+        assertEquals(280f / 288f, counterControlScale(280.dp), 0.0001f)
+    }
+
     @Test
     fun counterUnitSelectsMatchingLabels() {
         assertEquals(
@@ -46,17 +70,16 @@ class CounterPresentationTest {
     }
 
     @Test
-    fun returnToProjectsNavigatesBeforePostingMessage() {
+    fun unavailableProjectFeedbackOnlyPostsMessage() {
         val events = mutableListOf<String>()
 
         handleCounterEffect(
-            effect = CounterEffect.ReturnToProjects(R.string.counter_project_missing),
+            effect = CounterEffect.ShowMessage(R.string.counter_project_missing),
             hapticsEnabled = true,
             onMessage = { events += "message" },
-            onProjects = { events += "projects" },
             onHaptic = { events += "haptic" },
         )
 
-        assertEquals(listOf("projects", "message"), events)
+        assertEquals(listOf("message"), events)
     }
 }

@@ -17,6 +17,8 @@ class PreferencesRepository(
     private val dataStore: DataStore<Preferences>,
     private val projectDao: ProjectDao,
 ) {
+    private val defaults = AppPreferences()
+
     val preferences: Flow<AppPreferences> =
         dataStore.data
             .catch { exception ->
@@ -30,9 +32,9 @@ class PreferencesRepository(
                     themeMode =
                         values[THEME_MODE]
                             ?.let { stored -> ThemeMode.entries.firstOrNull { it.name == stored } }
-                            ?: ThemeMode.SYSTEM,
-                    hapticFeedbackEnabled = values[HAPTIC_FEEDBACK_ENABLED] ?: true,
-                    keepScreenAwake = values[KEEP_SCREEN_AWAKE] ?: true,
+                            ?: defaults.themeMode,
+                    hapticFeedbackEnabled = values[HAPTIC_FEEDBACK_ENABLED] ?: defaults.hapticFeedbackEnabled,
+                    keepScreenAwake = values[KEEP_SCREEN_AWAKE] ?: defaults.keepScreenAwake,
                     lastActiveProjectId = values[LAST_ACTIVE_PROJECT_ID],
                 )
             }

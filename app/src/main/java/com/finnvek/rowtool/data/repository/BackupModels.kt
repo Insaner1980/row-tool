@@ -1,6 +1,9 @@
 package com.finnvek.rowtool.data.repository
 
+import com.finnvek.rowtool.domain.model.CounterConstants
 import com.finnvek.rowtool.domain.model.CounterProject
+import com.finnvek.rowtool.domain.model.ProjectValidation
+import com.finnvek.rowtool.domain.model.ProjectValidationResult
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -27,10 +30,60 @@ data class BackupProject(
 )
 // CPD-ON
 
-data class ValidatedBackup(
+@ConsistentCopyVisibility
+data class ValidatedBackup private constructor(
     val exportedAt: Long,
     val projects: List<CounterProject>,
-)
+) {
+    companion object {
+        fun create(
+            exportedAt: Long,
+            projects: List<CounterProject>,
+        ): BackupDecodeResult {
+            val identifierError = validateBackupProjectIds(projects.map { it.id })
+            return if (identifierError != null) {
+                BackupDecodeResult.Invalid(identifierError)
+            } else {
+                val validatedProjects =
+                    projects.map { project ->
+                        validateProject(project)
+                            ?: return BackupDecodeResult.Invalid(BackupValidationError.INVALID_PROJECT)
+                    }
+                BackupDecodeResult.Valid(ValidatedBackup(exportedAt, validatedProjects))
+            }
+        }
+
+        private fun validateProject(project: CounterProject): CounterProject? {
+            if (project.id.isBlank()) return null
+            val validation =
+                ProjectValidation.validate(
+                    name = project.name,
+                    counterUnit = project.counterUnit,
+                    count = project.count,
+                    startValue = project.startValue,
+                    targetCount = project.targetCount,
+                    repeatLength = project.repeatLength,
+                ) as? ProjectValidationResult.Valid
+            return validation?.value?.let {
+                project.copy(
+                    name = it.name,
+                    counterUnit = it.counterUnit,
+                    count = it.count,
+                    startValue = it.startValue,
+                    targetCount = it.targetCount,
+                    repeatLength = it.repeatLength,
+                )
+            }
+        }
+    }
+}
+
+internal fun validateBackupProjectIds(ids: List<String>): BackupValidationError? =
+    when {
+        ids.size > CounterConstants.MAX_PROJECTS_IN_BACKUP -> BackupValidationError.TOO_MANY_PROJECTS
+        ids.toSet().size != ids.size -> BackupValidationError.DUPLICATE_PROJECT_ID
+        else -> null
+    }
 
 enum class BackupValidationError {
     TOO_LARGE,

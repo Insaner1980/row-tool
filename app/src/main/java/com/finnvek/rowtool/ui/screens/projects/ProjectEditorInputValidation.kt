@@ -1,9 +1,6 @@
 package com.finnvek.rowtool.ui.screens.projects
 
-import com.finnvek.rowtool.domain.model.CounterConstants
-
-private const val MAX_NAME_CODE_POINTS = 60
-private const val MAX_REPEAT_LENGTH = 999
+import com.finnvek.rowtool.domain.model.ProjectValidation
 
 internal data class ProjectEditorInputValidation(
     val name: String,
@@ -23,17 +20,15 @@ internal fun validateProjectEditorInput(
     repeatEnabled: Boolean,
     repeatText: String,
 ): ProjectEditorInputValidation {
-    val trimmedName = name.trim()
+    val trimmedName = ProjectValidation.normalizeName(name)
     val target = if (targetEnabled) targetText.toLongOrNull() else null
     val repeat = if (repeatEnabled) repeatText.toIntOrNull() else null
     return ProjectEditorInputValidation(
         name = trimmedName,
         targetCount = target,
         repeatLength = repeat,
-        nameValid =
-            trimmedName.isNotEmpty() &&
-                trimmedName.codePointCount(0, trimmedName.length) <= MAX_NAME_CODE_POINTS,
-        targetValid = !targetEnabled || target in 1L..CounterConstants.MAX_COUNT,
-        repeatValid = !repeatEnabled || repeat in 2..MAX_REPEAT_LENGTH,
+        nameValid = ProjectValidation.nameErrors(trimmedName).isEmpty(),
+        targetValid = !targetEnabled || (target != null && ProjectValidation.isTargetValid(target)),
+        repeatValid = !repeatEnabled || (repeat != null && ProjectValidation.isRepeatValid(repeat)),
     )
 }

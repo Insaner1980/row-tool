@@ -17,6 +17,8 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.finnvek.rowtool.R
+import com.finnvek.rowtool.ui.destructiveDialogActionColors
+import com.finnvek.rowtool.ui.ordinaryDialogActionColors
 import com.finnvek.rowtool.ui.theme.RowToolDimens
 import java.text.DateFormat
 import java.time.LocalDate
@@ -126,12 +128,18 @@ fun SettingsRoute(
                 }
             },
             confirmButton = {
-                TextButton(onClick = viewModel::confirmImport) {
+                TextButton(
+                    onClick = viewModel::confirmImport,
+                    colors = destructiveDialogActionColors(),
+                ) {
                     Text(stringResource(R.string.backup_import_confirm))
                 }
             },
             dismissButton = {
-                TextButton(onClick = viewModel::dismissImport) {
+                TextButton(
+                    onClick = viewModel::dismissImport,
+                    colors = ordinaryDialogActionColors(),
+                ) {
                     Text(stringResource(R.string.action_cancel))
                 }
             },

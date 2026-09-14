@@ -2,7 +2,9 @@ package com.finnvek.rowtool.ui.screens.counter
 
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -21,6 +23,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import com.finnvek.rowtool.R
 import com.finnvek.rowtool.domain.model.CounterConstants
+import com.finnvek.rowtool.ui.ordinaryDialogActionColors
 
 @Composable
 fun CountEditorDialog(
@@ -34,7 +37,7 @@ fun CountEditorDialog(
     }
     val focusRequester = androidx.compose.runtime.remember { FocusRequester() }
     val parsed = value.text.toLongOrNull()
-    val valid = parsed != null && parsed in 0..CounterConstants.MAX_COUNT
+    val valid = parsed != null && parsed in CounterConstants.MIN_COUNT..CounterConstants.MAX_COUNT
 
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
@@ -50,8 +53,20 @@ fun CountEditorDialog(
                 label = { Text(stringResource(R.string.counter_set_label)) },
                 singleLine = true,
                 isError = !valid,
+                colors =
+                    OutlinedTextFieldDefaults.colors(
+                        focusedLabelColor = MaterialTheme.colorScheme.secondary,
+                        focusedBorderColor = MaterialTheme.colorScheme.secondary,
+                        cursorColor = MaterialTheme.colorScheme.secondary,
+                        errorContainerColor = MaterialTheme.colorScheme.errorContainer,
+                        errorTextColor = MaterialTheme.colorScheme.onErrorContainer,
+                        errorLabelColor = MaterialTheme.colorScheme.onErrorContainer,
+                        errorSupportingTextColor = MaterialTheme.colorScheme.onErrorContainer,
+                        errorBorderColor = MaterialTheme.colorScheme.onErrorContainer,
+                        errorCursorColor = MaterialTheme.colorScheme.onErrorContainer,
+                    ),
                 supportingText = {
-                    if (!valid) Text(stringResource(R.string.counter_set_error))
+                    if (!valid) Text(stringResource(R.string.counter_set_error, CounterConstants.MIN_COUNT, CounterConstants.MAX_COUNT))
                 },
                 keyboardOptions =
                     KeyboardOptions(
@@ -64,13 +79,17 @@ fun CountEditorDialog(
         confirmButton = {
             TextButton(
                 enabled = valid,
+                colors = ordinaryDialogActionColors(),
                 onClick = { parsed?.let(onSave) },
             ) {
                 Text(stringResource(R.string.action_save))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(
+                onClick = onDismiss,
+                colors = ordinaryDialogActionColors(),
+            ) {
                 Text(stringResource(R.string.action_cancel))
             }
         },

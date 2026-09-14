@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -26,7 +25,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -52,6 +50,7 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.finnvek.rowtool.R
@@ -151,9 +150,12 @@ fun CounterScreenContent(
             TopAppBar(
                 title = {
                     Text(
-                        text = project?.name.orEmpty(),
-                        maxLines = 2,
+                        text = project?.name.orEmpty().uppercase(LocalConfiguration.current.locales[0]),
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(end = RowToolDimens.Space8).semantics { heading() },
                     )
                 },
                 navigationIcon = {
@@ -215,7 +217,7 @@ fun CounterScreenContent(
             )
         },
     ) { contentPadding ->
-        Box(
+        BoxWithConstraints(
             modifier =
                 Modifier
                     .fillMaxSize()
@@ -231,6 +233,7 @@ fun CounterScreenContent(
                     project = project,
                     canUndo = state.canUndo,
                     actions = actions.value,
+                    viewportHeight = maxHeight,
                     modifier =
                         Modifier
                             .widthIn(max = RowToolDimens.MaxContentWidth)
@@ -246,6 +249,7 @@ private fun CounterWorkspace(
     project: CounterProject,
     canUndo: Boolean,
     actions: CounterValueActions,
+    viewportHeight: Dp,
     modifier: Modifier = Modifier,
 ) {
     val configuration = LocalConfiguration.current
@@ -272,50 +276,21 @@ private fun CounterWorkspace(
         modifier =
             modifier
                 .verticalScroll(rememberScrollState())
+                .heightIn(min = viewportHeight)
                 .padding(
                     start = RowToolDimens.PhoneHorizontalPadding,
                     end = RowToolDimens.PhoneHorizontalPadding,
+                    top = RowToolDimens.Space24,
                     bottom = RowToolDimens.Space24,
                 ),
         horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
     ) {
-        Spacer(Modifier.height(RowToolDimens.Space8))
-        repeatProgress?.let { repeat ->
-            Surface(
-                shape = MaterialTheme.shapes.large,
-                color = MaterialTheme.colorScheme.secondaryContainer,
-                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-            ) {
-                Text(
-                    text =
-                        stringResource(
-                            R.string.counter_repeat_progress,
-                            repeat.currentStep,
-                            repeat.repeatLength,
-                        ),
-                    style = MaterialTheme.typography.labelLarge,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                )
-            }
-            if (repeat.completedRepeats > 0) {
-                Text(
-                    text =
-                        pluralStringResource(
-                            R.plurals.repeat_count,
-                            repeat.completedRepeats.toInt(),
-                            repeat.completedRepeats,
-                        ),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = RowToolDimens.Space4),
-                )
-            }
-        }
         Text(
             text = counterLabel,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.secondary,
-            modifier = Modifier.padding(top = RowToolDimens.Space16),
+            style = MaterialTheme.typography.headlineSmall.copy(fontSize = RowToolDimens.CounterUnitFontSize),
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
         )
         ResponsiveCount(
             formattedCount = formattedCount,
@@ -327,15 +302,6 @@ private fun CounterWorkspace(
                     .heightIn(min = 128.dp),
         )
         targetProgress?.let { target ->
-            LinearProgressIndicator(
-                progress = { target.fraction },
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .height(10.dp),
-                color = MaterialTheme.colorScheme.secondary,
-                trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-            )
             Text(
                 text =
                     if (target.isReached) {
@@ -348,10 +314,50 @@ private fun CounterWorkspace(
                             formattedTarget.orEmpty(),
                         )
                     },
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.labelMedium.copy(fontSize = RowToolDimens.CounterTargetFontSize),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
                 modifier = Modifier.padding(top = RowToolDimens.Space8),
             )
+            Spacer(Modifier.height(RowToolDimens.Space8))
+            LinearProgressIndicator(
+                progress = { target.fraction },
+                modifier =
+                    Modifier
+                        .widthIn(max = RowToolDimens.CounterControlsMaxWidth)
+                        .fillMaxWidth()
+                        .height(RowToolDimens.CounterTargetProgressHeight),
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+            )
+        }
+        repeatProgress?.let { repeat ->
+            Text(
+                text =
+                    stringResource(
+                        R.string.counter_repeat_progress,
+                        repeat.currentStep,
+                        repeat.repeatLength,
+                    ),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = RowToolDimens.Space16),
+            )
+            if (repeat.completedRepeats > 0) {
+                Text(
+                    text =
+                        pluralStringResource(
+                            R.plurals.repeat_count,
+                            repeat.completedRepeats.toInt(),
+                            repeat.completedRepeats,
+                        ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(top = RowToolDimens.Space4),
+                )
+            }
         }
         CounterButtons(
             count = project.count,
@@ -363,7 +369,7 @@ private fun CounterWorkspace(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(top = RowToolDimens.Space12),
+                    .padding(top = RowToolDimens.Space32),
         )
     }
 }
@@ -387,11 +393,12 @@ private fun ResponsiveCount(
         Text(
             text = formattedCount,
             style =
-                MaterialTheme.typography.displayLarge.copy(
+                MaterialTheme.typography.displayMedium.copy(
                     fontSize = textSize.sp,
                     fontWeight = FontWeight.Bold,
+                    fontFeatureSettings = "tnum",
                 ),
-            color = MaterialTheme.colorScheme.onBackground,
+            color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center,
             maxLines = 1,
             modifier =
@@ -424,44 +431,55 @@ private fun CounterButtons(
     actions: CounterValueActions,
     modifier: Modifier = Modifier,
 ) {
-    BoxWithConstraints(modifier = modifier) {
-        val scale = (maxWidth.value / 370f).coerceIn(0.72f, 1f)
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically,
+    BoxWithConstraints(
+        modifier = modifier,
+        contentAlignment = Alignment.TopCenter,
+    ) {
+        val scale = counterControlScale(maxWidth)
+        Column(
+            modifier =
+                Modifier
+                    .widthIn(max = RowToolDimens.CounterControlsMaxWidth)
+                    .fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(RowToolDimens.CounterUndoVerticalSpacing),
         ) {
-            CounterImageButton(
-                imageRes = R.drawable.counter_minus_button,
-                contentDescription = removeDescription,
-                layout =
-                    CounterButtonLayout(
-                        visualSize = (102 * scale).dp,
-                        touchSize = (120 * scale).dp,
-                        visualOffsetY = 2.dp,
-                    ),
-                enabled = !archived && count > 0,
-                onClick = actions.onDecrement,
-            )
-            CounterImageButton(
-                imageRes = R.drawable.counter_plus_button,
-                contentDescription = addDescription,
-                layout =
-                    CounterButtonLayout(
-                        visualSize = (130 * scale).dp,
-                        touchSize = (150 * scale).dp,
-                    ),
-                enabled = !archived && count < CounterConstants.MAX_COUNT,
-                onClick = actions.onIncrement,
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                CounterImageButton(
+                    imageRes = R.drawable.counter_minus_button,
+                    contentDescription = removeDescription,
+                    layout =
+                        CounterButtonLayout(
+                            visualSize = RowToolDimens.CounterMinusVisualSize * scale,
+                            touchSize = RowToolDimens.CounterPrimaryTouchSize * scale,
+                            visualOffsetY = RowToolDimens.CounterMinusOpticalOffsetY,
+                        ),
+                    enabled = !archived && count > CounterConstants.MIN_COUNT,
+                    onClick = actions.onDecrement,
+                )
+                CounterImageButton(
+                    imageRes = R.drawable.counter_plus_button,
+                    contentDescription = addDescription,
+                    layout =
+                        CounterButtonLayout(
+                            visualSize = RowToolDimens.CounterPlusVisualSize * scale,
+                            touchSize = RowToolDimens.CounterPrimaryTouchSize * scale,
+                        ),
+                    enabled = !archived && count < CounterConstants.MAX_COUNT,
+                    onClick = actions.onIncrement,
+                )
+            }
             CounterImageButton(
                 imageRes = R.drawable.counter_undo_button,
                 contentDescription = stringResource(R.string.counter_undo),
                 layout =
                     CounterButtonLayout(
-                        visualSize = (82 * scale).dp,
-                        touchSize = (104 * scale).dp,
-                        visualOffsetY = 4.dp,
+                        visualSize = RowToolDimens.CounterUndoSize * scale,
+                        touchSize = (RowToolDimens.CounterUndoSize * scale).coerceAtLeast(RowToolDimens.MinimumTouchSize),
                     ),
                 enabled = !archived && canUndo,
                 onClick = actions.onUndo,

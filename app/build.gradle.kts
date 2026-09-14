@@ -111,6 +111,7 @@ val instrumentDataForCoverage =
     }
 
 tasks.withType<Test>().configureEach {
+    jvmArgs("--add-opens=java.base/jdk.internal.access=ALL-UNNAMED")
     if (name == "testDebugUnitTest") {
         notCompatibleWithConfigurationCache("Prepends offline-instrumented data classes at execution time")
         dependsOn(instrumentDataForCoverage)

@@ -1,8 +1,5 @@
 package com.finnvek.rowtool.ui.screens.projects
 
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -13,6 +10,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.finnvek.rowtool.R
+import com.finnvek.rowtool.ui.RowToolConfirmationDialog
 
 @Composable
 fun ProjectsRoute(
@@ -95,24 +93,15 @@ fun ProjectsRoute(
     }
 
     deleteProject?.let { project ->
-        AlertDialog(
-            onDismissRequest = { deleteProjectId = null },
-            title = { Text(stringResource(R.string.counter_delete_title)) },
-            text = { Text(stringResource(R.string.counter_delete_message, project.name)) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        deleteProjectId = null
-                        viewModel.delete(project)
-                    },
-                ) {
-                    Text(stringResource(R.string.action_delete))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { deleteProjectId = null }) {
-                    Text(stringResource(R.string.action_cancel))
-                }
+        RowToolConfirmationDialog(
+            title = stringResource(R.string.counter_delete_title),
+            message = stringResource(R.string.counter_delete_message, project.name),
+            confirmLabel = stringResource(R.string.action_delete),
+            isDestructive = true,
+            onDismiss = { deleteProjectId = null },
+            onConfirm = {
+                deleteProjectId = null
+                viewModel.delete(project)
             },
         )
     }

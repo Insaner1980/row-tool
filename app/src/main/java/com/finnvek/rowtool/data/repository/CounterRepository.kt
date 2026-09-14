@@ -216,7 +216,7 @@ class CounterRepository(
 
             CounterMutation.Decrement -> {
                 CalculatedMutation.Valid(
-                    newCount = (project.count - 1).coerceAtLeast(0),
+                    newCount = (project.count - 1).coerceAtLeast(CounterConstants.MIN_COUNT),
                     reason = HistoryChangeReason.DECREMENT,
                 )
             }
@@ -229,7 +229,7 @@ class CounterRepository(
             }
 
             is CounterMutation.ManualSet -> {
-                if (mutation.count in 0..CounterConstants.MAX_COUNT) {
+                if (mutation.count in CounterConstants.MIN_COUNT..CounterConstants.MAX_COUNT) {
                     CalculatedMutation.Valid(mutation.count, HistoryChangeReason.MANUAL_SET)
                 } else {
                     CalculatedMutation.Invalid(setOf(ProjectValidationError.INVALID_COUNT))

@@ -1,10 +1,10 @@
 package com.finnvek.rowtool.domain.model
 
 object CounterConstants {
+    const val MIN_COUNT: Long = 0L
     const val MAX_COUNT: Long = 999_999L
     const val MAX_HISTORY_ENTRIES: Int = 100
     const val MAX_PROJECTS_IN_BACKUP: Int = 1_000
-    const val MAX_BACKUP_BYTES: Int = 5 * 1024 * 1024
 }
 
 enum class CounterUnit {

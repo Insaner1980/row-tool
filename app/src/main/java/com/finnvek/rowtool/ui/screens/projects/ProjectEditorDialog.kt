@@ -10,17 +10,20 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -29,21 +32,28 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.finnvek.rowtool.R
+import com.finnvek.rowtool.domain.model.CounterConstants
 import com.finnvek.rowtool.domain.model.CounterProject
 import com.finnvek.rowtool.domain.model.CounterUnit
+import com.finnvek.rowtool.domain.model.ProjectValidation
+import com.finnvek.rowtool.ui.ordinaryDialogActionColors
 import com.finnvek.rowtool.ui.theme.RowToolDimens
 
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
 fun ProjectEditorDialog(
     project: CounterProject?,
     onDismiss: () -> Unit,
@@ -83,12 +93,15 @@ fun ProjectEditorDialog(
             modifier =
                 Modifier
                     .fillMaxWidth(0.92f)
+                    // Let the width cap apply after fillMaxWidth sets an exact width.
+                    .wrapContentWidth()
                     .widthIn(max = 560.dp)
                     .heightIn(max = maxHeight)
                     .imePadding(),
-            shape = MaterialTheme.shapes.large,
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-            tonalElevation = 6.dp,
+            shape = AlertDialogDefaults.shape,
+            color = AlertDialogDefaults.containerColor,
+            contentColor = AlertDialogDefaults.textContentColor,
+            tonalElevation = AlertDialogDefaults.TonalElevation,
         ) {
             Column(
                 modifier =
@@ -103,6 +116,8 @@ fun ProjectEditorDialog(
                             if (project == null) R.string.project_new_title else R.string.project_edit_title,
                         ),
                     style = MaterialTheme.typography.headlineSmall,
+                    color = AlertDialogDefaults.titleContentColor,
+                    modifier = Modifier.semantics { heading() },
                 )
                 ProjectNameField(
                     value = name,
@@ -139,7 +154,12 @@ fun ProjectEditorDialog(
                         ToggleNumberFieldConfig(
                             switchLabel = stringResource(R.string.project_target_enabled),
                             fieldLabel = stringResource(R.string.project_target_label),
-                            errorText = stringResource(R.string.project_target_error),
+                            errorText =
+                                stringResource(
+                                    R.string.project_target_error,
+                                    ProjectValidation.MIN_TARGET_COUNT,
+                                    CounterConstants.MAX_COUNT,
+                                ),
                             imeAction = ImeAction.Next,
                         ),
                 )
@@ -153,19 +173,29 @@ fun ProjectEditorDialog(
                         ToggleNumberFieldConfig(
                             switchLabel = stringResource(R.string.project_repeat_enabled),
                             fieldLabel = stringResource(R.string.project_repeat_label),
-                            errorText = stringResource(R.string.project_repeat_error),
+                            errorText =
+                                stringResource(
+                                    R.string.project_repeat_error,
+                                    ProjectValidation.MIN_REPEAT_LENGTH,
+                                    ProjectValidation.MAX_REPEAT_LENGTH,
+                                ),
                             imeAction = ImeAction.Done,
                         ),
                 )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth().padding(top = RowToolDimens.Space8),
+                    horizontalArrangement = Arrangement.spacedBy(RowToolDimens.Space8, Alignment.End),
+                    verticalArrangement = Arrangement.spacedBy(RowToolDimens.Space12),
                 ) {
-                    TextButton(onClick = onDismiss) {
+                    TextButton(
+                        onClick = onDismiss,
+                        colors = ordinaryDialogActionColors(),
+                    ) {
                         Text(stringResource(R.string.action_cancel))
                     }
                     TextButton(
                         enabled = validation.canSave,
+                        colors = ordinaryDialogActionColors(),
                         onClick = {
                             onSave(
                                 ProjectEditorValues(
@@ -192,18 +222,20 @@ private fun ProjectNameField(
     onValueChange: (String) -> Unit,
     validation: ProjectEditorInputValidation,
 ) {
-    OutlinedTextField(
+    TextField(
         value = value,
         onValueChange = onValueChange,
         modifier = Modifier.fillMaxWidth(),
         label = { Text(stringResource(R.string.project_name_label)) },
         singleLine = true,
         isError = !validation.nameValid,
+        shape = MaterialTheme.shapes.large,
+        colors = projectEditorTextFieldColors(),
         supportingText = {
             if (validation.name.isEmpty()) {
                 Text(stringResource(R.string.project_name_required))
             } else if (!validation.nameValid) {
-                Text(stringResource(R.string.project_name_too_long))
+                Text(stringResource(R.string.project_name_too_long, ProjectValidation.MAX_NAME_CODE_POINTS))
             }
         },
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
@@ -219,7 +251,11 @@ private fun ChoiceSection(
     onSelect: (String) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(RowToolDimens.Space8)) {
-        Text(label, style = MaterialTheme.typography.labelLarge)
+        Text(
+            label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(RowToolDimens.Space8),
             verticalArrangement = Arrangement.spacedBy(RowToolDimens.Space8),
@@ -255,6 +291,7 @@ private fun ToggleNumberField(
                         onValueChange = onCheckedChange,
                     ).padding(vertical = RowToolDimens.Space8),
             verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(RowToolDimens.Space12),
         ) {
             Text(
                 text = config.switchLabel,
@@ -264,13 +301,15 @@ private fun ToggleNumberField(
             Switch(checked = checked, onCheckedChange = null)
         }
         if (checked) {
-            OutlinedTextField(
+            TextField(
                 value = value,
                 onValueChange = onValueChange,
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text(config.fieldLabel) },
                 singleLine = true,
                 isError = !isValid,
+                shape = MaterialTheme.shapes.large,
+                colors = projectEditorTextFieldColors(),
                 supportingText = {
                     if (!isValid) Text(config.errorText)
                 },
@@ -283,6 +322,24 @@ private fun ToggleNumberField(
         }
     }
 }
+
+@Composable
+private fun projectEditorTextFieldColors() =
+    TextFieldDefaults.colors(
+        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+        focusedIndicatorColor = Color.Transparent,
+        unfocusedIndicatorColor = Color.Transparent,
+        // Primary text has insufficient contrast on this dialog in both themes.
+        focusedLabelColor = MaterialTheme.colorScheme.secondary,
+        cursorColor = MaterialTheme.colorScheme.secondary,
+        // Keep the error indicator and use the error surface's readable foreground.
+        errorContainerColor = MaterialTheme.colorScheme.errorContainer,
+        errorTextColor = MaterialTheme.colorScheme.onErrorContainer,
+        errorLabelColor = MaterialTheme.colorScheme.onErrorContainer,
+        errorSupportingTextColor = MaterialTheme.colorScheme.onErrorContainer,
+        errorCursorColor = MaterialTheme.colorScheme.onErrorContainer,
+    )
 
 private data class ToggleNumberFieldConfig(
     val switchLabel: String,

@@ -32,7 +32,7 @@
     <string name="project_edit_title">Redigera projekt</string>
     <string name="project_name_label">Projektnamn</string>
     <string name="project_name_required">Ange ett projektnamn.</string>
-    <string name="project_name_too_long">Använd högst 60 tecken.</string>
+    <string name="project_name_too_long">Använd högst %1$d tecken.</string>
     <string name="project_counter_type">Räknartyp</string>
     <string name="project_rows">Varv</string>
     <string name="project_rounds">Rundor</string>
@@ -41,10 +41,10 @@
     <string name="project_start_one">1</string>
     <string name="project_target_enabled">Ange ett mål</string>
     <string name="project_target_label">Målantal</string>
-    <string name="project_target_error">Ange ett heltal mellan 1 och 999 999.</string>
+    <string name="project_target_error">Ange ett heltal mellan %1$d och %2$,d.</string>
     <string name="project_repeat_enabled">Följ en upprepning</string>
     <string name="project_repeat_label">Upprepningens längd</string>
-    <string name="project_repeat_error">Ange ett heltal mellan 2 och 999.</string>
+    <string name="project_repeat_error">Ange ett heltal mellan %1$d och %2$d.</string>
 
     <string name="counter_rows_label">VARV</string>
     <string name="counter_rounds_label">RUNDOR</string>
@@ -66,14 +66,14 @@
     <string name="counter_target_reached">Målet är uppnått</string>
     <string name="counter_set_title">Ange antal</string>
     <string name="counter_set_label">Antal</string>
-    <string name="counter_set_error">Ange ett heltal mellan 0 och 999 999.</string>
+    <string name="counter_set_error">Ange ett heltal mellan %1$d och %2$,d.</string>
     <string name="counter_reset_title">Nollställa räknaren?</string>
     <string name="counter_reset_message">Återställa projektet till %1$d? Du kan ångra den här ändringen.</string>
     <string name="counter_archive_title">Arkivera projektet?</string>
     <string name="counter_archive_message">%1$s flyttas till Arkiverade och räknaren inaktiveras.</string>
     <string name="counter_delete_title">Ta bort projektet?</string>
     <string name="counter_delete_message">Ta bort %1$s och dess räknehistorik permanent?</string>
-    <string name="counter_max_reached">Det högsta antalet är 999 999.</string>
+    <string name="counter_max_reached">Det högsta antalet är %1$,d.</string>
     <string name="counter_project_missing">Projektet är inte längre tillgängligt.</string>
 
     <string name="settings_title">Inställningar</string>
@@ -99,7 +99,7 @@
     <string name="backup_export_success">Data har exporterats.</string>
     <string name="backup_export_failed">Det gick inte att exportera data. Välj en fil och försök igen.</string>
     <string name="backup_import_failed_open">Det gick inte att öppna filen.</string>
-    <string name="backup_import_too_large">Filen är större än 5 MB.</string>
+    <string name="backup_import_too_large">Filen är större än %1$d MiB.</string>
     <string name="backup_import_invalid_json">Filen innehåller inte giltig RowTool-JSON.</string>
     <string name="backup_import_unsupported">Den här versionen av säkerhetskopian stöds inte.</string>
     <string name="backup_import_invalid_data">Säkerhetskopian innehåller ogiltiga projektdata.</string>

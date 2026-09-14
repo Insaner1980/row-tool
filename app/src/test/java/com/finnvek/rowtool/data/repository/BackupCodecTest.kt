@@ -1,6 +1,5 @@
 package com.finnvek.rowtool.data.repository
 
-import com.finnvek.rowtool.domain.model.CounterConstants
 import com.finnvek.rowtool.domain.model.CounterUnit
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -36,7 +35,7 @@ class BackupCodecTest {
 
         assertTrue(decoded is BackupDecodeResult.Valid)
         assertEquals(
-            ValidatedBackup(
+            ValidatedBackup.create(
                 exportedAt = 1_234_567_890L,
                 projects =
                     listOf(
@@ -54,7 +53,7 @@ class BackupCodecTest {
                         ),
                     ),
             ),
-            (decoded as BackupDecodeResult.Valid).backup,
+            decoded,
         )
     }
 
@@ -155,6 +154,22 @@ class BackupCodecTest {
     }
 
     @Test
+    fun collectionErrorsKeepPrecedenceOverUnknownCounterUnit() {
+        val unknownUnit = validProjectJson(id = "same").replace("\"ROWS\"", "\"UNKNOWN\"")
+        val duplicateIds = unknownUnit + "," + validProjectJson(id = "same")
+        val tooManyProjects = (1..1_001).joinToString(",") { unknownUnit }
+
+        assertInvalid(
+            BackupValidationError.DUPLICATE_PROJECT_ID,
+            BackupCodec.decode(backupJson(duplicateIds).encodeToByteArray()),
+        )
+        assertInvalid(
+            BackupValidationError.TOO_MANY_PROJECTS,
+            BackupCodec.decode(backupJson(tooManyProjects).encodeToByteArray()),
+        )
+    }
+
+    @Test
     fun malformedJsonIsRejected() {
         assertInvalid(
             BackupValidationError.MALFORMED_JSON,
@@ -174,8 +189,19 @@ class BackupCodecTest {
     }
 
     @Test
+    fun displayedLimitMatchesAcceptedByteAndStreamBoundary() {
+        val limitBytes = BackupCodec.MAX_BACKUP_MIB * 1024 * 1024
+        assertEquals(5_242_880, limitBytes)
+        val bytes = backupJson(validProjectJson(id = "p1")).padEnd(limitBytes, ' ').encodeToByteArray()
+
+        assertTrue(BackupCodec.decode(bytes) is BackupDecodeResult.Valid)
+        assertTrue(BackupCodec.decode(bytes.inputStream()) is BackupDecodeResult.Valid)
+        assertInvalid(BackupValidationError.TOO_LARGE, BackupCodec.decode(bytes + ' '.code.toByte()))
+    }
+
+    @Test
     fun oversizedInputIsRejectedBeforeParsing() {
-        val bytes = ByteArray(CounterConstants.MAX_BACKUP_BYTES + 1) { 'x'.code.toByte() }
+        val bytes = ByteArray(5_242_881) { 'x'.code.toByte() }
 
         assertInvalid(BackupValidationError.TOO_LARGE, BackupCodec.decode(bytes))
     }
@@ -185,7 +211,7 @@ class BackupCodecTest {
         val stream = CountingEndlessInputStream()
 
         assertInvalid(BackupValidationError.TOO_LARGE, BackupCodec.decode(stream))
-        assertEquals(CounterConstants.MAX_BACKUP_BYTES + 1, stream.bytesRead)
+        assertEquals(5_242_881, stream.bytesRead)
     }
 
     @Test

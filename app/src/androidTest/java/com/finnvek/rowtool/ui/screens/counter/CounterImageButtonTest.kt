@@ -1,8 +1,14 @@
 package com.finnvek.rowtool.ui.screens.counter
 
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertHasClickAction
+import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
@@ -29,7 +35,7 @@ class CounterImageButtonTest {
                 CounterImageButton(
                     imageRes = R.drawable.counter_plus_button,
                     contentDescription = "Add one row",
-                    layout = CounterButtonLayout(visualSize = 128.dp, touchSize = 148.dp),
+                    layout = CounterButtonLayout(visualSize = 24.dp, touchSize = 24.dp),
                     enabled = true,
                     onClick = { clicks += 1 },
                 )
@@ -40,6 +46,9 @@ class CounterImageButtonTest {
             .onNodeWithContentDescription("Add one row")
             .assertIsEnabled()
             .assertHasClickAction()
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
+            .assertWidthIsAtLeast(48.dp)
+            .assertHeightIsAtLeast(48.dp)
             .performClick()
 
         assertEquals(1, clicks)
@@ -65,6 +74,7 @@ class CounterImageButtonTest {
             .onNodeWithContentDescription("Remove one row")
             .assertIsNotEnabled()
             .assertHasClickAction()
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
             .performClick()
 
         assertEquals(0, clicks)

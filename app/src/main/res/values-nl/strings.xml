@@ -32,7 +32,7 @@
     <string name="project_edit_title">Project bewerken</string>
     <string name="project_name_label">Projectnaam</string>
     <string name="project_name_required">Voer een projectnaam in.</string>
-    <string name="project_name_too_long">Gebruik niet meer dan 60 tekens.</string>
+    <string name="project_name_too_long">Gebruik niet meer dan %1$d tekens.</string>
     <string name="project_counter_type">Type teller</string>
     <string name="project_rows">Rijen</string>
     <string name="project_rounds">Rondes</string>
@@ -41,10 +41,10 @@
     <string name="project_start_one">1</string>
     <string name="project_target_enabled">Een doel instellen</string>
     <string name="project_target_label">Doelaantal</string>
-    <string name="project_target_error">Voer een geheel getal in van 1 t/m 999.999.</string>
+    <string name="project_target_error">Voer een geheel getal in van %1$d t/m %2$,d.</string>
     <string name="project_repeat_enabled">Een herhaling bijhouden</string>
     <string name="project_repeat_label">Lengte van herhaling</string>
-    <string name="project_repeat_error">Voer een geheel getal in van 2 t/m 999.</string>
+    <string name="project_repeat_error">Voer een geheel getal in van %1$d t/m %2$d.</string>
 
     <string name="counter_rows_label">RIJEN</string>
     <string name="counter_rounds_label">RONDES</string>
@@ -66,14 +66,14 @@
     <string name="counter_target_reached">Doel bereikt</string>
     <string name="counter_set_title">Aantal instellen</string>
     <string name="counter_set_label">Aantal</string>
-    <string name="counter_set_error">Voer een geheel getal in van 0 t/m 999.999.</string>
+    <string name="counter_set_error">Voer een geheel getal in van %1$d t/m %2$,d.</string>
     <string name="counter_reset_title">Teller resetten?</string>
     <string name="counter_reset_message">Dit project resetten naar %1$d? Je kunt deze wijziging ongedaan maken.</string>
     <string name="counter_archive_title">Project archiveren?</string>
     <string name="counter_archive_message">%1$s wordt naar Gearchiveerd verplaatst en tellen wordt uitgeschakeld.</string>
     <string name="counter_delete_title">Project verwijderen?</string>
     <string name="counter_delete_message">%1$s en de telgeschiedenis permanent verwijderen?</string>
-    <string name="counter_max_reached">Het maximale aantal is 999.999.</string>
+    <string name="counter_max_reached">Het maximale aantal is %1$,d.</string>
     <string name="counter_project_missing">Dit project is niet meer beschikbaar.</string>
 
     <string name="settings_title">Instellingen</string>
@@ -99,7 +99,7 @@
     <string name="backup_export_success">Gegevens geëxporteerd.</string>
     <string name="backup_export_failed">Kan gegevens niet exporteren. Kies een bestand en probeer het opnieuw.</string>
     <string name="backup_import_failed_open">Kan dit bestand niet openen.</string>
-    <string name="backup_import_too_large">Dit bestand is groter dan 5 MB.</string>
+    <string name="backup_import_too_large">Dit bestand is groter dan %1$d MiB.</string>
     <string name="backup_import_invalid_json">Dit bestand bevat geen geldige RowTool-JSON.</string>
     <string name="backup_import_unsupported">Deze versie van de back-up wordt niet ondersteund.</string>
     <string name="backup_import_invalid_data">De back-up bevat ongeldige projectgegevens.</string>

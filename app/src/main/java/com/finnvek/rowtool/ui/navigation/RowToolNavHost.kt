@@ -57,9 +57,9 @@ fun RowToolNavHost(
 
         composable(
             route = Screen.COUNTER_PATTERN,
-            arguments = listOf(navArgument("projectId") { type = NavType.StringType }),
+            arguments = listOf(navArgument(Screen.COUNTER_PROJECT_ID_ARG) { type = NavType.StringType }),
         ) { backStackEntry ->
-            val projectId = backStackEntry.arguments?.getString("projectId").orEmpty()
+            val projectId = backStackEntry.arguments?.getString(Screen.COUNTER_PROJECT_ID_ARG).orEmpty()
             val counterViewModel: CounterViewModel =
                 viewModel(
                     key = "counter:$projectId",
@@ -96,7 +96,7 @@ fun RowToolNavHost(
                 onImportComplete = { projectId ->
                     val destination = projectId?.let(Screen::counter) ?: Screen.PROJECTS
                     navController.navigate(destination) {
-                        popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                        popUpTo(navController.graph.id) { inclusive = true }
                         launchSingleTop = true
                     }
                 },

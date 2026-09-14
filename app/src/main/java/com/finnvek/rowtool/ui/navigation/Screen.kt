@@ -5,7 +5,9 @@ import android.net.Uri
 object Screen {
     const val PROJECTS = "projects"
     const val SETTINGS = "settings"
-    const val COUNTER_PATTERN = "counter/{projectId}"
+    private const val COUNTER_BASE = "counter"
+    internal const val COUNTER_PROJECT_ID_ARG = "projectId"
+    const val COUNTER_PATTERN = "$COUNTER_BASE/{$COUNTER_PROJECT_ID_ARG}"
 
-    fun counter(projectId: String): String = "counter/${Uri.encode(projectId)}"
+    fun counter(projectId: String): String = "$COUNTER_BASE/${Uri.encode(projectId)}"
 }

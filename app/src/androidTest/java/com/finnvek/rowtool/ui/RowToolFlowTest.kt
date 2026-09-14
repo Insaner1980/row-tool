@@ -3,12 +3,14 @@ package com.finnvek.rowtool.ui
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
+import androidx.test.espresso.Espresso
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.finnvek.rowtool.MainActivity
 import com.finnvek.rowtool.data.preferences.ThemeMode
@@ -36,9 +38,7 @@ class RowToolFlowTest {
 
     @Test
     fun createCountCorrectUndoAndRecreateKeepsTheAcceptedCount() {
-        composeRule.onNodeWithText("New project").performClick()
-        composeRule.onNode(hasSetTextAction()).performTextInput("Test scarf")
-        composeRule.onNodeWithText("Save").performClick()
+        createProject("Test scarf")
 
         composeRule.onNodeWithContentDescription("Add one row").performClick()
         composeRule.onNodeWithContentDescription("Add one row").performClick()
@@ -55,13 +55,12 @@ class RowToolFlowTest {
 
     @Test
     fun tappingCountSetsAnUndoableManualValue() {
-        composeRule.onNodeWithText("New project").performClick()
-        composeRule.onNode(hasSetTextAction()).performTextInput("Manual counter")
-        composeRule.onNodeWithText("Save").performClick()
+        createProject("Manual counter")
 
         composeRule.onNodeWithText("0").performClick()
         composeRule.onNode(hasSetTextAction()).performTextClearance()
         composeRule.onNode(hasSetTextAction()).performTextInput("12")
+        Espresso.closeSoftKeyboard()
         composeRule.onNodeWithText("Save").performClick()
         waitForText("12")
         composeRule.onNodeWithContentDescription("Undo last count change").performClick()
@@ -70,9 +69,7 @@ class RowToolFlowTest {
 
     @Test
     fun resetAndDeleteAreProtectedByNamedConfirmationDialogs() {
-        composeRule.onNodeWithText("New project").performClick()
-        composeRule.onNode(hasSetTextAction()).performTextInput("Protected counter")
-        composeRule.onNodeWithText("Save").performClick()
+        createProject("Protected counter")
 
         composeRule.onNodeWithContentDescription("More options").performClick()
         composeRule.onNodeWithText("Reset count").performClick()
@@ -83,6 +80,16 @@ class RowToolFlowTest {
         composeRule.onNodeWithText("Delete").performClick()
         composeRule.onNodeWithText("Delete project?").assertIsDisplayed()
         composeRule.onNodeWithText("Delete").assertIsDisplayed()
+    }
+
+    private fun createProject(name: String) {
+        composeRule.onNodeWithText("New project").performClick()
+        composeRule.onNode(hasSetTextAction()).performTextInput(name)
+        Espresso.closeSoftKeyboard()
+        composeRule.onNodeWithText("Save").performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithContentDescription("Add one row").fetchSemanticsNodes().size == 1
+        }
     }
 
     private fun waitForText(text: String) {

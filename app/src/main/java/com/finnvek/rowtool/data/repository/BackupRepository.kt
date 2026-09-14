@@ -3,7 +3,6 @@ package com.finnvek.rowtool.data.repository
 import android.database.SQLException
 import androidx.room.withTransaction
 import com.finnvek.rowtool.data.local.RowToolDatabase
-import com.finnvek.rowtool.data.local.toDomain
 import com.finnvek.rowtool.data.local.toEntity
 import com.finnvek.rowtool.data.preferences.PreferencesRepository
 import com.finnvek.rowtool.domain.model.CounterProject
@@ -24,8 +23,8 @@ class BackupRepository(
             val projects = database.withTransaction { database.projectDao().getAll() }
             BackupCodec.encode(
                 BackupFile(
-                    schemaVersion = 1,
-                    application = "RowTool",
+                    schemaVersion = BackupFormat.CURRENT_SCHEMA_VERSION,
+                    application = BackupFormat.APPLICATION_ID,
                     exportedAt = clock(),
                     projects =
                         projects.map { entity ->

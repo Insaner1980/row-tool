@@ -15,8 +15,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
@@ -24,7 +23,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.dp
+import com.finnvek.rowtool.ui.theme.RowToolDimens
 
 @Composable
 fun CounterImageButton(
@@ -37,8 +36,8 @@ fun CounterImageButton(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed && enabled) 0.97f else 1f,
+    val pressProgress by animateFloatAsState(
+        targetValue = if (isPressed && enabled) 1f else 0f,
         animationSpec = tween(durationMillis = 90),
         label = "counter button press",
     )
@@ -46,7 +45,7 @@ fun CounterImageButton(
     Box(
         modifier =
             modifier
-                .size(layout.touchSize.coerceAtLeast(48.dp))
+                .size(layout.touchSize.coerceAtLeast(RowToolDimens.MinimumTouchSize))
                 .semantics(mergeDescendants = true) {
                     this.contentDescription = contentDescription
                     role = Role.Button
@@ -69,8 +68,13 @@ fun CounterImageButton(
                 Modifier
                     .size(layout.visualSize.coerceAtMost(layout.touchSize))
                     .offset(y = layout.visualOffsetY)
-                    .scale(scale)
-                    .alpha(if (enabled) 1f else 0.46f),
+                    .graphicsLayer {
+                        val scale = 1f - pressProgress * 0.018f
+                        scaleX = scale
+                        scaleY = scale
+                        translationY = pressProgress * RowToolDimens.CounterPressTranslation.toPx()
+                        alpha = if (enabled) 1f else 0.46f
+                    },
         )
     }
 }

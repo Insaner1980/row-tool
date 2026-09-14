@@ -4,9 +4,6 @@ import android.annotation.SuppressLint
 import android.os.Build
 import android.view.HapticFeedbackConstants
 import androidx.activity.compose.BackHandler
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -17,9 +14,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import com.finnvek.rowtool.R
 import com.finnvek.rowtool.domain.model.CounterProject
+import com.finnvek.rowtool.ui.RowToolConfirmationDialog
 import com.finnvek.rowtool.ui.screens.projects.ProjectEditorDialog
 import com.finnvek.rowtool.ui.screens.projects.ProjectEditorValues
 
@@ -60,6 +61,7 @@ fun CounterRoute(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val preferences by viewModel.preferences.collectAsStateWithLifecycle()
     val view = LocalView.current
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
     val currentHapticsEnabled by rememberUpdatedState(preferences.hapticFeedbackEnabled)
     val currentOnMessage by rememberUpdatedState(onMessage)
     val currentOnProjects by rememberUpdatedState(onProjects)
@@ -73,17 +75,31 @@ fun CounterRoute(
         onDispose { view.keepScreenOn = false }
     }
 
+    val mustReturnToProjects = !state.isLoading && (state.project == null || state.project?.isArchived == true)
+    LaunchedEffect(viewModel, mustReturnToProjects) {
+        if (mustReturnToProjects) currentOnProjects()
+    }
+
     LaunchedEffect(viewModel) {
         viewModel.effects.collect { effect ->
             handleCounterEffect(
                 effect = effect,
                 hapticsEnabled = currentHapticsEnabled,
                 onMessage = currentOnMessage,
-                onProjects = currentOnProjects,
                 onHaptic = { strong ->
                     view.performHapticFeedback(hapticFeedbackConstant(strong))
                 },
             )
+        }
+    }
+
+    LaunchedEffect(viewModel, lifecycle, view) {
+        lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            viewModel.haptics.collect { effect ->
+                if (lifecycle.currentState == Lifecycle.State.RESUMED && currentHapticsEnabled) {
+                    view.performHapticFeedback(hapticFeedbackConstant(effect.strong))
+                }
+            }
         }
     }
 
@@ -130,7 +146,6 @@ internal fun handleCounterEffect(
     effect: CounterEffect,
     hapticsEnabled: Boolean,
     onMessage: (Int) -> Unit,
-    onProjects: () -> Unit,
     onHaptic: (Boolean) -> Unit,
 ) {
     when (effect) {
@@ -140,11 +155,6 @@ internal fun handleCounterEffect(
 
         is CounterEffect.Haptic -> {
             if (hapticsEnabled) onHaptic(effect.strong)
-        }
-
-        is CounterEffect.ReturnToProjects -> {
-            onProjects()
-            effect.message?.let(onMessage)
         }
     }
 }
@@ -181,7 +191,7 @@ private fun CounterDialogContent(
         }
 
         CounterDialog.RESET -> {
-            ConfirmationDialog(
+            RowToolConfirmationDialog(
                 title = stringResource(R.string.counter_reset_title),
                 message = stringResource(R.string.counter_reset_message, project.startValue),
                 confirmLabel = stringResource(R.string.action_reset),
@@ -194,7 +204,7 @@ private fun CounterDialogContent(
         }
 
         CounterDialog.ARCHIVE -> {
-            ConfirmationDialog(
+            RowToolConfirmationDialog(
                 title = stringResource(R.string.counter_archive_title),
                 message = stringResource(R.string.counter_archive_message, project.name),
                 confirmLabel = stringResource(R.string.action_archive),
@@ -207,10 +217,11 @@ private fun CounterDialogContent(
         }
 
         CounterDialog.DELETE -> {
-            ConfirmationDialog(
+            RowToolConfirmationDialog(
                 title = stringResource(R.string.counter_delete_title),
                 message = stringResource(R.string.counter_delete_message, project.name),
                 confirmLabel = stringResource(R.string.action_delete),
+                isDestructive = true,
                 onDismiss = onDismiss,
                 onConfirm = {
                     onDismiss()
@@ -219,29 +230,4 @@ private fun CounterDialogContent(
             )
         }
     }
-}
-
-@Composable
-private fun ConfirmationDialog(
-    title: String,
-    message: String,
-    confirmLabel: String,
-    onDismiss: () -> Unit,
-    onConfirm: () -> Unit,
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = { Text(message) },
-        confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text(confirmLabel)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.action_cancel))
-            }
-        },
-    )
 }

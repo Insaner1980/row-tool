@@ -2,13 +2,13 @@ package com.finnvek.rowtool.ui.screens.projects
 
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
-import com.finnvek.rowtool.data.local.ProjectEntity
 import com.finnvek.rowtool.data.local.RowToolDatabase
 import com.finnvek.rowtool.data.preferences.PreferencesRepository
 import com.finnvek.rowtool.data.repository.CounterRepository
 import com.finnvek.rowtool.domain.model.CounterConstants
 import com.finnvek.rowtool.domain.model.CounterUnit
 import com.finnvek.rowtool.test.InMemoryPreferencesDataStore
+import com.finnvek.rowtool.test.projectEntities
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
@@ -56,20 +56,7 @@ class ProjectsViewModelTest {
     fun projectLimitUsesDedicatedMessage() =
         runTest(dispatcher) {
             database.projectDao().insertAll(
-                List(CounterConstants.MAX_PROJECTS_IN_BACKUP) { index ->
-                    ProjectEntity(
-                        id = "project-$index",
-                        name = "Project $index",
-                        counterUnit = CounterUnit.ROWS.name,
-                        count = 0,
-                        startValue = 0,
-                        targetCount = null,
-                        repeatLength = null,
-                        isArchived = false,
-                        createdAt = index.toLong(),
-                        updatedAt = index.toLong(),
-                    )
-                },
+                projectEntities(CounterConstants.MAX_PROJECTS_IN_BACKUP),
             )
             assertEquals(CounterConstants.MAX_PROJECTS_IN_BACKUP, database.projectDao().count())
             val preferencesRepository =

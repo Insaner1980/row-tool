@@ -16,8 +16,10 @@ import com.finnvek.rowtool.domain.model.CounterMutationResult
 import com.finnvek.rowtool.domain.model.CounterProject
 import com.finnvek.rowtool.ui.screens.projects.updateProjectFromEditor
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -34,10 +36,6 @@ sealed interface CounterEffect {
     data class Haptic(
         val strong: Boolean,
     ) : CounterEffect
-
-    data class ReturnToProjects(
-        @StringRes val message: Int? = null,
-    ) : CounterEffect
 }
 
 class CounterViewModel(
@@ -47,8 +45,12 @@ class CounterViewModel(
 ) : ViewModel() {
     private val effectChannel = Channel<CounterEffect>(Channel.BUFFERED)
     val effects = effectChannel.receiveAsFlow()
+
+    // Transient feedback is lost when no resumed route is collecting; never replay it.
+    private val hapticFlow = MutableSharedFlow<CounterEffect.Haptic>()
+    val haptics = hapticFlow.asSharedFlow()
     private val routeResolved = AtomicBoolean()
-    private val returnToProjectsSent = AtomicBoolean()
+    private val unavailableFeedbackHandled = AtomicBoolean()
 
     val preferences: StateFlow<AppPreferences> =
         preferencesRepository.preferences.stateIn(
@@ -64,11 +66,11 @@ class CounterViewModel(
                 if (routeResolved.compareAndSet(false, true)) {
                     when {
                         project == null -> {
-                            returnToProjects(R.string.counter_project_missing)
+                            reportUnavailableProject(R.string.counter_project_missing)
                         }
 
                         project.isArchived -> {
-                            returnToProjects(R.string.error_archived_project)
+                            reportUnavailableProject(R.string.error_archived_project)
                         }
 
                         else -> {
@@ -81,8 +83,8 @@ class CounterViewModel(
                     }
                 } else {
                     when {
-                        project == null -> returnToProjects()
-                        project.isArchived -> returnToProjects(R.string.error_archived_project)
+                        project == null -> reportUnavailableProject()
+                        project.isArchived -> reportUnavailableProject(R.string.error_archived_project)
                     }
                 }
             }
@@ -132,7 +134,7 @@ class CounterViewModel(
             try {
                 if (counterRepository.setArchived(projectId, true)) {
                     preferencesRepository.clearLastActiveProjectIdIfMatching(projectId)
-                    returnToProjects()
+                    reportUnavailableProject()
                 }
             } catch (_: SQLException) {
                 effectChannel.send(CounterEffect.ShowMessage(R.string.error_database_write))
@@ -145,7 +147,7 @@ class CounterViewModel(
             try {
                 counterRepository.deleteProject(projectId)
                 preferencesRepository.clearLastActiveProjectIdIfMatching(projectId)
-                returnToProjects()
+                reportUnavailableProject()
             } catch (_: SQLException) {
                 effectChannel.send(CounterEffect.ShowMessage(R.string.error_database_write))
             }
@@ -180,7 +182,7 @@ class CounterViewModel(
         when (result) {
             is CounterMutationResult.Changed -> {
                 if (emitHaptic) {
-                    effectChannel.send(
+                    hapticFlow.emit(
                         CounterEffect.Haptic(
                             shouldUseStrongHaptic(mutation, project, result),
                         ),
@@ -195,11 +197,11 @@ class CounterViewModel(
             }
 
             CounterMutationResult.ProjectMissing -> {
-                returnToProjects(R.string.counter_project_missing)
+                reportUnavailableProject(R.string.counter_project_missing)
             }
 
             CounterMutationResult.ProjectArchived -> {
-                returnToProjects(R.string.error_archived_project)
+                reportUnavailableProject(R.string.error_archived_project)
             }
 
             is CounterMutationResult.Invalid -> {
@@ -210,11 +212,12 @@ class CounterViewModel(
         }
     }
 
-    private suspend fun returnToProjects(
+    private fun reportUnavailableProject(
         @StringRes message: Int? = null,
     ) {
-        if (returnToProjectsSent.compareAndSet(false, true)) {
-            effectChannel.send(CounterEffect.ReturnToProjects(message))
+        // Feedback must never delay publication of the project state used for navigation.
+        if (unavailableFeedbackHandled.compareAndSet(false, true) && message != null) {
+            effectChannel.trySend(CounterEffect.ShowMessage(message))
         }
     }
 

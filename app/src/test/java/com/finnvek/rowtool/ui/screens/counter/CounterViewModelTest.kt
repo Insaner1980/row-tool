@@ -6,6 +6,7 @@ import com.finnvek.rowtool.R
 import com.finnvek.rowtool.data.local.RowToolDatabase
 import com.finnvek.rowtool.data.preferences.PreferencesRepository
 import com.finnvek.rowtool.data.repository.CounterRepository
+import com.finnvek.rowtool.domain.model.CounterProject
 import com.finnvek.rowtool.domain.model.CounterUnit
 import com.finnvek.rowtool.test.InMemoryPreferencesDataStore
 import kotlinx.coroutines.Dispatchers
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -56,64 +58,107 @@ class CounterViewModelTest {
     // CPD-ON
 
     @Test
-    fun deleteEmitsOneReturnToProjectsEffect() =
+    fun deletePublishesMissingProjectWithoutNavigationEffect() =
         runTest(dispatcher) {
-            val counterRepository = CounterRepository(database, idGenerator = { "project" })
-            val preferencesRepository = PreferencesRepository(InMemoryPreferencesDataStore(), database.projectDao())
-            val project =
-                counterRepository.createProject(
-                    name = "Project",
-                    counterUnit = CounterUnit.ROWS,
-                    startValue = 0,
-                    targetCount = null,
-                    repeatLength = null,
-                )
-            val viewModel = CounterViewModel(project.id, counterRepository, preferencesRepository)
-            val effects = mutableListOf<CounterEffect>()
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                viewModel.uiState.collect()
-            }
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                viewModel.effects.collect(effects::add)
-            }
-            viewModel.uiState.first { !it.isLoading }
+            val fixture = createLoadedViewModel()
 
-            viewModel.delete()
+            fixture.viewModel.delete()
             advanceUntilIdle()
 
-            assertEquals(null, counterRepository.getProject(project.id))
-            assertEquals(1, effects.filterIsInstance<CounterEffect.ReturnToProjects>().size)
+            assertEquals(null, fixture.repository.getProject(fixture.project.id))
+            assertEquals(null, fixture.viewModel.uiState.value.project)
+            assertEquals(false, fixture.viewModel.uiState.value.isLoading)
+            assertEquals(emptyList<CounterEffect>(), fixture.effects)
         }
 
     @Test
-    fun archivedProjectEmissionReturnsToProjects() =
+    fun archivedProjectStateRemainsAvailableAfterFeedbackIsConsumed() =
         runTest(dispatcher) {
-            val counterRepository = CounterRepository(database, idGenerator = { "project" })
-            val preferencesRepository = PreferencesRepository(InMemoryPreferencesDataStore(), database.projectDao())
-            val project =
-                counterRepository.createProject(
-                    name = "Project",
-                    counterUnit = CounterUnit.ROWS,
-                    startValue = 0,
-                    targetCount = null,
-                    repeatLength = null,
-                )
-            val viewModel = CounterViewModel(project.id, counterRepository, preferencesRepository)
-            val effects = mutableListOf<CounterEffect>()
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                viewModel.uiState.collect()
-            }
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                viewModel.effects.collect(effects::add)
-            }
-            viewModel.uiState.first { !it.isLoading }
+            val fixture = createLoadedViewModel()
 
-            counterRepository.setArchived(project.id, true)
+            fixture.repository.setArchived(fixture.project.id, true)
             advanceUntilIdle()
 
+            val state = fixture.viewModel.uiState.value
+            assertEquals(true, state.project?.isArchived)
+            assertEquals(false, state.isLoading)
             assertEquals(
-                listOf(CounterEffect.ReturnToProjects(R.string.error_archived_project)),
-                effects.filterIsInstance<CounterEffect.ReturnToProjects>(),
+                listOf(CounterEffect.ShowMessage(R.string.error_archived_project)),
+                fixture.effects.filterIsInstance<CounterEffect.ShowMessage>(),
             )
         }
+
+    @Test
+    fun mutationCompletingWithoutCollectorDoesNotReplayButNewMutationsStillEmit() =
+        runTest(dispatcher) {
+            val fixture = createLoadedViewModel()
+            val haptics = mutableListOf<CounterEffect.Haptic>()
+            val collector =
+                backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                    fixture.viewModel.haptics.collect(haptics::add)
+                }
+            // StandardTestDispatcher holds the requested mutation until the collector is gone.
+            fixture.viewModel.increment()
+            assertEquals(fixture.project, fixture.viewModel.uiState.value.project)
+            collector.cancel()
+            advanceUntilIdle()
+            assertEquals(1L, fixture.repository.getProject(fixture.project.id)?.count)
+
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                fixture.viewModel.haptics.collect(haptics::add)
+            }
+            advanceUntilIdle()
+            assertEquals(emptyList<CounterEffect.Haptic>(), haptics)
+            fixture.viewModel.increment()
+            advanceUntilIdle()
+            fixture.viewModel.decrement()
+            advanceUntilIdle()
+            fixture.viewModel.undo()
+            advanceUntilIdle()
+            assertEquals(List(3) { CounterEffect.Haptic(false) }, haptics)
+            assertEquals(emptyList<CounterEffect>(), fixture.effects)
+        }
+
+    @Test
+    fun targetAndRepeatFeedbackStayStrongAndManualChangesStaySilent() =
+        runTest(dispatcher) {
+            val fixture = createLoadedViewModel(targetCount = 2, repeatLength = 3)
+            val haptics = mutableListOf<CounterEffect.Haptic>()
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                fixture.viewModel.haptics.collect(haptics::add)
+            }
+            repeat(3) {
+                fixture.viewModel.increment()
+                advanceUntilIdle()
+            }
+            fixture.viewModel.setCount(4)
+            advanceUntilIdle()
+            fixture.viewModel.reset()
+            advanceUntilIdle()
+            fixture.viewModel.decrement()
+            advanceUntilIdle()
+            assertEquals(listOf(false, true, true), haptics.map { it.strong })
+        }
+
+    private suspend fun TestScope.createLoadedViewModel(
+        targetCount: Long? = null,
+        repeatLength: Int? = null,
+    ): CounterViewModelFixture {
+        val repository = CounterRepository(database, idGenerator = { "project" })
+        val preferences = PreferencesRepository(InMemoryPreferencesDataStore(), database.projectDao())
+        val project = repository.createProject("Project", CounterUnit.ROWS, 0, targetCount, repeatLength)
+        val viewModel = CounterViewModel(project.id, repository, preferences)
+        val effects = mutableListOf<CounterEffect>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect() }
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.effects.collect(effects::add) }
+        viewModel.uiState.first { !it.isLoading }
+        return CounterViewModelFixture(repository, project, viewModel, effects)
+    }
+
+    private data class CounterViewModelFixture(
+        val repository: CounterRepository,
+        val project: CounterProject,
+        val viewModel: CounterViewModel,
+        val effects: List<CounterEffect>,
+    )
 }

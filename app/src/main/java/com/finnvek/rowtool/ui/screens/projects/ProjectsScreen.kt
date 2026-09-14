@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -15,16 +14,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -42,16 +38,22 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.isContainer
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.finnvek.rowtool.R
 import com.finnvek.rowtool.domain.model.CounterProject
 import com.finnvek.rowtool.domain.model.CounterUnit
 import com.finnvek.rowtool.ui.RowToolDropdownMenuItem
+import com.finnvek.rowtool.ui.RowToolSectionHeadingText
+import com.finnvek.rowtool.ui.screens.counter.CounterButtonLayout
+import com.finnvek.rowtool.ui.screens.counter.CounterImageButton
 import com.finnvek.rowtool.ui.theme.RowToolDimens
 
 data class ProjectsScreenState(
@@ -105,17 +107,12 @@ fun ProjectsScreenContent(
         },
         floatingActionButton = {
             if (state.activeProjects.isNotEmpty() || state.archivedProjects.isNotEmpty()) {
-                ExtendedFloatingActionButton(
+                CounterImageButton(
+                    imageRes = R.drawable.counter_plus_button,
+                    contentDescription = stringResource(R.string.action_new_project),
+                    layout = CounterButtonLayout(visualSize = 64.dp, touchSize = 72.dp),
+                    enabled = true,
                     onClick = actions.onNewProject,
-                    icon = {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_add),
-                            contentDescription = null,
-                        )
-                    },
-                    text = { Text(stringResource(R.string.action_new_project)) },
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
                 )
             }
         },
@@ -175,7 +172,6 @@ private fun ProjectsList(
                 top = RowToolDimens.Space12,
                 bottom = 104.dp,
             ),
-        verticalArrangement = Arrangement.spacedBy(RowToolDimens.Space12),
     ) {
         activeProjectItems(state.activeProjects, actions.project)
         archivedProjectItems(
@@ -193,14 +189,16 @@ private fun LazyListScope.activeProjectItems(
 ) {
     if (projects.isEmpty()) return
     item {
-        Text(
+        RowToolSectionHeadingText(
             text = stringResource(R.string.projects_active_title),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.secondary,
+            modifier = Modifier.padding(top = RowToolDimens.Space20, bottom = RowToolDimens.Space8),
         )
     }
-    items(projects, key = { it.id }) { project ->
-        ProjectCard(project = project, actions = actions)
+    itemsIndexed(projects, key = { _, project -> project.id }) { index, project ->
+        ProjectRow(project = project, actions = actions)
+        if (index < projects.lastIndex) {
+            ProjectDivider()
+        }
     }
 }
 
@@ -212,12 +210,6 @@ private fun LazyListScope.archivedProjectItems(
 ) {
     if (projects.isEmpty()) return
     item {
-        HorizontalDivider(
-            modifier = Modifier.padding(top = RowToolDimens.Space8),
-            color = MaterialTheme.colorScheme.outlineVariant,
-        )
-    }
-    item {
         ArchivedProjectsHeader(
             projectCount = projects.size,
             expanded = expanded,
@@ -226,10 +218,13 @@ private fun LazyListScope.archivedProjectItems(
     }
     item {
         AnimatedVisibility(visible = expanded) {
-            Column(verticalArrangement = Arrangement.spacedBy(RowToolDimens.Space12)) {
-                projects.forEach { project ->
+            Column {
+                projects.forEachIndexed { index, project ->
                     key(project.id) {
-                        ProjectCard(project = project, actions = actions)
+                        ProjectRow(project = project, actions = actions)
+                        if (index < projects.lastIndex) {
+                            ProjectDivider()
+                        }
                     }
                 }
             }
@@ -247,16 +242,16 @@ private fun ArchivedProjectsHeader(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .heightIn(min = 48.dp)
+                .padding(top = RowToolDimens.Space20)
+                .heightIn(min = RowToolDimens.MinimumTouchSize)
                 .clickable(
                     role = Role.Button,
                     onClick = { onExpandedChange(!expanded) },
                 ).padding(vertical = RowToolDimens.Space8),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
+        RowToolSectionHeadingText(
             text = stringResource(R.string.projects_archived_title),
-            style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.weight(1f),
         )
         Text(
@@ -320,50 +315,46 @@ private fun EmptyProjects(
 }
 
 @Composable
-private fun ProjectCard(
+private fun ProjectRow(
     project: CounterProject,
     actions: ProjectCardActions,
     modifier: Modifier = Modifier,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
-    Card(
+    Row(
         modifier =
             modifier
                 .fillMaxWidth()
-                .then(
+                .testTag("project-${project.id}")
+                .semantics {
+                    // Preserve the former Card surface's accessibility container.
+                    @Suppress("DEPRECATION")
+                    isContainer = true
+                }.then(
                     if (project.isArchived) {
                         Modifier
                     } else {
                         Modifier.clickable(role = Role.Button) { actions.onOpen(project) }
                     },
-                ),
-        colors =
-            CardDefaults.cardColors(
-                containerColor =
-                    if (project.isArchived) {
-                        MaterialTheme.colorScheme.surfaceContainerLow
-                    } else {
-                        MaterialTheme.colorScheme.surfaceContainer
-                    },
-            ),
-        border = CardDefaults.outlinedCardBorder(),
+                ).padding(vertical = 14.dp),
+        verticalAlignment = Alignment.Top,
     ) {
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(RowToolDimens.Space16),
-            verticalAlignment = Alignment.Top,
-        ) {
-            ProjectSummary(project = project, modifier = Modifier.weight(1f))
-            ProjectOptions(
-                project = project,
-                expanded = menuExpanded,
-                onExpandedChange = { menuExpanded = it },
-                actions = actions,
-            )
-        }
+        ProjectSummary(project = project, modifier = Modifier.weight(1f))
+        ProjectOptions(
+            project = project,
+            expanded = menuExpanded,
+            onExpandedChange = { menuExpanded = it },
+            actions = actions,
+        )
     }
+}
+
+@Composable
+private fun ProjectDivider() {
+    HorizontalDivider(
+        thickness = 1.dp,
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f),
+    )
 }
 
 @Composable
@@ -400,7 +391,7 @@ private fun ProjectSummary(
                         )
                     }
                 },
-            style = MaterialTheme.typography.bodyLarge,
+            style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.secondary,
         )
         project.targetCount?.let { target ->
@@ -445,7 +436,7 @@ private fun ProjectOptions(
             expanded = expanded,
             onDismissRequest = { onExpandedChange(false) },
         ) {
-            ProjectMenuItem(
+            RowToolDropdownMenuItem(
                 label = stringResource(R.string.action_edit),
                 iconRes = R.drawable.ic_edit,
                 onClick = {
@@ -453,7 +444,7 @@ private fun ProjectOptions(
                     actions.onEdit(project)
                 },
             )
-            ProjectMenuItem(
+            RowToolDropdownMenuItem(
                 label =
                     stringResource(
                         if (project.isArchived) R.string.action_restore else R.string.action_archive,
@@ -468,7 +459,7 @@ private fun ProjectOptions(
                     }
                 },
             )
-            ProjectMenuItem(
+            RowToolDropdownMenuItem(
                 label = stringResource(R.string.action_delete),
                 iconRes = R.drawable.ic_delete,
                 onClick = {
@@ -478,17 +469,4 @@ private fun ProjectOptions(
             )
         }
     }
-}
-
-@Composable
-private fun ProjectMenuItem(
-    label: String,
-    iconRes: Int,
-    onClick: () -> Unit,
-) {
-    RowToolDropdownMenuItem(
-        label = label,
-        iconRes = iconRes,
-        onClick = onClick,
-    )
 }

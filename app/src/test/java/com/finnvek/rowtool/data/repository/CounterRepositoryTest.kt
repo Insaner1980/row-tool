@@ -2,13 +2,14 @@ package com.finnvek.rowtool.data.repository
 
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
-import com.finnvek.rowtool.data.local.ProjectEntity
 import com.finnvek.rowtool.data.local.RowToolDatabase
 import com.finnvek.rowtool.domain.model.CounterConstants
 import com.finnvek.rowtool.domain.model.CounterMutation
 import com.finnvek.rowtool.domain.model.CounterMutationResult
 import com.finnvek.rowtool.domain.model.CounterUnit
 import com.finnvek.rowtool.domain.model.HistoryChangeReason
+import com.finnvek.rowtool.domain.model.ProjectValidationError
+import com.finnvek.rowtool.test.projectEntities
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.first
@@ -110,6 +111,21 @@ class CounterRepositoryTest {
             )
             assertChanged(repository.undo(project.id), 42, 0, HistoryChangeReason.MANUAL_SET)
             assertEquals(0L, repository.getProject(project.id)?.count)
+        }
+
+    @Test
+    fun manualSetRejectsNegativeAndAcceptsZeroWithoutLosingHistory() =
+        runTest {
+            val project = createProject(startValue = 1)
+
+            assertEquals(
+                CounterMutationResult.Invalid(setOf(ProjectValidationError.INVALID_COUNT)),
+                repository.mutate(project.id, CounterMutation.ManualSet(-1)),
+            )
+            assertEquals(1L, repository.getProject(project.id)?.count)
+            assertEquals(0, database.counterHistoryDao().countForProject(project.id))
+            assertChanged(repository.mutate(project.id, CounterMutation.ManualSet(0)), 1, 0, HistoryChangeReason.MANUAL_SET)
+            assertChanged(repository.undo(project.id), 0, 1, HistoryChangeReason.MANUAL_SET)
         }
 
     @Test
@@ -232,20 +248,7 @@ class CounterRepositoryTest {
     fun creatingProjectBeyondBackupLimitIsRejected() =
         runTest {
             database.projectDao().insertAll(
-                (0 until CounterConstants.MAX_PROJECTS_IN_BACKUP).map { index ->
-                    ProjectEntity(
-                        id = "project-$index",
-                        name = "Project $index",
-                        counterUnit = CounterUnit.ROWS.name,
-                        count = 0,
-                        startValue = 0,
-                        targetCount = null,
-                        repeatLength = null,
-                        isArchived = false,
-                        createdAt = index.toLong(),
-                        updatedAt = index.toLong(),
-                    )
-                },
+                projectEntities(CounterConstants.MAX_PROJECTS_IN_BACKUP),
             )
 
             val failure = runCatching { createProject() }.exceptionOrNull()

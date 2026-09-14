@@ -32,7 +32,7 @@
     <string name="project_edit_title">Editar proyecto</string>
     <string name="project_name_label">Nombre del proyecto</string>
     <string name="project_name_required">Introduce un nombre para el proyecto.</string>
-    <string name="project_name_too_long">Usa 60 caracteres como máximo.</string>
+    <string name="project_name_too_long">Usa %1$d caracteres como máximo.</string>
     <string name="project_counter_type">Tipo de recuento</string>
     <string name="project_rows">Filas</string>
     <string name="project_rounds">Vueltas</string>
@@ -41,10 +41,10 @@
     <string name="project_start_one">1</string>
     <string name="project_target_enabled">Establecer un objetivo</string>
     <string name="project_target_label">Recuento objetivo</string>
-    <string name="project_target_error">Introduce un número entero entre 1 y 999.999.</string>
+    <string name="project_target_error">Introduce un número entero entre %1$d y %2$,d.</string>
     <string name="project_repeat_enabled">Registrar una repetición</string>
     <string name="project_repeat_label">Longitud de la repetición</string>
-    <string name="project_repeat_error">Introduce un número entero entre 2 y 999.</string>
+    <string name="project_repeat_error">Introduce un número entero entre %1$d y %2$d.</string>
 
     <string name="counter_rows_label">FILAS</string>
     <string name="counter_rounds_label">VUELTAS</string>
@@ -68,14 +68,14 @@
     <string name="counter_target_reached">Objetivo alcanzado</string>
     <string name="counter_set_title">Establecer recuento</string>
     <string name="counter_set_label">Recuento</string>
-    <string name="counter_set_error">Introduce un número entero entre 0 y 999.999.</string>
+    <string name="counter_set_error">Introduce un número entero entre %1$d y %2$,d.</string>
     <string name="counter_reset_title">¿Restablecer el recuento?</string>
     <string name="counter_reset_message">¿Restablecer este proyecto a %1$d? Puedes deshacer este cambio.</string>
     <string name="counter_archive_title">¿Archivar el proyecto?</string>
     <string name="counter_archive_message">%1$s se moverá a Archivados y se desactivará el recuento.</string>
     <string name="counter_delete_title">¿Eliminar el proyecto?</string>
     <string name="counter_delete_message">¿Eliminar permanentemente %1$s y su historial de recuento?</string>
-    <string name="counter_max_reached">El recuento máximo es 999.999.</string>
+    <string name="counter_max_reached">El recuento máximo es %1$,d.</string>
     <string name="counter_project_missing">Ese proyecto ya no está disponible.</string>
 
     <string name="settings_title">Ajustes</string>
@@ -101,7 +101,7 @@
     <string name="backup_export_success">Datos exportados.</string>
     <string name="backup_export_failed">No se han podido exportar los datos. Elige un archivo e inténtalo de nuevo.</string>
     <string name="backup_import_failed_open">No se ha podido abrir ese archivo.</string>
-    <string name="backup_import_too_large">Ese archivo ocupa más de 5 MB.</string>
+    <string name="backup_import_too_large">Ese archivo ocupa más de %1$d MiB.</string>
     <string name="backup_import_invalid_json">Ese archivo no es un JSON de RowTool válido.</string>
     <string name="backup_import_unsupported">Esta versión de la copia de seguridad no es compatible.</string>
     <string name="backup_import_invalid_data">La copia de seguridad contiene datos de proyecto no válidos.</string>

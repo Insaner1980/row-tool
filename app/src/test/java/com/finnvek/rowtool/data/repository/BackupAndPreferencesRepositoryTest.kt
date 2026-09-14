@@ -4,7 +4,9 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStoreFile
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
@@ -24,6 +26,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.Json
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -98,6 +101,16 @@ class BackupAndPreferencesRepositoryTest {
                 ),
                 preferencesRepository.preferences.first(),
             )
+        }
+
+    @Test
+    fun unknownStoredThemeUsesDefaultWithoutRewritingStoredValue() =
+        runTest {
+            val themeKey = stringPreferencesKey("theme_mode")
+            dataStore.edit { it[themeKey] = "UNKNOWN" }
+
+            assertEquals(AppPreferences(), preferencesRepository.preferences.first())
+            assertEquals("UNKNOWN", dataStore.data.first()[themeKey])
         }
 
     @Test
@@ -198,7 +211,12 @@ class BackupAndPreferencesRepositoryTest {
 
             val result =
                 backupRepository.replaceWith(
-                    ValidatedBackup(exportedAt = 400, projects = listOf(importedOlder, importedNewest)),
+                    (
+                        ValidatedBackup.create(
+                            exportedAt = 400,
+                            projects = listOf(importedOlder, importedNewest),
+                        ) as BackupDecodeResult.Valid
+                    ).backup,
                 )
 
             assertEquals(BackupImportResult.Success(2, importedNewest.id), result)
@@ -218,10 +236,27 @@ class BackupAndPreferencesRepositoryTest {
 
             val result =
                 backupRepository.replaceWith(
-                    ValidatedBackup(exportedAt = 400, projects = listOf(archived)),
+                    (ValidatedBackup.create(exportedAt = 400, projects = listOf(archived)) as BackupDecodeResult.Valid).backup,
                 )
 
             assertEquals(BackupImportResult.Success(1, null), result)
+            assertNull(preferencesRepository.preferences.first().lastActiveProjectId)
+        }
+
+    @Test
+    fun emptyBackupImportClearsProjectsHistoryAndSelection() =
+        runTest {
+            val existing = createProject("Existing")
+            counterRepository.mutate(existing.id, CounterMutation.Increment)
+            preferencesRepository.setLastActiveProjectId(existing.id)
+            val json = BackupCodec.encode(BackupFile(1, "RowTool", 400, emptyList()))
+            val prepared = backupRepository.prepareImport(json.encodeToByteArray()) as BackupDecodeResult.Valid
+
+            val result = backupRepository.replaceWith(prepared.backup)
+
+            assertEquals(BackupImportResult.Success(0, null), result)
+            assertEquals(emptyList<CounterProject>(), counterRepository.projects.first())
+            assertEquals(0, database.counterHistoryDao().countAll())
             assertNull(preferencesRepository.preferences.first().lastActiveProjectId)
         }
 
@@ -233,10 +268,12 @@ class BackupAndPreferencesRepositoryTest {
 
             val result =
                 backupRepository.replaceWith(
-                    ValidatedBackup(
-                        exportedAt = 400,
-                        projects = listOf(secondByDaoOrder, firstByDaoOrder),
-                    ),
+                    (
+                        ValidatedBackup.create(
+                            exportedAt = 400,
+                            projects = listOf(secondByDaoOrder, firstByDaoOrder),
+                        ) as BackupDecodeResult.Valid
+                    ).backup,
                 )
 
             assertEquals(BackupImportResult.Success(2, firstByDaoOrder.id), result)
@@ -260,10 +297,12 @@ class BackupAndPreferencesRepositoryTest {
 
             val result =
                 backupRepository.replaceWith(
-                    ValidatedBackup(
-                        exportedAt = 400,
-                        projects = listOf(importedProject(id = "blocked", name = "Blocked", updatedAt = 500)),
-                    ),
+                    (
+                        ValidatedBackup.create(
+                            exportedAt = 400,
+                            projects = listOf(importedProject(id = "blocked", name = "Blocked", updatedAt = 500)),
+                        ) as BackupDecodeResult.Valid
+                    ).backup,
                 )
 
             assertEquals(
@@ -289,7 +328,7 @@ class BackupAndPreferencesRepositoryTest {
 
             val result =
                 repositoryWithFailingPreferences.replaceWith(
-                    ValidatedBackup(exportedAt = 400, projects = listOf(imported)),
+                    (ValidatedBackup.create(exportedAt = 400, projects = listOf(imported)) as BackupDecodeResult.Valid).backup,
                 )
 
             assertEquals(BackupImportResult.Success(1, imported.id), result)
@@ -304,8 +343,11 @@ class BackupAndPreferencesRepositoryTest {
             counterRepository.mutate(project.id, CounterMutation.Increment)
 
             val json = backupRepository.exportJson()
-            val decoded = BackupCodec.decode(json.encodeToByteArray())
+            val file = Json.decodeFromString<BackupFile>(json)
+            val decoded = backupRepository.prepareImport(json.encodeToByteArray())
 
+            assertEquals(1, file.schemaVersion)
+            assertEquals("RowTool", file.application)
             assertTrue(decoded is BackupDecodeResult.Valid)
             val exported = (decoded as BackupDecodeResult.Valid).backup.projects.single()
             assertEquals(1L, exported.count)

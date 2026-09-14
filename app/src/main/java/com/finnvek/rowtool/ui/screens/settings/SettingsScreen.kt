@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
@@ -17,8 +18,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
@@ -32,9 +31,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import com.finnvek.rowtool.R
 import com.finnvek.rowtool.data.preferences.AppPreferences
 import com.finnvek.rowtool.data.preferences.ThemeMode
+import com.finnvek.rowtool.ui.RowToolSectionHeadingText
 import com.finnvek.rowtool.ui.theme.RowToolDimens
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -50,7 +52,12 @@ fun SettingsScreenContent(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.settings_title)) },
+                title = {
+                    Text(
+                        text = stringResource(R.string.settings_title),
+                        style = MaterialTheme.typography.headlineMedium,
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = actions.onBack) {
                         Icon(
@@ -78,14 +85,7 @@ fun SettingsScreenContent(
                     Modifier
                         .widthIn(max = RowToolDimens.MaxContentWidth)
                         .fillMaxWidth(),
-                contentPadding =
-                    PaddingValues(
-                        start = RowToolDimens.PhoneHorizontalPadding,
-                        end = RowToolDimens.PhoneHorizontalPadding,
-                        top = RowToolDimens.Space12,
-                        bottom = RowToolDimens.Space32,
-                    ),
-                verticalArrangement = Arrangement.spacedBy(RowToolDimens.Space4),
+                contentPadding = PaddingValues(bottom = RowToolDimens.Space32),
             ) {
                 item { SectionTitle(stringResource(R.string.settings_appearance)) }
                 item {
@@ -150,17 +150,17 @@ fun SettingsScreenContent(
                         modifier =
                             Modifier.padding(
                                 horizontal = RowToolDimens.Space16,
-                                vertical = RowToolDimens.Space8,
+                                vertical = RowToolDimens.Space12,
                             ),
                         verticalArrangement = Arrangement.spacedBy(RowToolDimens.Space8),
                     ) {
                         Text(
                             text = stringResource(R.string.app_name),
-                            style = MaterialTheme.typography.titleLarge,
+                            style = MaterialTheme.typography.titleMedium,
                         )
                         Text(
                             text = stringResource(R.string.settings_version, versionName),
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                         Text(
@@ -169,13 +169,13 @@ fun SettingsScreenContent(
                         )
                         Text(
                             text = stringResource(R.string.settings_privacy),
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                         Text(
                             text = stringResource(R.string.settings_business_model),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.secondary,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }
@@ -186,17 +186,12 @@ fun SettingsScreenContent(
 
 @Composable
 private fun SectionTitle(text: String) {
-    Text(
+    RowToolSectionHeadingText(
         text = text,
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.secondary,
         modifier =
-            Modifier.padding(
-                start = RowToolDimens.Space16,
-                end = RowToolDimens.Space16,
-                top = RowToolDimens.Space12,
-                bottom = RowToolDimens.Space4,
-            ),
+            Modifier
+                .padding(horizontal = RowToolDimens.Space16, vertical = RowToolDimens.Space8)
+                .semantics { heading() },
     )
 }
 
@@ -214,7 +209,8 @@ private fun ThemeOption(
                     selected = selected,
                     role = Role.RadioButton,
                     onClick = onClick,
-                ).padding(horizontal = RowToolDimens.Space12, vertical = RowToolDimens.Space8),
+                ).heightIn(min = RowToolDimens.MinimumTouchSize)
+                .padding(horizontal = RowToolDimens.Space16, vertical = RowToolDimens.Space12),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         RadioButton(selected = selected, onClick = null)
@@ -241,20 +237,16 @@ private fun ToggleRow(
                     value = checked,
                     role = Role.Switch,
                     onValueChange = onCheckedChange,
-                ).padding(horizontal = RowToolDimens.Space16, vertical = RowToolDimens.Space12),
+                ).heightIn(min = RowToolDimens.MinimumTouchSize)
+                .padding(horizontal = RowToolDimens.Space16, vertical = RowToolDimens.Space12),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(RowToolDimens.Space12),
     ) {
-        Column(
+        SettingText(
+            title = title,
+            summary = summary,
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(RowToolDimens.Space4),
-        ) {
-            Text(title, style = MaterialTheme.typography.bodyLarge)
-            Text(
-                text = summary,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+        )
         Switch(checked = checked, onCheckedChange = null)
     }
 }
@@ -265,18 +257,40 @@ private fun ActionRow(
     summary: String,
     onClick: () -> Unit,
 ) {
-    ListItem(
-        headlineContent = { Text(title) },
-        supportingContent = { Text(summary) },
-        colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.background),
-        modifier = Modifier.clickable(role = Role.Button, onClick = onClick),
+    SettingText(
+        title = title,
+        summary = summary,
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable(role = Role.Button, onClick = onClick)
+                .heightIn(min = RowToolDimens.MinimumTouchSize)
+                .padding(horizontal = RowToolDimens.Space16, vertical = RowToolDimens.Space12),
     )
+}
+
+@Composable
+private fun SettingText(
+    title: String,
+    summary: String,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(RowToolDimens.Space4),
+    ) {
+        Text(title, style = MaterialTheme.typography.bodyLarge)
+        Text(
+            text = summary,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
 }
 
 @Composable
 private fun SectionDivider() {
     HorizontalDivider(
-        modifier = Modifier.padding(vertical = RowToolDimens.Space8),
         color = MaterialTheme.colorScheme.outlineVariant,
     )
 }

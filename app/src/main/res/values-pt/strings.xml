@@ -32,7 +32,7 @@
     <string name="project_edit_title">Editar projeto</string>
     <string name="project_name_label">Nome do projeto</string>
     <string name="project_name_required">Introduz um nome para o projeto.</string>
-    <string name="project_name_too_long">Utiliza no máximo 60 caracteres.</string>
+    <string name="project_name_too_long">Utiliza no máximo %1$d caracteres.</string>
     <string name="project_counter_type">Tipo de contagem</string>
     <string name="project_rows">Carreiras</string>
     <string name="project_rounds">Voltas</string>
@@ -41,10 +41,10 @@
     <string name="project_start_one">1</string>
     <string name="project_target_enabled">Definir um objetivo</string>
     <string name="project_target_label">Contagem pretendida</string>
-    <string name="project_target_error">Introduz um número inteiro entre 1 e 999 999.</string>
+    <string name="project_target_error">Introduz um número inteiro entre %1$d e %2$,d.</string>
     <string name="project_repeat_enabled">Acompanhar uma repetição</string>
     <string name="project_repeat_label">Comprimento da repetição</string>
-    <string name="project_repeat_error">Introduz um número inteiro entre 2 e 999.</string>
+    <string name="project_repeat_error">Introduz um número inteiro entre %1$d e %2$d.</string>
 
     <string name="counter_rows_label">CARREIRAS</string>
     <string name="counter_rounds_label">VOLTAS</string>
@@ -68,14 +68,14 @@
     <string name="counter_target_reached">Objetivo alcançado</string>
     <string name="counter_set_title">Definir contagem</string>
     <string name="counter_set_label">Contagem</string>
-    <string name="counter_set_error">Introduz um número inteiro entre 0 e 999 999.</string>
+    <string name="counter_set_error">Introduz um número inteiro entre %1$d e %2$,d.</string>
     <string name="counter_reset_title">Repor a contagem?</string>
     <string name="counter_reset_message">Repor este projeto para %1$d? Podes anular esta alteração.</string>
     <string name="counter_archive_title">Arquivar o projeto?</string>
     <string name="counter_archive_message">%1$s será movido para Arquivados e a contagem será desativada.</string>
     <string name="counter_delete_title">Eliminar o projeto?</string>
     <string name="counter_delete_message">Eliminar permanentemente %1$s e o respetivo histórico de contagem?</string>
-    <string name="counter_max_reached">A contagem máxima é 999 999.</string>
+    <string name="counter_max_reached">A contagem máxima é %1$,d.</string>
     <string name="counter_project_missing">Esse projeto já não está disponível.</string>
 
     <string name="settings_title">Definições</string>
@@ -101,7 +101,7 @@
     <string name="backup_export_success">Dados exportados.</string>
     <string name="backup_export_failed">Não foi possível exportar os dados. Escolhe um ficheiro e tenta novamente.</string>
     <string name="backup_import_failed_open">Não foi possível abrir esse ficheiro.</string>
-    <string name="backup_import_too_large">Esse ficheiro tem mais de 5 MB.</string>
+    <string name="backup_import_too_large">Esse ficheiro tem mais de %1$d MiB.</string>
     <string name="backup_import_invalid_json">Esse ficheiro não contém JSON RowTool válido.</string>
     <string name="backup_import_unsupported">Esta versão da cópia de segurança não é suportada.</string>
     <string name="backup_import_invalid_data">A cópia de segurança contém dados de projeto inválidos.</string>

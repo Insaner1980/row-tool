@@ -29,8 +29,27 @@ sealed interface ProjectValidationResult {
 }
 
 object ProjectValidation {
-    private const val MAX_NAME_CODE_POINTS = 60
-    private const val MAX_REPEAT_LENGTH = 999
+    internal const val MAX_NAME_CODE_POINTS = 60
+    internal const val MAX_REPEAT_LENGTH = 999
+    internal const val MIN_TARGET_COUNT = 1L
+    internal const val MIN_REPEAT_LENGTH = 2
+
+    internal fun normalizeName(name: String): String = name.trim()
+
+    internal fun nameErrors(name: String): Set<ProjectValidationError> {
+        val trimmedName = normalizeName(name)
+        return buildSet {
+            if (trimmedName.isBlank()) add(ProjectValidationError.NAME_BLANK)
+            if (trimmedName.codePointCount(0, trimmedName.length) > MAX_NAME_CODE_POINTS) {
+                add(ProjectValidationError.NAME_TOO_LONG)
+            }
+        }
+    }
+
+    internal fun isTargetValid(targetCount: Long?): Boolean =
+        targetCount == null || targetCount in MIN_TARGET_COUNT..CounterConstants.MAX_COUNT
+
+    internal fun isRepeatValid(repeatLength: Int?): Boolean = repeatLength == null || repeatLength in MIN_REPEAT_LENGTH..MAX_REPEAT_LENGTH
 
     fun validate(
         name: String,
@@ -40,14 +59,11 @@ object ProjectValidation {
         targetCount: Long?,
         repeatLength: Int?,
     ): ProjectValidationResult {
-        val trimmedName = name.trim()
+        val trimmedName = normalizeName(name)
         val errors =
             buildSet {
-                if (trimmedName.isBlank()) add(ProjectValidationError.NAME_BLANK)
-                if (trimmedName.codePointCount(0, trimmedName.length) > MAX_NAME_CODE_POINTS) {
-                    add(ProjectValidationError.NAME_TOO_LONG)
-                }
-                if (count !in 0..CounterConstants.MAX_COUNT) {
+                addAll(nameErrors(trimmedName))
+                if (count !in CounterConstants.MIN_COUNT..CounterConstants.MAX_COUNT) {
                     add(ProjectValidationError.INVALID_COUNT)
                 }
                 if (startValue != 0 && startValue != 1) {
@@ -77,10 +93,10 @@ object ProjectValidation {
         repeatLength: Int?,
     ): Set<ProjectValidationError> =
         buildSet {
-            if (targetCount != null && targetCount !in 1..CounterConstants.MAX_COUNT) {
+            if (!isTargetValid(targetCount)) {
                 add(ProjectValidationError.INVALID_TARGET)
             }
-            if (repeatLength != null && repeatLength !in 2..MAX_REPEAT_LENGTH) {
+            if (!isRepeatValid(repeatLength)) {
                 add(ProjectValidationError.INVALID_REPEAT_LENGTH)
             }
         }

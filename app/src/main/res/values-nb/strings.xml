@@ -32,7 +32,7 @@
     <string name="project_edit_title">Rediger prosjekt</string>
     <string name="project_name_label">Prosjektnavn</string>
     <string name="project_name_required">Angi et prosjektnavn.</string>
-    <string name="project_name_too_long">Bruk maksimalt 60 tegn.</string>
+    <string name="project_name_too_long">Bruk maksimalt %1$d tegn.</string>
     <string name="project_counter_type">Telling</string>
     <string name="project_rows">Rader</string>
     <string name="project_rounds">Omganger</string>
@@ -41,10 +41,10 @@
     <string name="project_start_one">1</string>
     <string name="project_target_enabled">Angi et mål</string>
     <string name="project_target_label">Målverdi</string>
-    <string name="project_target_error">Angi et heltall fra 1 til 999 999.</string>
+    <string name="project_target_error">Angi et heltall fra %1$d til %2$,d.</string>
     <string name="project_repeat_enabled">Følg en repetisjon</string>
     <string name="project_repeat_label">Repetisjonslengde</string>
-    <string name="project_repeat_error">Angi et heltall fra 2 til 999.</string>
+    <string name="project_repeat_error">Angi et heltall fra %1$d til %2$d.</string>
 
     <string name="counter_rows_label">RADER</string>
     <string name="counter_rounds_label">OMGANGER</string>
@@ -66,14 +66,14 @@
     <string name="counter_target_reached">Målet er nådd</string>
     <string name="counter_set_title">Angi antall</string>
     <string name="counter_set_label">Antall</string>
-    <string name="counter_set_error">Angi et heltall fra 0 til 999 999.</string>
+    <string name="counter_set_error">Angi et heltall fra %1$d til %2$,d.</string>
     <string name="counter_reset_title">Nullstille telleren?</string>
     <string name="counter_reset_message">Tilbakestille dette prosjektet til %1$d? Du kan angre denne endringen.</string>
     <string name="counter_archive_title">Arkivere prosjektet?</string>
     <string name="counter_archive_message">%1$s flyttes til Arkiverte, og telling deaktiveres.</string>
     <string name="counter_delete_title">Slette prosjektet?</string>
     <string name="counter_delete_message">Slette %1$s og tellehistorikken permanent?</string>
-    <string name="counter_max_reached">Maksimalt antall er 999 999.</string>
+    <string name="counter_max_reached">Maksimalt antall er %1$,d.</string>
     <string name="counter_project_missing">Dette prosjektet er ikke lenger tilgjengelig.</string>
 
     <string name="settings_title">Innstillinger</string>
@@ -99,7 +99,7 @@
     <string name="backup_export_success">Dataene er eksportert.</string>
     <string name="backup_export_failed">Kunne ikke eksportere data. Velg en fil og prøv på nytt.</string>
     <string name="backup_import_failed_open">Kunne ikke åpne filen.</string>
-    <string name="backup_import_too_large">Filen er større enn 5 MB.</string>
+    <string name="backup_import_too_large">Filen er større enn %1$d MiB.</string>
     <string name="backup_import_invalid_json">Filen inneholder ikke gyldig RowTool-JSON.</string>
     <string name="backup_import_unsupported">Denne versjonen av sikkerhetskopien støttes ikke.</string>
     <string name="backup_import_invalid_data">Sikkerhetskopien inneholder ugyldige prosjektdata.</string>
