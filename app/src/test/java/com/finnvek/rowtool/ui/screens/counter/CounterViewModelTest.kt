@@ -140,13 +140,78 @@ class CounterViewModelTest {
             assertEquals(listOf(false, true, true), haptics.map { it.strong })
         }
 
+    @Test
+    fun repeatBoundaryFeedbackUsesConfiguredStartWhileTargetRemainsStrong() =
+        runTest(dispatcher) {
+            val fixture = createLoadedViewModel(targetCount = 2, repeatLength = 8, repeatStartCount = 11)
+            val haptics = mutableListOf<CounterEffect.Haptic>()
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                fixture.viewModel.haptics.collect(haptics::add)
+            }
+            fixture.viewModel.increment()
+            advanceUntilIdle()
+            fixture.viewModel.increment()
+            advanceUntilIdle()
+            fixture.viewModel.setCount(17)
+            advanceUntilIdle()
+            fixture.viewModel.increment()
+            advanceUntilIdle()
+            assertEquals(listOf(false, true, true), haptics.map { it.strong })
+        }
+
+    @Test
+    fun reminderAndTargetTogetherEmitOneStrongHapticAndAcknowledgedReminderDoesNotReplay() =
+        runTest(dispatcher) {
+            val fixture = createLoadedViewModel(targetCount = 1)
+            val reminder = fixture.repository.reminders.save(fixture.project.id, null, null, "Check", 1, null, true)!!
+            val haptics = mutableListOf<CounterEffect.Haptic>()
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { fixture.viewModel.haptics.collect(haptics::add) }
+            fixture.viewModel.increment()
+            advanceUntilIdle()
+            assertEquals(listOf(true), haptics.map { it.strong })
+            fixture.repository.reminders.acknowledge(fixture.project.id, reminder.id, reminder.revision, 1)
+            fixture.viewModel.setCount(0)
+            advanceUntilIdle()
+            fixture.viewModel.increment()
+            advanceUntilIdle()
+            assertEquals(listOf(true, true), haptics.map { it.strong }) // The project target still applies.
+            fixture.viewModel.reset()
+            advanceUntilIdle()
+            assertEquals(2, haptics.size)
+        }
+
+    @Test
+    fun reminderOnlyIsStrongOnIncrementButManualSetAndResetAreSilent() =
+        runTest(dispatcher) {
+            val fixture = createLoadedViewModel()
+            val reminder = fixture.repository.reminders.save(fixture.project.id, null, null, "Check", 2, null, true)!!
+            val haptics = mutableListOf<CounterEffect.Haptic>()
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { fixture.viewModel.haptics.collect(haptics::add) }
+            fixture.viewModel.setCount(2)
+            advanceUntilIdle()
+            fixture.viewModel.reset()
+            advanceUntilIdle()
+            fixture.viewModel.increment()
+            advanceUntilIdle()
+            fixture.viewModel.increment()
+            advanceUntilIdle()
+            assertEquals(listOf(false, true), haptics.map { it.strong })
+            fixture.repository.reminders.acknowledge(fixture.project.id, reminder.id, reminder.revision, 2)
+            fixture.viewModel.decrement()
+            advanceUntilIdle()
+            fixture.viewModel.increment()
+            advanceUntilIdle()
+            assertEquals(listOf(false, true, false, false), haptics.map { it.strong })
+        }
+
     private suspend fun TestScope.createLoadedViewModel(
         targetCount: Long? = null,
         repeatLength: Int? = null,
+        repeatStartCount: Long? = if (repeatLength != null) 1L else null,
     ): CounterViewModelFixture {
         val repository = CounterRepository(database, idGenerator = { "project" })
         val preferences = PreferencesRepository(InMemoryPreferencesDataStore(), database.projectDao())
-        val project = repository.createProject("Project", CounterUnit.ROWS, 0, targetCount, repeatLength)
+        val project = repository.createProject("Project", CounterUnit.ROWS, 0, targetCount, repeatLength, repeatStartCount)
         val viewModel = CounterViewModel(project.id, repository, preferences)
         val effects = mutableListOf<CounterEffect>()
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect() }

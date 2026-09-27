@@ -2,6 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" tools:node="remove" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" tools:node="remove" />
+
     <application
         android:name=".RowToolApplication"
         android:allowBackup="false"
@@ -16,6 +19,11 @@
         android:usesCleartextTraffic="false"
         tools:targetApi="33">
 
+        <service android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
+            android:enabled="false" android:exported="false">
+            <meta-data android:name="autoStoreLocales" android:value="true" />
+        </service>
+
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -25,6 +33,17 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".widget.WidgetConfigurationActivity" android:exported="true" android:theme="@style/Theme.RowTool">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" /></intent-filter>
+        </activity>
+        <receiver android:name=".widget.WidgetActionReceiver" android:exported="false" />
+        <receiver android:name=".widget.CounterWidgetReceiver" android:exported="false" android:label="@string/widget_name">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.LOCALE_CHANGED" />
+                <action android:name="android.intent.action.CONFIGURATION_CHANGED" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/counter_widget_info" />
+        </receiver>
+        <service android:name="androidx.work.impl.foreground.SystemForegroundService" tools:ignore="MissingClass" tools:node="remove" />
         <receiver
             android:name="androidx.profileinstaller.ProfileInstallReceiver"
             tools:ignore="MissingClass"

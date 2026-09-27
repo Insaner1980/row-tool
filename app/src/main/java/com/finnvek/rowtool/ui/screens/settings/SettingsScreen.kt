@@ -109,6 +109,7 @@ fun SettingsScreenContent(
                         onClick = { actions.onThemeMode(ThemeMode.DARK) },
                     )
                 }
+                item { LanguageSetting() }
                 item { SectionDivider() }
                 item { SectionTitle(stringResource(R.string.settings_counter)) }
                 item {
@@ -252,7 +253,7 @@ private fun ToggleRow(
 }
 
 @Composable
-private fun ActionRow(
+internal fun ActionRow(
     title: String,
     summary: String,
     onClick: () -> Unit,

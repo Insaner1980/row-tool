@@ -116,6 +116,28 @@ class CounterScreenContentTest {
     }
 
     @Test
+    fun repeatDisplayAndMenuOpenSameEditorWithShiftedStart() {
+        var opens = 0
+        composeRule.setContent {
+            RowToolTheme {
+                CounterScreenContent(
+                    state = CounterUiState(project = project(10, null, 8).copy(repeatStartCount = 11)),
+                    actions = counterActions(onRepeatEdit = { opens++ }),
+                )
+            }
+        }
+        composeRule
+            .onNodeWithText("Repeat 0/8")
+            .performScrollTo()
+            .assertHasClickAction()
+            .performClick()
+        composeRule.onNodeWithText("Starts at row 11").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("More options").performClick()
+        composeRule.onNodeWithText("Repeat", useUnmergedTree = true).performClick()
+        assertEquals(2, opens)
+    }
+
+    @Test
     fun zeroCountDisablesMinusAndUndoWhilePlusRemainsActionable() {
         var increments = 0
         var disabledClicks = 0
@@ -375,9 +397,10 @@ class CounterScreenContentTest {
         onSetCount: () -> Unit = {},
         onDecrement: () -> Unit = {},
         onUndo: () -> Unit = {},
+        onRepeatEdit: () -> Unit = {},
     ) = CounterScreenActions(
         navigation = CounterNavigationActions({}, {}),
         value = CounterValueActions(onIncrement, onDecrement, onUndo, onSetCount),
-        project = CounterProjectActions({}, {}, {}, {}),
+        project = CounterProjectActions({}, {}, {}, {}, onRepeatEdit),
     )
 }

@@ -38,6 +38,7 @@ class ValidatedBackupTest {
                     count = CounterConstants.MIN_COUNT,
                     targetCount = ProjectValidation.MIN_TARGET_COUNT,
                     repeatLength = ProjectValidation.MIN_REPEAT_LENGTH,
+                    repeatStartCount = 1,
                 ),
                 project().copy(
                     id = "maximum",
@@ -47,6 +48,7 @@ class ValidatedBackupTest {
                     startValue = 1,
                     targetCount = CounterConstants.MAX_COUNT,
                     repeatLength = ProjectValidation.MAX_REPEAT_LENGTH,
+                    repeatStartCount = CounterConstants.MAX_COUNT,
                 ),
             )
 
@@ -87,6 +89,9 @@ class ValidatedBackupTest {
         assertInvalid(listOf(project().copy(repeatLength = 0)))
         assertInvalid(listOf(project().copy(repeatLength = 1)))
         assertInvalid(listOf(project().copy(repeatLength = ProjectValidation.MAX_REPEAT_LENGTH + 1)))
+        assertInvalid(listOf(project().copy(repeatLength = 8, repeatStartCount = null)))
+        assertInvalid(listOf(project().copy(repeatLength = 8, repeatStartCount = 0)))
+        assertInvalid(listOf(project().copy(repeatStartCount = 11)))
     }
 
     @Test

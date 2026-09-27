@@ -5,11 +5,16 @@ import com.finnvek.rowtool.domain.model.CounterUnit
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonObject
 import java.io.InputStream
 import java.nio.charset.CharacterCodingException
 
 internal object BackupFormat {
-    const val CURRENT_SCHEMA_VERSION = 1
+    const val REMINDERS_SCHEMA_VERSION = 4
+    const val CURRENT_SCHEMA_VERSION = 5
+    const val NOTES_SCHEMA_VERSION = 5
     const val APPLICATION_ID = "RowTool"
 }
 
@@ -21,6 +26,7 @@ object BackupCodec {
         Json {
             ignoreUnknownKeys = true
             explicitNulls = true
+            encodeDefaults = true
         }
 
     fun encode(backup: BackupFile): String = json.encodeToString(backup)
@@ -50,7 +56,8 @@ object BackupCodec {
     private fun decodeFile(bytes: ByteArray): BackupDecodeResult {
         val file = parseFile(bytes)
         val fileError = file?.let(::validateFile)
-        val projects = file?.takeIf { fileError == null }?.let { parseProjects(it.projects) }
+        val missingV3Start = file?.schemaVersion?.let { it >= 3 } == true && !hasV3StartFields(bytes)
+        val projects = file?.takeIf { fileError == null }?.let { parseProjects(it.projects, it.schemaVersion) }
         return when {
             file == null -> {
                 BackupDecodeResult.Invalid(BackupValidationError.MALFORMED_JSON)
@@ -58,6 +65,10 @@ object BackupCodec {
 
             fileError != null -> {
                 BackupDecodeResult.Invalid(fileError)
+            }
+
+            missingV3Start -> {
+                BackupDecodeResult.Invalid(BackupValidationError.INVALID_PROJECT)
             }
 
             projects == null -> {
@@ -68,7 +79,14 @@ object BackupCodec {
             }
 
             else -> {
-                ValidatedBackup.create(file.exportedAt, projects)
+                ValidatedBackup.create(
+                    file.exportedAt,
+                    projects,
+                    file.counters.orEmpty(),
+                    file.history.orEmpty(),
+                    file.reminders.orEmpty(),
+                    file.notes.orEmpty(),
+                )
             }
         }
     }
@@ -84,23 +102,79 @@ object BackupCodec {
             null
         }
 
+    private fun hasV3StartFields(bytes: ByteArray): Boolean =
+        try {
+            val root = json.parseToJsonElement(bytes.decodeToString()).jsonObject
+            (root["projects"] as? JsonArray)?.all { (it as? JsonObject)?.containsKey("repeatStartCount") == true } == true
+        } catch (_: IllegalArgumentException) {
+            false
+        }
+
     private fun validateFile(file: BackupFile): BackupValidationError? =
-        when {
-            file.schemaVersion != BackupFormat.CURRENT_SCHEMA_VERSION -> BackupValidationError.UNSUPPORTED_SCHEMA_VERSION
-            file.application != BackupFormat.APPLICATION_ID -> BackupValidationError.INVALID_APPLICATION
+        validateCoreFile(file) ?: validateReminderFields(file) ?: when {
+            file.schemaVersion >= BackupFormat.NOTES_SCHEMA_VERSION && file.notes == null -> BackupValidationError.INVALID_NOTE
+            file.schemaVersion < BackupFormat.NOTES_SCHEMA_VERSION && !file.notes.isNullOrEmpty() -> BackupValidationError.INVALID_NOTE
             else -> null
         }
 
-    private fun parseProjects(projects: List<BackupProject>): List<CounterProject>? {
+    private fun validateReminderFields(file: BackupFile): BackupValidationError? =
+        when {
+            file.schemaVersion >= BackupFormat.REMINDERS_SCHEMA_VERSION && file.reminders == null -> {
+                BackupValidationError.INVALID_REMINDER
+            }
+
+            file.schemaVersion < BackupFormat.REMINDERS_SCHEMA_VERSION && !file.reminders.isNullOrEmpty() -> {
+                BackupValidationError.INVALID_REMINDER
+            }
+
+            else -> {
+                null
+            }
+        }
+
+    private fun validateCoreFile(file: BackupFile): BackupValidationError? =
+        when {
+            file.schemaVersion !in 1..BackupFormat.CURRENT_SCHEMA_VERSION -> {
+                BackupValidationError.UNSUPPORTED_SCHEMA_VERSION
+            }
+
+            file.application != BackupFormat.APPLICATION_ID -> {
+                BackupValidationError.INVALID_APPLICATION
+            }
+
+            file.schemaVersion >= 2 && (file.counters == null || file.history == null) -> {
+                BackupValidationError.INVALID_HISTORY
+            }
+
+            file.schemaVersion <= 2 && file.projects.any { it.repeatStartCount != null } -> {
+                BackupValidationError.INVALID_PROJECT
+            }
+
+            file.schemaVersion == 1 && (!file.counters.isNullOrEmpty() || !file.history.isNullOrEmpty()) -> {
+                BackupValidationError.INVALID_HISTORY
+            }
+
+            else -> {
+                null
+            }
+        }
+
+    private fun parseProjects(
+        projects: List<BackupProject>,
+        schemaVersion: Int,
+    ): List<CounterProject>? {
         val parsedProjects = ArrayList<CounterProject>(projects.size)
         for (project in projects) {
-            val parsedProject = parseProject(project) ?: return null
+            val parsedProject = parseProject(project, schemaVersion) ?: return null
             parsedProjects += parsedProject
         }
         return parsedProjects
     }
 
-    private fun parseProject(project: BackupProject): CounterProject? {
+    private fun parseProject(
+        project: BackupProject,
+        schemaVersion: Int,
+    ): CounterProject? {
         val counterUnit = CounterUnit.entries.firstOrNull { it.name == project.counterUnit } ?: return null
         return CounterProject(
             id = project.id,
@@ -113,6 +187,12 @@ object BackupCodec {
             isArchived = project.isArchived,
             createdAt = project.createdAt,
             updatedAt = project.updatedAt,
+            repeatStartCount =
+                if (schemaVersion <= 2) {
+                    if (project.repeatLength != null) 1L else null
+                } else {
+                    project.repeatStartCount
+                },
         )
     }
 }

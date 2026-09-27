@@ -1,5 +1,6 @@
 package com.finnvek.rowtool.domain.counter
 
+import com.finnvek.rowtool.domain.model.RepeatProgress
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -33,6 +34,42 @@ class CounterCalculatorsTest {
             assertEquals("completed for $count", expectedCompleted, progress.completedRepeats)
             assertEquals(6, progress.repeatLength)
         }
+    }
+
+    @Test
+    fun repeatStartAtElevenMatchesFirstAndLastRows() {
+        val cases =
+            listOf(
+                Triple(10L, 0, 0L),
+                Triple(11L, 1, 0L),
+                Triple(15L, 5, 0L),
+                Triple(18L, 8, 1L),
+                Triple(19L, 1, 1L),
+                Triple(26L, 8, 2L),
+            )
+        cases.forEach { (count, step, completed) ->
+            val progress = requireNotNull(RepeatProgressCalculator.calculate(count, 8, 11))
+            assertEquals("step for $count", step, progress.currentStep)
+            assertEquals("completed for $count", completed, progress.completedRepeats)
+        }
+    }
+
+    @Test
+    fun defaultStartKeepsLegacyResultsAtZeroAndMaximum() {
+        listOf(0L, 1L, 6L, 7L, 999_999L).forEach { count ->
+            assertEquals(
+                RepeatProgressCalculator.calculate(count, 6),
+                RepeatProgressCalculator.calculate(count, 6, 1),
+            )
+        }
+    }
+
+    @Test
+    fun repeatCanStartAtMaximumCount() {
+        assertEquals(
+            RepeatProgress(1, 8, 0),
+            RepeatProgressCalculator.calculate(999_999, 8, 999_999),
+        )
     }
 
     @Test

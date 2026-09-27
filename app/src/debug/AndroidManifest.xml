@@ -2,6 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
     <application android:allowBackup="false">
+        <activity android:name=".widget.WidgetTestHostActivity" android:taskAffinity="com.finnvek.rowtool.widget.testhost" android:exported="false" android:theme="@style/Theme.RowTool" />
         <!-- Use the app's native day/night theme for the Compose test host. -->
         <activity
             android:name="androidx.activity.ComponentActivity"

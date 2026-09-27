@@ -84,7 +84,7 @@ class BackupCodecTest {
 
     @Test
     fun unsupportedSchemaVersionIsRejected() {
-        val json = backupJson(validProjectJson(id = "p1"), schemaVersion = 2)
+        val json = backupJson(validProjectJson(id = "p1"), schemaVersion = 6)
 
         assertInvalid(
             BackupValidationError.UNSUPPORTED_SCHEMA_VERSION,
@@ -121,6 +121,31 @@ class BackupCodecTest {
         val json = backupJson(validProjectJson(id = "p1").replace("\"repeatLength\":null", "\"repeatLength\":1"))
 
         assertInvalid(BackupValidationError.INVALID_PROJECT, BackupCodec.decode(json.encodeToByteArray()))
+    }
+
+    @Test
+    fun v3RequiresAndValidatesRepeatStartBeforeImport() {
+        val base = validProjectJson("p1").replace("\"repeatLength\":null", "\"repeatLength\":8")
+        val missing = backupJson(base, schemaVersion = 3)
+        // v3 also requires the v2 collections.
+        val v3 = missing.replace("\"projects\":[", "\"counters\":[],\"history\":[],\"projects\":[")
+        assertInvalid(BackupValidationError.INVALID_PROJECT, BackupCodec.decode(v3.encodeToByteArray()))
+        assertInvalid(
+            BackupValidationError.INVALID_PROJECT,
+            BackupCodec.decode(v3.replace("\"repeatLength\":8", "\"repeatLength\":8,\"repeatStartCount\":0").encodeToByteArray()),
+        )
+        val decoded =
+            BackupCodec.decode(
+                v3
+                    .replace("\"repeatLength\":8", "\"repeatLength\":8,\"repeatStartCount\":11")
+                    .encodeToByteArray(),
+            ) as BackupDecodeResult.Valid
+        assertEquals(
+            11L,
+            decoded.backup.projects
+                .single()
+                .repeatStartCount,
+        )
     }
 
     @Test

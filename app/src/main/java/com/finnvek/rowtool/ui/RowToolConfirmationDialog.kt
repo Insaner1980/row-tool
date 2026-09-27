@@ -15,14 +15,16 @@ internal fun RowToolConfirmationDialog(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
     isDestructive: Boolean = false,
+    enabled: Boolean = true,
 ) {
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = { if (enabled) onDismiss() },
         title = { Text(title) },
         text = { Text(message) },
         confirmButton = {
             TextButton(
                 onClick = onConfirm,
+                enabled = enabled,
                 colors =
                     if (isDestructive) {
                         destructiveDialogActionColors()
@@ -36,6 +38,7 @@ internal fun RowToolConfirmationDialog(
         dismissButton = {
             TextButton(
                 onClick = onDismiss,
+                enabled = enabled,
                 colors = ordinaryDialogActionColors(),
             ) {
                 Text(stringResource(R.string.action_cancel))

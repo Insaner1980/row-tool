@@ -69,6 +69,10 @@ data class ProjectCardActions(
     val onArchive: (CounterProject) -> Unit,
     val onRestore: (CounterProject) -> Unit,
     val onDelete: (CounterProject) -> Unit,
+    val canOpenNote: (CounterProject) -> Boolean = { false },
+    val onNote: (CounterProject) -> Unit = {},
+    val onHistory: (CounterProject) -> Unit = {},
+    val onCopySetup: (CounterProject) -> Unit = {},
 )
 
 data class ProjectsScreenActions(
@@ -436,6 +440,32 @@ private fun ProjectOptions(
             expanded = expanded,
             onDismissRequest = { onExpandedChange(false) },
         ) {
+            if (project.isArchived && actions.canOpenNote(project)) {
+                RowToolDropdownMenuItem(
+                    label = stringResource(R.string.note_title),
+                    iconRes = R.drawable.ic_edit,
+                    onClick = {
+                        onExpandedChange(false)
+                        actions.onNote(project)
+                    },
+                )
+            }
+            RowToolDropdownMenuItem(
+                label = stringResource(R.string.copy_action),
+                iconRes = R.drawable.ic_edit,
+                onClick = {
+                    onExpandedChange(false)
+                    actions.onCopySetup(project)
+                },
+            )
+            RowToolDropdownMenuItem(
+                label = stringResource(R.string.history_title),
+                iconRes = R.drawable.ic_restore,
+                onClick = {
+                    onExpandedChange(false)
+                    actions.onHistory(project)
+                },
+            )
             RowToolDropdownMenuItem(
                 label = stringResource(R.string.action_edit),
                 iconRes = R.drawable.ic_edit,

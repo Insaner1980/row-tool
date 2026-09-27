@@ -15,6 +15,7 @@ import com.finnvek.rowtool.domain.model.CounterProject
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
@@ -25,6 +26,7 @@ data class ProjectsUiState(
     val activeProjects: List<CounterProject> = emptyList(),
     val archivedProjects: List<CounterProject> = emptyList(),
     val isLoading: Boolean = true,
+    val noteProjectIds: Set<String> = emptySet(),
 )
 
 sealed interface ProjectsEffect {
@@ -38,22 +40,23 @@ sealed interface ProjectsEffect {
 }
 
 class ProjectsViewModel(
-    private val counterRepository: CounterRepository,
-    private val preferencesRepository: PreferencesRepository,
+    internal val counterRepository: CounterRepository,
+    internal val preferencesRepository: PreferencesRepository,
 ) : ViewModel() {
+    internal val noteStore = counterRepository.notes
     val uiState: StateFlow<ProjectsUiState> =
-        counterRepository.projects
-            .map { projects ->
-                ProjectsUiState(
-                    activeProjects = projects.filterNot(CounterProject::isArchived),
-                    archivedProjects = projects.filter(CounterProject::isArchived),
-                    isLoading = false,
-                )
-            }.stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
-                initialValue = ProjectsUiState(),
+        combine(counterRepository.projects, noteStore.projectIds) { projects, noteIds ->
+            ProjectsUiState(
+                activeProjects = projects.filterNot(CounterProject::isArchived),
+                archivedProjects = projects.filter(CounterProject::isArchived),
+                isLoading = false,
+                noteProjectIds = noteIds.toSet(),
             )
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = ProjectsUiState(),
+        )
 
     private val effectChannel = Channel<ProjectsEffect>(Channel.BUFFERED)
     val effects = effectChannel.receiveAsFlow()
@@ -68,6 +71,7 @@ class ProjectsViewModel(
                         startValue = values.startValue,
                         targetCount = values.targetCount,
                         repeatLength = values.repeatLength,
+                        repeatStartCount = values.repeatStartCount,
                     )
                 try {
                     preferencesRepository.setLastActiveProjectId(project.id)

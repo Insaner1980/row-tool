@@ -35,6 +35,8 @@ fun RowToolApp(
     container: AppContainer,
     startProjectId: String?,
     modifier: Modifier = Modifier,
+    widgetRequest: com.finnvek.rowtool.widget.WidgetOpenRequest? = null,
+    onWidgetConsume: () -> Unit = {},
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
@@ -43,6 +45,8 @@ fun RowToolApp(
     Box(modifier = modifier.fillMaxSize()) {
         RowToolNavHost(
             container = container,
+            widgetRequest = widgetRequest,
+            onWidgetConsume = onWidgetConsume,
             startProjectId = startProjectId,
             onMessage = { message ->
                 val text =

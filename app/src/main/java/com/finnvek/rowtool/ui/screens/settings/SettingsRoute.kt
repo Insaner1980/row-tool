@@ -20,10 +20,8 @@ import com.finnvek.rowtool.R
 import com.finnvek.rowtool.ui.destructiveDialogActionColors
 import com.finnvek.rowtool.ui.ordinaryDialogActionColors
 import com.finnvek.rowtool.ui.theme.RowToolDimens
-import java.text.DateFormat
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import java.util.Date
 
 @Composable
 fun SettingsRoute(
@@ -104,9 +102,14 @@ fun SettingsRoute(
             )
         val backupDate =
             if (preview.backup.exportedAt > 0) {
-                DateFormat
-                    .getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT)
-                    .format(Date(preview.backup.exportedAt))
+                com.finnvek.rowtool.ui.screens.history
+                    .historyTime(
+                        preview.backup.exportedAt,
+                        resources.configuration.locales[0],
+                        android.text.format.DateFormat
+                            .is24HourFormat(context),
+                        java.util.TimeZone.getDefault(),
+                    ).orEmpty()
             } else {
                 stringResource(R.string.backup_import_unknown_date)
             }

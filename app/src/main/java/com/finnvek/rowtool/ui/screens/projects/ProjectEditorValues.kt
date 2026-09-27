@@ -9,6 +9,7 @@ data class ProjectEditorValues(
     val startValue: Int,
     val targetCount: Long?,
     val repeatLength: Int?,
+    val repeatStartCount: Long? = if (repeatLength != null) 1L else null,
 )
 
 internal suspend fun CounterRepository.updateProjectFromEditor(
@@ -22,5 +23,6 @@ internal suspend fun CounterRepository.updateProjectFromEditor(
         startValue = values.startValue,
         targetCount = values.targetCount,
         repeatLength = values.repeatLength,
+        repeatStartCount = values.repeatStartCount,
     )
 }

@@ -1,6 +1,10 @@
 package com.finnvek.rowtool.ui.screens.counter
 
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -30,8 +34,10 @@ fun CountEditorDialog(
     currentCount: Long,
     onDismiss: () -> Unit,
     onSave: (Long) -> Unit,
+    isSaving: Boolean = false,
+    saveFailed: Boolean = false,
 ) {
-    var value by rememberSaveable(currentCount, stateSaver = TextFieldValue.Saver) {
+    var value by rememberSaveable(stateSaver = TextFieldValue.Saver) {
         val text = currentCount.toString()
         mutableStateOf(TextFieldValue(text, selection = TextRange(0, text.length)))
     }
@@ -39,46 +45,50 @@ fun CountEditorDialog(
     val parsed = value.text.toLongOrNull()
     val valid = parsed != null && parsed in CounterConstants.MIN_COUNT..CounterConstants.MAX_COUNT
 
-    LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
-    }
-
     AlertDialog(
-        onDismissRequest = onDismiss,
+        modifier = Modifier.imePadding(),
+        onDismissRequest = { if (!isSaving) onDismiss() },
         title = { Text(stringResource(R.string.counter_set_title)) },
         text = {
-            OutlinedTextField(
-                value = value,
-                onValueChange = { value = it },
-                label = { Text(stringResource(R.string.counter_set_label)) },
-                singleLine = true,
-                isError = !valid,
-                colors =
-                    OutlinedTextFieldDefaults.colors(
-                        focusedLabelColor = MaterialTheme.colorScheme.secondary,
-                        focusedBorderColor = MaterialTheme.colorScheme.secondary,
-                        cursorColor = MaterialTheme.colorScheme.secondary,
-                        errorContainerColor = MaterialTheme.colorScheme.errorContainer,
-                        errorTextColor = MaterialTheme.colorScheme.onErrorContainer,
-                        errorLabelColor = MaterialTheme.colorScheme.onErrorContainer,
-                        errorSupportingTextColor = MaterialTheme.colorScheme.onErrorContainer,
-                        errorBorderColor = MaterialTheme.colorScheme.onErrorContainer,
-                        errorCursorColor = MaterialTheme.colorScheme.onErrorContainer,
-                    ),
-                supportingText = {
-                    if (!valid) Text(stringResource(R.string.counter_set_error, CounterConstants.MIN_COUNT, CounterConstants.MAX_COUNT))
-                },
-                keyboardOptions =
-                    KeyboardOptions(
-                        keyboardType = KeyboardType.Number,
-                        imeAction = ImeAction.Done,
-                    ),
-                modifier = Modifier.focusRequester(focusRequester),
-            )
+            LaunchedEffect(Unit) {
+                focusRequester.requestFocus()
+            }
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                OutlinedTextField(
+                    value = value,
+                    enabled = !isSaving,
+                    onValueChange = { value = it },
+                    label = { Text(stringResource(R.string.counter_set_label)) },
+                    singleLine = true,
+                    isError = !valid,
+                    colors =
+                        OutlinedTextFieldDefaults.colors(
+                            focusedLabelColor = MaterialTheme.colorScheme.secondary,
+                            focusedBorderColor = MaterialTheme.colorScheme.secondary,
+                            cursorColor = MaterialTheme.colorScheme.secondary,
+                            errorContainerColor = MaterialTheme.colorScheme.errorContainer,
+                            errorTextColor = MaterialTheme.colorScheme.onErrorContainer,
+                            errorLabelColor = MaterialTheme.colorScheme.onErrorContainer,
+                            errorSupportingTextColor = MaterialTheme.colorScheme.onErrorContainer,
+                            errorBorderColor = MaterialTheme.colorScheme.onErrorContainer,
+                            errorCursorColor = MaterialTheme.colorScheme.onErrorContainer,
+                        ),
+                    supportingText = {
+                        if (!valid) Text(stringResource(R.string.counter_set_error, CounterConstants.MIN_COUNT, CounterConstants.MAX_COUNT))
+                    },
+                    keyboardOptions =
+                        KeyboardOptions(
+                            keyboardType = KeyboardType.Number,
+                            imeAction = ImeAction.Done,
+                        ),
+                    modifier = Modifier.focusRequester(focusRequester),
+                )
+                if (saveFailed) Text(stringResource(R.string.error_database_write))
+            }
         },
         confirmButton = {
             TextButton(
-                enabled = valid,
+                enabled = valid && !isSaving,
                 colors = ordinaryDialogActionColors(),
                 onClick = { parsed?.let(onSave) },
             ) {
@@ -88,6 +98,7 @@ fun CountEditorDialog(
         dismissButton = {
             TextButton(
                 onClick = onDismiss,
+                enabled = !isSaving,
                 colors = ordinaryDialogActionColors(),
             ) {
                 Text(stringResource(R.string.action_cancel))

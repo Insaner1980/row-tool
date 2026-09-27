@@ -5,20 +5,29 @@ import android.app.Instrumentation.ActivityResult
 import android.content.Intent
 import android.content.IntentFilter
 import android.net.Uri
+import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasScrollToIndexAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
 import androidx.lifecycle.Lifecycle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.finnvek.rowtool.MainActivity
+import com.finnvek.rowtool.R
 import com.finnvek.rowtool.RowToolApplication
 import com.finnvek.rowtool.data.preferences.ThemeMode
 import com.finnvek.rowtool.domain.model.CounterUnit
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Rule
 import org.junit.Test
@@ -30,6 +39,7 @@ import java.io.File
 @RunWith(AndroidJUnit4::class)
 class DirectCounterNavigationTest {
     private val composeRule = createAndroidComposeRule<MainActivity>()
+    private lateinit var fixtureId: String
 
     @get:Rule
     val rules: TestRule =
@@ -48,12 +58,13 @@ class DirectCounterNavigationTest {
                     container.preferencesRepository.setHapticFeedbackEnabled(true)
                     container.preferencesRepository.setKeepScreenAwake(true)
                     container.preferencesRepository.setLastActiveProjectId(project.id)
+                    fixtureId = project.id
                 },
             ).around(composeRule)
 
     @Test
     fun deletedProjectWhileStoppedReturnsToProjectsAfterRecreation() {
-        composeRule.onNodeWithText("DIRECT START").assertIsDisplayed()
+        assertDirectStart()
         val application =
             InstrumentationRegistry.getInstrumentation().targetContext.applicationContext as RowToolApplication
         val projectId = runBlocking { application.container.preferencesRepository.resolveLastActiveProjectId()!! }
@@ -67,18 +78,36 @@ class DirectCounterNavigationTest {
             composeRule.onAllNodesWithText("Create your first project").fetchSemanticsNodes().isNotEmpty()
         }
 
-        composeRule.onNodeWithText("ACTIVE PROJECTS").assertIsDisplayed()
+        val projectDao = application.container.database.projectDao()
+        assertEquals(0, runBlocking { projectDao.count() })
         composeRule.onNodeWithText("Create your first project").assertIsDisplayed()
+        composeRule
+            .onNodeWithText("New project")
+            .assertIsDisplayed()
+            .assertHasClickAction()
         pressBackAndAssertActivityNotResumed()
     }
 
     @Test
     fun emptyImportAfterDirectCounterFallbackDoesNotLeaveSettingsOnBackStack() {
-        composeRule.onNodeWithText("DIRECT START").assertIsDisplayed()
+        assertDirectStart()
         composeRule.onNodeWithContentDescription("Back").performClick()
         composeRule.onNodeWithText("ACTIVE PROJECTS").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("Settings").performClick()
-        composeRule.onNodeWithText("Import data").assertIsDisplayed()
+        val importAction =
+            hasText(composeRule.activity.getString(R.string.action_import)) and
+                hasClickAction() and hasAnyAncestor(hasScrollToIndexAction())
+        composeRule.captureAssertionFailure(
+            label = "settings-import",
+            activity = { composeRule.activity },
+        ) {
+            composeRule.onNode(hasScrollToIndexAction()).performScrollToNode(importAction)
+            composeRule
+                .onNode(importAction)
+                .assertIsDisplayed()
+                .assertIsEnabled()
+                .assertHasClickAction()
+        }
 
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val backup = File.createTempFile("empty-backup", ".json", instrumentation.targetContext.cacheDir)
@@ -93,7 +122,7 @@ class DirectCounterNavigationTest {
                 true,
             )
         try {
-            composeRule.onNodeWithText("Import data").performClick()
+            composeRule.onNode(importAction).performClick()
             composeRule.waitUntil(timeoutMillis = 5_000) {
                 composeRule.onAllNodesWithText("Replace all projects?").fetchSemanticsNodes().isNotEmpty()
             }
@@ -112,12 +141,25 @@ class DirectCounterNavigationTest {
 
     @Test
     fun projectsFromDirectCounterDoesNotLeaveCounterOnBackStack() {
-        composeRule.onNodeWithText("DIRECT START").assertIsDisplayed()
+        assertDirectStart()
 
         composeRule.onNodeWithContentDescription("Back").performClick()
         composeRule.onNodeWithText("ACTIVE PROJECTS").assertIsDisplayed()
 
         pressBackAndAssertActivityNotResumed()
+    }
+
+    private fun assertDirectStart() {
+        composeRule.captureAssertionFailure(
+            label = "direct-start",
+            activity = { composeRule.activity },
+            state = { "fixtureProjectId=$fixtureId" },
+        ) {
+            composeRule.awaitDirectCounter(
+                expectedProjectId = fixtureId,
+                selectedProjectId = { composeRule.runOnUiThread { composeRule.activity.existingStartupState()?.projectId } },
+            )
+        }
     }
 
     private fun pressBackAndAssertActivityNotResumed() {

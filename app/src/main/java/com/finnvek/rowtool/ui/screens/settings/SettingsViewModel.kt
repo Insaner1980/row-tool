@@ -214,6 +214,10 @@ class SettingsViewModel(
             BackupValidationError.TOO_MANY_PROJECTS,
             BackupValidationError.DUPLICATE_PROJECT_ID,
             BackupValidationError.INVALID_PROJECT,
+            BackupValidationError.INVALID_COUNTER,
+            BackupValidationError.INVALID_HISTORY,
+            BackupValidationError.INVALID_REMINDER,
+            BackupValidationError.INVALID_NOTE,
             -> R.string.backup_import_invalid_data
         }
 

@@ -83,6 +83,71 @@ class BackupAndPreferencesRepositoryTest {
     }
 
     @Test
+    fun widgetBindingWriteFailureLeavesDatabaseAndReportsImportFailure() =
+        runTest {
+            val project = counterRepository.createProject("Original", CounterUnit.ROWS, 0, null, null)
+            counterRepository.mutate(project.id, CounterMutation.ManualSet(7))
+            val valid =
+                (
+                    backupRepository.prepareImport(
+                        backupRepository.exportJson().encodeToByteArray(),
+                    ) as BackupDecodeResult.Valid
+                ).backup
+            counterRepository.mutate(project.id, CounterMutation.Increment)
+            val failing =
+                BackupRepository(database, preferencesRepository, replaceTransaction = { throw IOException("Binding write failed") })
+            assertTrue(failing.replaceWith(valid) is BackupImportResult.Failure)
+            assertEquals(8L, counterRepository.getProject(project.id)!!.count)
+        }
+
+    @Test
+    fun noteRoundTripLegacyReplacementAndFailedReplacementAreAtomic() =
+        runTest {
+            val id = counterRepository.createProject("Note", CounterUnit.ROWS, 0, null, null).id
+            counterRepository.mutate(id, CounterMutation.ManualSet(74))
+            counterRepository.notes.save(id, null, " A\n\n    🧶", true)
+            val original = counterRepository.notes.load(id).note!!
+            counterRepository.mutate(id, CounterMutation.Reset)
+            val json = backupRepository.exportJson()
+            val valid = (backupRepository.prepareImport(json.encodeToByteArray()) as BackupDecodeResult.Valid).backup
+            assertEquals(BackupNote(id, original.text, original.savedAt, 74), valid.notes.single())
+            assertTrue(backupRepository.replaceWith(valid) is BackupImportResult.Success)
+            val restored = counterRepository.notes.load(id).note!!
+            assertEquals(original.text, restored.text)
+            assertEquals(original.savedAt, restored.savedAt)
+            assertEquals(original.savedCount, restored.savedCount)
+            assertFalse(original.version == restored.version)
+            assertEquals(NoteWriteResult.Conflict, counterRepository.notes.save(id, original.version, "Old editor", true))
+            database.openHelper.writableDatabase.execSQL(
+                "CREATE TRIGGER fail_restore BEFORE INSERT ON project_notes BEGIN SELECT RAISE(ABORT, 'test'); END",
+            )
+            try {
+                assertTrue(backupRepository.replaceWith(valid) is BackupImportResult.Failure)
+                assertEquals(restored, counterRepository.notes.load(id).note)
+            } finally {
+                database.openHelper.writableDatabase.execSQL("DROP TRIGGER fail_restore")
+            }
+            val invalid = json.replace(" A\\n\\n    🧶", " ")
+            assertTrue(backupRepository.prepareImport(invalid.encodeToByteArray()) is BackupDecodeResult.Invalid)
+            assertEquals(restored, counterRepository.notes.load(id).note)
+            val file = Json.decodeFromString<BackupFile>(json)
+            for (version in 1..4) {
+                val legacy =
+                    file.copy(
+                        schemaVersion = version,
+                        notes = null,
+                        counters = if (version == 1) null else file.counters,
+                        history = if (version == 1) null else file.history,
+                        reminders = if (version < 4) null else file.reminders,
+                    )
+                val old = (BackupCodec.decode(BackupCodec.encode(legacy).encodeToByteArray()) as BackupDecodeResult.Valid).backup
+                assertTrue(backupRepository.replaceWith(old) is BackupImportResult.Success)
+                assertNull(counterRepository.notes.load(id).note)
+                counterRepository.notes.save(id, null, "Remove on next replacement", true)
+            }
+        }
+
+    @Test
     fun preferencesUseRequiredDefaultsAndPersistChanges() =
         runTest {
             assertEquals(AppPreferences(), preferencesRepository.preferences.first())
@@ -337,7 +402,7 @@ class BackupAndPreferencesRepositoryTest {
         }
 
     @Test
-    fun exportContainsProjectsButNotUndoHistory() =
+    fun exportContainsProjectsAndUndoHistory() =
         runTest {
             val project = createProject("Exported")
             counterRepository.mutate(project.id, CounterMutation.Increment)
@@ -346,13 +411,13 @@ class BackupAndPreferencesRepositoryTest {
             val file = Json.decodeFromString<BackupFile>(json)
             val decoded = backupRepository.prepareImport(json.encodeToByteArray())
 
-            assertEquals(1, file.schemaVersion)
+            assertEquals(5, file.schemaVersion)
             assertEquals("RowTool", file.application)
             assertTrue(decoded is BackupDecodeResult.Valid)
             val exported = (decoded as BackupDecodeResult.Valid).backup.projects.single()
             assertEquals(1L, exported.count)
-            assertFalse(json.contains("previousCount"))
-            assertFalse(json.contains("changeReason"))
+            assertEquals(0L, file.history!!.single().previousCount)
+            assertEquals("INCREMENT", file.history.single().changeReason)
         }
 
     private suspend fun createProject(name: String) =

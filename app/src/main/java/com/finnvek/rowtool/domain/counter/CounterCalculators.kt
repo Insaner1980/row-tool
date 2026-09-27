@@ -7,19 +7,21 @@ object RepeatProgressCalculator {
     fun calculate(
         count: Long,
         repeatLength: Int?,
+        repeatStartCount: Long? = if (repeatLength != null) 1L else null,
     ): RepeatProgress? {
         if (repeatLength == null) return null
 
+        val progress = (count - requireNotNull(repeatStartCount) + 1).coerceAtLeast(0)
         val currentStep =
-            if (count == 0L) {
+            if (progress == 0L) {
                 0
             } else {
-                (((count - 1) % repeatLength) + 1).toInt()
+                (((progress - 1) % repeatLength) + 1).toInt()
             }
         return RepeatProgress(
             currentStep = currentStep,
             repeatLength = repeatLength,
-            completedRepeats = count / repeatLength,
+            completedRepeats = progress / repeatLength,
         )
     }
 }

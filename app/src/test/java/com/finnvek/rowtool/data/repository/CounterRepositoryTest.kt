@@ -3,12 +3,14 @@ package com.finnvek.rowtool.data.repository
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.finnvek.rowtool.data.local.RowToolDatabase
+import com.finnvek.rowtool.domain.counter.RepeatProgressCalculator
 import com.finnvek.rowtool.domain.model.CounterConstants
 import com.finnvek.rowtool.domain.model.CounterMutation
 import com.finnvek.rowtool.domain.model.CounterMutationResult
 import com.finnvek.rowtool.domain.model.CounterUnit
 import com.finnvek.rowtool.domain.model.HistoryChangeReason
 import com.finnvek.rowtool.domain.model.ProjectValidationError
+import com.finnvek.rowtool.domain.model.RepeatProgress
 import com.finnvek.rowtool.test.projectEntities
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -61,6 +63,51 @@ class CounterRepositoryTest {
             assertEquals(1L, repository.getProject(project.id)?.count)
             assertEquals(1, database.counterHistoryDao().countForProject(project.id))
             assertTrue(repository.observeCanUndo(project.id).first())
+        }
+
+    @Test
+    fun repeatSettingsChangeOnlyRepeatFieldsAndUndoKeepsNewSettings() =
+        runTest {
+            val project = createProject()
+            repository.mutate(project.id, CounterMutation.ManualSet(18))
+            val historyBefore = database.counterHistoryDao().countForProject(project.id)
+            val updated = repository.repeatSettings.save(project.id, 8, 11)
+            assertEquals(18L, updated?.count)
+            assertEquals(8, updated?.repeatLength)
+            assertEquals(11L, updated?.repeatStartCount)
+            assertEquals(historyBefore, database.counterHistoryDao().countForProject(project.id))
+
+            repository.undo(project.id)
+            assertEquals(0L, repository.getProject(project.id)?.count)
+            assertEquals(11L, repository.getProject(project.id)?.repeatStartCount)
+            val timestamp = repository.getProject(project.id)?.updatedAt
+            repository.repeatSettings.save(project.id, 8, 11)
+            assertEquals(timestamp, repository.getProject(project.id)?.updatedAt)
+        }
+
+    @Test
+    fun repeatProgressFollowsManualJumpsDecrementResetAndUndo() =
+        runTest {
+            val project = createProject()
+            repository.repeatSettings.save(project.id, 8, 11)
+
+            suspend fun progress(): RepeatProgress? {
+                val current = requireNotNull(repository.getProject(project.id))
+                return RepeatProgressCalculator.calculate(current.count, current.repeatLength, current.repeatStartCount)
+            }
+
+            repository.mutate(project.id, CounterMutation.ManualSet(26))
+            assertEquals(RepeatProgress(8, 8, 2), progress())
+            repository.mutate(project.id, CounterMutation.ManualSet(10))
+            assertEquals(RepeatProgress(0, 8, 0), progress())
+            repository.undo(project.id)
+            assertEquals(RepeatProgress(8, 8, 2), progress())
+            repository.mutate(project.id, CounterMutation.Decrement)
+            assertEquals(RepeatProgress(7, 8, 1), progress())
+            repository.mutate(project.id, CounterMutation.Reset)
+            assertEquals(RepeatProgress(0, 8, 0), progress())
+            repository.undo(project.id)
+            assertEquals(RepeatProgress(7, 8, 1), progress())
         }
 
     @Test
@@ -320,6 +367,10 @@ class CounterRepositoryTest {
         new: Long,
         reason: HistoryChangeReason,
     ) {
-        assertEquals(CounterMutationResult.Changed(previous, new, reason), result)
+        assertTrue(result is CounterMutationResult.Changed)
+        result as CounterMutationResult.Changed
+        assertEquals(previous, result.previousCount)
+        assertEquals(new, result.newCount)
+        assertEquals(reason, result.reason)
     }
 }

@@ -124,4 +124,16 @@ class ProjectEditorInputValidationTest {
             assertFalse(validation.canSave)
         }
     }
+
+    @Test
+    fun repeatStartUsesSameBoundsInBothEditors() {
+        listOf("0", "1", "999999", "1000000", "x").forEach { text ->
+            val repeat = validateRepeatSettingsInput(true, "8", text)
+            val project = validateProjectEditorInput("Project", false, "", true, "8", text)
+            assertEquals(repeat.repeatStartValid, project.repeatStartValid)
+            assertEquals(repeat.canSave, project.canSave)
+            assertEquals(text.toLongOrNull()?.let { it in 1L..999_999L } == true, repeat.canSave)
+        }
+        assertNull(validateRepeatSettingsInput(false, "invalid", "invalid").repeatStartCount)
+    }
 }

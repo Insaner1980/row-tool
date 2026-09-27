@@ -31,6 +31,7 @@ data class CounterProject(
     val isArchived: Boolean,
     val createdAt: Long,
     val updatedAt: Long,
+    val repeatStartCount: Long? = if (repeatLength != null) 1L else null,
 )
 
 enum class HistoryChangeReason {
@@ -57,6 +58,10 @@ sealed interface CounterMutationResult {
         val previousCount: Long,
         val newCount: Long,
         val reason: HistoryChangeReason,
+        val repeatLength: Int? = null,
+        val repeatStartCount: Long? = null,
+        val targetCount: Long? = null,
+        val reminderReached: Boolean = false,
     ) : CounterMutationResult
 
     data class NoOp(
@@ -66,6 +71,8 @@ sealed interface CounterMutationResult {
     data object ProjectMissing : CounterMutationResult
 
     data object ProjectArchived : CounterMutationResult
+
+    data object CounterMissing : CounterMutationResult
 
     data class Invalid(
         val errors: Set<ProjectValidationError>,

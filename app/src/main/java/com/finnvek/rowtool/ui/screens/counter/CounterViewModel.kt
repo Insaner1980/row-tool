@@ -11,9 +11,9 @@ import com.finnvek.rowtool.R
 import com.finnvek.rowtool.data.preferences.AppPreferences
 import com.finnvek.rowtool.data.preferences.PreferencesRepository
 import com.finnvek.rowtool.data.repository.CounterRepository
+import com.finnvek.rowtool.domain.counter.RepeatProgressCalculator
 import com.finnvek.rowtool.domain.model.CounterMutation
 import com.finnvek.rowtool.domain.model.CounterMutationResult
-import com.finnvek.rowtool.domain.model.CounterProject
 import com.finnvek.rowtool.ui.screens.projects.updateProjectFromEditor
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -51,6 +51,7 @@ class CounterViewModel(
     val haptics = hapticFlow.asSharedFlow()
     private val routeResolved = AtomicBoolean()
     private val unavailableFeedbackHandled = AtomicBoolean()
+    internal val noteStore = counterRepository.notes
 
     val preferences: StateFlow<AppPreferences> =
         preferencesRepository.preferences.stateIn(
@@ -93,8 +94,18 @@ class CounterViewModel(
         combine(
             projectFlow,
             counterRepository.observeCanUndo(projectId),
-        ) { project, canUndo ->
-            CounterUiState(project = project, canUndo = canUndo, isLoading = false)
+            counterRepository.additionalCounters.observe(projectId),
+            counterRepository.reminders.observe(projectId),
+            noteStore.observe(projectId),
+        ) { project, canUndo, counters, reminders, note ->
+            CounterUiState(
+                project = project,
+                canUndo = canUndo,
+                isLoading = false,
+                additionalCounters = counters,
+                reminders = reminders,
+                note = note,
+            )
         }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
@@ -109,10 +120,49 @@ class CounterViewModel(
 
     fun reset() = mutate(CounterMutation.Reset, emitHaptic = false)
 
+    val additionalEditorActions =
+        AdditionalCounterEditorActions(
+            onSave = { id, name, followsMain -> counterRepository.additionalCounters.save(projectId, id, name, followsMain) },
+            onDelete = { id -> counterRepository.additionalCounters.delete(projectId, id) },
+            onSetCount = { id, mutation ->
+                when (counterRepository.mutate(projectId, mutation, id)) {
+                    is CounterMutationResult.Changed, is CounterMutationResult.NoOp -> true
+                    else -> false
+                }
+            },
+        )
+
+    internal val reminderActions =
+        ReminderActions(
+            onSave = { owner, id, revision, message, first, interval, enabled, creationId ->
+                owner == projectId &&
+                    counterRepository.reminders.save(owner, id, revision, message, first, interval, enabled, creationId) != null
+            },
+            onAcknowledge = { owner, id, revision, target ->
+                owner == projectId && counterRepository.reminders.acknowledge(owner, id, revision, target)
+            },
+            onReset = { owner, id, revision ->
+                owner == projectId && counterRepository.reminders.resetAcknowledgements(owner, id, revision)
+            },
+            onDelete = { owner, id, revision ->
+                owner == projectId && counterRepository.reminders.delete(owner, id, revision)
+            },
+        )
+
+    val changeAdditionalCount: (String, CounterMutation) -> Unit = { id, mutation ->
+        viewModelScope.launch {
+            try {
+                handleMutationResult(counterRepository.mutate(projectId, mutation, id), emitHaptic = true)
+            } catch (_: SQLException) {
+                effectChannel.send(CounterEffect.ShowMessage(R.string.error_database_write))
+            }
+        }
+    }
+
     fun undo() {
         viewModelScope.launch {
             try {
-                handleMutationResult(counterRepository.undo(projectId), null, emitHaptic = true)
+                handleMutationResult(counterRepository.undo(projectId), emitHaptic = true)
             } catch (_: SQLException) {
                 effectChannel.send(CounterEffect.ShowMessage(R.string.error_database_write))
             }
@@ -125,6 +175,18 @@ class CounterViewModel(
                 counterRepository.updateProjectFromEditor(projectId, values)
             } catch (_: SQLException) {
                 effectChannel.send(CounterEffect.ShowMessage(R.string.error_database_write))
+            }
+        }
+    }
+
+    val saveRepeatSettings: suspend (String, Int?, Long?) -> Boolean = { editorProjectId, repeatLength, repeatStartCount ->
+        if (editorProjectId != projectId) {
+            false
+        } else {
+            try {
+                counterRepository.repeatSettings.save(editorProjectId, repeatLength, repeatStartCount) != null
+            } catch (_: SQLException) {
+                false
             }
         }
     }
@@ -159,11 +221,9 @@ class CounterViewModel(
         emitHaptic: Boolean,
     ) {
         viewModelScope.launch {
-            val project = uiState.value.project
             try {
                 handleMutationResult(
                     result = counterRepository.mutate(projectId, mutation),
-                    project = project,
                     emitHaptic = emitHaptic,
                     mutation = mutation,
                 )
@@ -175,7 +235,6 @@ class CounterViewModel(
 
     private suspend fun handleMutationResult(
         result: CounterMutationResult,
-        project: CounterProject?,
         emitHaptic: Boolean,
         mutation: CounterMutation? = null,
     ) {
@@ -184,7 +243,7 @@ class CounterViewModel(
                 if (emitHaptic) {
                     hapticFlow.emit(
                         CounterEffect.Haptic(
-                            shouldUseStrongHaptic(mutation, project, result),
+                            shouldUseStrongHaptic(mutation, result),
                         ),
                     )
                 }
@@ -208,6 +267,10 @@ class CounterViewModel(
                 effectChannel.send(
                     CounterEffect.ShowMessage(R.string.counter_set_error),
                 )
+            }
+
+            CounterMutationResult.CounterMissing -> {
+                effectChannel.send(CounterEffect.ShowMessage(R.string.error_database_write))
             }
         }
     }
@@ -237,13 +300,13 @@ class CounterViewModel(
 
 private fun shouldUseStrongHaptic(
     mutation: CounterMutation?,
-    project: CounterProject?,
     result: CounterMutationResult.Changed,
 ): Boolean {
-    if (mutation != CounterMutation.Increment || project == null) {
+    if (mutation != CounterMutation.Increment) {
         return false
     }
-    val completedRepeat = project.repeatLength?.let { result.newCount > 0 && result.newCount % it == 0L } == true
-    val reachedTarget = project.targetCount?.let { result.previousCount < it && result.newCount == it } == true
-    return completedRepeat || reachedTarget
+    val repeat = RepeatProgressCalculator.calculate(result.newCount, result.repeatLength, result.repeatStartCount)
+    val completedRepeat = repeat != null && repeat.currentStep == repeat.repeatLength
+    val reachedTarget = result.targetCount?.let { result.previousCount < it && result.newCount == it } == true
+    return completedRepeat || reachedTarget || result.reminderReached
 }

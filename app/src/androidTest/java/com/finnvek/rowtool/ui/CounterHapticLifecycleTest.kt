@@ -53,6 +53,30 @@ class CounterHapticLifecycleTest {
             ).around(composeRule)
 
     @Test
+    fun reminderAndTargetProduceOneStrongFeedbackOnlyOnResumedIncrement() =
+        runBlocking {
+            showCounter()
+            application.container.counterRepository.reminders
+                .save(projectId, null, null, "Check", 1, null, true)
+            composeRule.waitForIdle()
+            composeRule.runOnIdle { assertEquals(emptyList<Int>(), probe.feedback) }
+            composeRule.runOnIdle { counterViewModel.increment() }
+            composeRule.waitUntil(5_000) { composeRule.runOnIdle { probe.feedback.size == 1 } }
+            composeRule.runOnIdle { assertEquals(listOf(HapticFeedbackConstants.CONFIRM), probe.feedback) }
+            composeRule.runOnIdle { navController.navigate("settings") }
+            waitForResumed("settings")
+            composeRule.runOnIdle { navController.popBackStack() }
+            waitForResumed("counter")
+            composeRule.runOnIdle { assertEquals(1, probe.feedback.size) }
+            composeRule.runOnIdle { counterViewModel.reset() }
+            composeRule.waitUntil(5_000) {
+                counterViewModel.uiState.value.project
+                    ?.count == 0L
+            }
+            composeRule.runOnIdle { assertEquals(1, probe.feedback.size) }
+        }
+
+    @Test
     fun delayedMilestoneAfterNavigationNeverReplaysAndNewResumedMutationStillVibrates() =
         runBlocking {
             showCounter()

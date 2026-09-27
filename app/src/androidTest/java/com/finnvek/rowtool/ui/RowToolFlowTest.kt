@@ -83,7 +83,12 @@ class RowToolFlowTest {
     }
 
     private fun createProject(name: String) {
-        composeRule.onNodeWithText("New project").performClick()
+        composeRule.captureAssertionFailure(
+            label = "full-suite-new-project",
+            activity = { composeRule.activity },
+        ) {
+            composeRule.onNodeWithText("New project").performClick()
+        }
         composeRule.onNode(hasSetTextAction()).performTextInput(name)
         Espresso.closeSoftKeyboard()
         composeRule.onNodeWithText("Save").performClick()

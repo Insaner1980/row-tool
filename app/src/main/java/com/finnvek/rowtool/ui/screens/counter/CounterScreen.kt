@@ -25,7 +25,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -56,10 +58,15 @@ import androidx.compose.ui.unit.sp
 import com.finnvek.rowtool.R
 import com.finnvek.rowtool.domain.counter.RepeatProgressCalculator
 import com.finnvek.rowtool.domain.counter.TargetProgressCalculator
+import com.finnvek.rowtool.domain.model.AdditionalCounter
 import com.finnvek.rowtool.domain.model.CounterConstants
 import com.finnvek.rowtool.domain.model.CounterProject
 import com.finnvek.rowtool.domain.model.CounterUnit
+import com.finnvek.rowtool.domain.model.ProjectNote
+import com.finnvek.rowtool.domain.model.Reminder
+import com.finnvek.rowtool.domain.model.ReminderRules
 import com.finnvek.rowtool.ui.RowToolDropdownMenuItem
+import com.finnvek.rowtool.ui.screens.note.NotePreview
 import com.finnvek.rowtool.ui.theme.RowToolDimens
 import java.text.NumberFormat
 
@@ -80,12 +87,17 @@ data class CounterProjectActions(
     val onReset: () -> Unit,
     val onArchive: () -> Unit,
     val onDelete: () -> Unit,
+    val onRepeatEdit: () -> Unit = {},
+    val onReminders: () -> Unit = {},
+    val onNote: () -> Unit = {},
+    val onHistory: () -> Unit = {},
 )
 
 data class CounterScreenActions(
     val navigation: CounterNavigationActions,
     val value: CounterValueActions,
     val project: CounterProjectActions,
+    val additional: AdditionalCounterActions = AdditionalCounterActions(),
 )
 
 internal data class CounterUnitResources(
@@ -191,6 +203,22 @@ fun CounterScreenContent(
                                 menuExpanded = false
                                 actions.project.onEdit()
                             }
+                            CounterMenuItem(R.string.action_repeat, R.drawable.ic_edit) {
+                                menuExpanded = false
+                                actions.project.onRepeatEdit()
+                            }
+                            CounterMenuItem(R.string.note_title, R.drawable.ic_edit) {
+                                menuExpanded = false
+                                actions.project.onNote()
+                            }
+                            CounterMenuItem(R.string.history_title, R.drawable.ic_restore) {
+                                menuExpanded = false
+                                actions.project.onHistory()
+                            }
+                            CounterMenuItem(R.string.reminder_title, R.drawable.ic_edit) {
+                                menuExpanded = false
+                                actions.project.onReminders()
+                            }
                             CounterMenuItem(R.string.action_set_count, R.drawable.ic_edit) {
                                 menuExpanded = false
                                 actions.value.onSetCount()
@@ -233,6 +261,13 @@ fun CounterScreenContent(
                     project = project,
                     canUndo = state.canUndo,
                     actions = actions.value,
+                    additionalCounters = state.additionalCounters,
+                    additionalActions = actions.additional,
+                    reminders = state.reminders,
+                    onReminders = actions.project.onReminders,
+                    note = state.note,
+                    onNote = actions.project.onNote,
+                    onRepeatEdit = actions.project.onRepeatEdit,
                     viewportHeight = maxHeight,
                     modifier =
                         Modifier
@@ -250,22 +285,37 @@ private fun CounterWorkspace(
     canUndo: Boolean,
     actions: CounterValueActions,
     viewportHeight: Dp,
+    additionalCounters: List<AdditionalCounter>,
+    additionalActions: AdditionalCounterActions,
+    reminders: List<Reminder>,
+    onReminders: () -> Unit,
+    note: ProjectNote?,
+    onNote: () -> Unit,
+    onRepeatEdit: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val configuration = LocalConfiguration.current
-    val numberFormat = remember(configuration) { NumberFormat.getIntegerInstance() }
+    val numberFormat = remember(configuration.locales[0]) { NumberFormat.getIntegerInstance(configuration.locales[0]) }
     val formattedCount = remember(project.count, numberFormat) { numberFormat.format(project.count) }
     val formattedTarget =
         remember(project.targetCount, numberFormat) {
             project.targetCount?.let(numberFormat::format)
         }
     val repeatProgress =
-        remember(project.count, project.repeatLength) {
-            RepeatProgressCalculator.calculate(project.count, project.repeatLength)
+        remember(project.count, project.repeatLength, project.repeatStartCount) {
+            RepeatProgressCalculator.calculate(project.count, project.repeatLength, project.repeatStartCount)
         }
     val targetProgress =
         remember(project.count, project.targetCount) {
             TargetProgressCalculator.calculate(project.count, project.targetCount)
+        }
+    val visibleReminders =
+        reminders.filter {
+            !project.isArchived &&
+                it.enabled &&
+                ReminderRules.status(it, project.count).let { status ->
+                    status.dueCount != null || status.nextCount != null
+                }
         }
     val resources = counterUnitResources(project.counterUnit)
     val counterLabel = stringResource(resources.label)
@@ -284,7 +334,7 @@ private fun CounterWorkspace(
                     bottom = RowToolDimens.Space24,
                 ),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
+        verticalArrangement = if (visibleReminders.isEmpty()) Arrangement.Center else Arrangement.Top,
     ) {
         Text(
             text = counterLabel,
@@ -332,31 +382,42 @@ private fun CounterWorkspace(
             )
         }
         repeatProgress?.let { repeat ->
-            Text(
-                text =
-                    stringResource(
-                        R.string.counter_repeat_progress,
-                        repeat.currentStep,
-                        repeat.repeatLength,
-                    ),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = RowToolDimens.Space16),
-            )
-            if (repeat.completedRepeats > 0) {
+            Column(
+                modifier =
+                    Modifier
+                        .padding(top = RowToolDimens.Space16)
+                        .heightIn(min = 48.dp)
+                        .clickable(role = Role.Button, onClick = onRepeatEdit),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
                 Text(
-                    text =
-                        pluralStringResource(
-                            R.plurals.repeat_count,
-                            repeat.completedRepeats.toInt(),
-                            repeat.completedRepeats,
-                        ),
-                    style = MaterialTheme.typography.bodySmall,
+                    text = stringResource(R.string.counter_repeat_progress, repeat.currentStep, repeat.repeatLength),
+                    style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(top = RowToolDimens.Space4),
                 )
+                if (project.repeatStartCount != null && project.repeatStartCount > 1) {
+                    Text(
+                        text =
+                            stringResource(
+                                if (project.counterUnit == CounterUnit.ROWS) R.string.repeat_starts_row else R.string.repeat_starts_round,
+                                project.repeatStartCount,
+                            ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                    )
+                }
+                if (repeat.completedRepeats > 0) {
+                    Text(
+                        text = pluralStringResource(R.plurals.repeat_count, repeat.completedRepeats.toInt(), repeat.completedRepeats),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(top = RowToolDimens.Space4),
+                    )
+                }
             }
         }
         CounterButtons(
@@ -371,6 +432,49 @@ private fun CounterWorkspace(
                     .fillMaxWidth()
                     .padding(top = RowToolDimens.Space32),
         )
+        if (visibleReminders.isNotEmpty()) {
+            ReminderPanel(project, visibleReminders, onReminders)
+        }
+        AdditionalCountersSection(
+            counters = additionalCounters,
+            actions = additionalActions,
+            enabled = !project.isArchived,
+            modifier = Modifier.fillMaxWidth().padding(top = RowToolDimens.Space24),
+        )
+        if (note != null) NotePreview(note, onNote)
+    }
+}
+
+@Composable
+private fun ReminderPanel(
+    project: CounterProject,
+    reminders: List<Reminder>,
+    onOpen: () -> Unit,
+) {
+    val due = reminders.filter { ReminderRules.status(it, project.count).dueCount != null }
+    Surface(
+        modifier = Modifier.fillMaxWidth().padding(top = RowToolDimens.Space16).heightIn(min = 96.dp),
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+    ) {
+        Column(Modifier.padding(RowToolDimens.Space16), verticalArrangement = Arrangement.spacedBy(RowToolDimens.Space4)) {
+            if (due.size == 1) {
+                val item = due.single()
+                Text(
+                    reminderCountLabel(project.counterUnit, ReminderRules.status(item, project.count).dueCount!!, true),
+                    style = MaterialTheme.typography.titleSmall,
+                )
+                Text(item.message, maxLines = 2, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyMedium)
+            } else if (due.size > 1) {
+                Text(pluralStringResource(R.plurals.reminder_due_count, due.size, due.size), style = MaterialTheme.typography.titleSmall)
+            } else {
+                val next = reminders.mapNotNull { ReminderRules.status(it, project.count).nextCount }.minOrNull()
+                if (next != null) Text(reminderCountLabel(project.counterUnit, next, false), style = MaterialTheme.typography.titleSmall)
+            }
+            TextButton(onClick = onOpen, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(stringResource(R.string.reminder_view_all))
+            }
+        }
     }
 }
 

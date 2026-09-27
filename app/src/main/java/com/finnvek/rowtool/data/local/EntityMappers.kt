@@ -15,6 +15,7 @@ fun ProjectEntity.toDomain(): CounterProject =
         isArchived = isArchived,
         createdAt = createdAt,
         updatedAt = updatedAt,
+        repeatStartCount = repeatStartCount,
     )
 
 fun CounterProject.toEntity(): ProjectEntity =
@@ -29,4 +30,5 @@ fun CounterProject.toEntity(): ProjectEntity =
         isArchived = isArchived,
         createdAt = createdAt,
         updatedAt = updatedAt,
+        repeatStartCount = repeatStartCount,
     )

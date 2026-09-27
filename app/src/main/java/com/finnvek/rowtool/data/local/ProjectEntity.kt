@@ -21,4 +21,5 @@ data class ProjectEntity(
     val isArchived: Boolean,
     val createdAt: Long,
     val updatedAt: Long,
+    val repeatStartCount: Long? = if (repeatLength != null) 1L else null,
 )

@@ -58,6 +58,7 @@ fun ProjectEditorDialog(
     project: CounterProject?,
     onDismiss: () -> Unit,
     onSave: (ProjectEditorValues) -> Unit,
+    copyState: CopySetupState? = null,
 ) {
     var name by rememberSaveable(project?.id) { mutableStateOf(project?.name.orEmpty()) }
     var counterUnitName by rememberSaveable(project?.id) {
@@ -72,6 +73,33 @@ fun ProjectEditorDialog(
     var repeatText by rememberSaveable(project?.id) {
         mutableStateOf(project?.repeatLength?.toString().orEmpty())
     }
+    var repeatStartText by rememberSaveable(project?.id) {
+        mutableStateOf((project?.repeatStartCount ?: 1L).toString())
+    }
+
+    var confirmDiscard by rememberSaveable { mutableStateOf(false) }
+    val dirty =
+        name != project?.name.orEmpty() ||
+            counterUnitName != (project?.counterUnit ?: CounterUnit.ROWS).name ||
+            startValue != (project?.startValue ?: 0) || targetEnabled != (project?.targetCount != null) ||
+            targetText != project?.targetCount?.toString().orEmpty() || repeatEnabled != (project?.repeatLength != null) ||
+            repeatText != project?.repeatLength?.toString().orEmpty() ||
+            repeatStartText != (project?.repeatStartCount ?: 1L).toString()
+    val dismiss = {
+        if (copyState?.saving != true) {
+            if (copyState != null && dirty) confirmDiscard = true else onDismiss()
+        }
+    }
+    if (confirmDiscard) {
+        com.finnvek.rowtool.ui.RowToolConfirmationDialog(
+            title = stringResource(R.string.note_discard_title),
+            message = stringResource(R.string.note_discard_message),
+            confirmLabel = stringResource(R.string.note_discard),
+            isDestructive = true,
+            onDismiss = { confirmDiscard = false },
+            onConfirm = onDismiss,
+        )
+    }
 
     val validation =
         validateProjectEditorInput(
@@ -80,13 +108,14 @@ fun ProjectEditorDialog(
             targetText = targetText,
             repeatEnabled = repeatEnabled,
             repeatText = repeatText,
+            repeatStartText = repeatStartText,
         )
     val counterUnit = CounterUnit.valueOf(counterUnitName)
     val windowHeight = LocalWindowInfo.current.containerSize.height
     val maxHeight = with(LocalDensity.current) { windowHeight.toDp() * 0.88f }
 
     Dialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = dismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         Surface(
@@ -105,96 +134,142 @@ fun ProjectEditorDialog(
         ) {
             Column(
                 modifier =
-                    Modifier
-                        .verticalScroll(rememberScrollState())
-                        .padding(RowToolDimens.Space24),
-                verticalArrangement = Arrangement.spacedBy(RowToolDimens.Space16),
+                    if (copyState ==
+                        null
+                    ) {
+                        Modifier.verticalScroll(rememberScrollState()).padding(RowToolDimens.Space24)
+                    } else {
+                        Modifier
+                    },
+                verticalArrangement = Arrangement.spacedBy(if (copyState == null) RowToolDimens.Space16 else 0.dp),
             ) {
-                Text(
-                    text =
-                        stringResource(
-                            if (project == null) R.string.project_new_title else R.string.project_edit_title,
-                        ),
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = AlertDialogDefaults.titleContentColor,
-                    modifier = Modifier.semantics { heading() },
-                )
-                ProjectNameField(
-                    value = name,
-                    onValueChange = { name = it },
-                    validation = validation,
-                )
-                ChoiceSection(
-                    label = stringResource(R.string.project_counter_type),
-                    options =
-                        listOf(
-                            CounterUnit.ROWS.name to stringResource(R.string.project_rows),
-                            CounterUnit.ROUNDS.name to stringResource(R.string.project_rounds),
-                        ),
-                    selected = counterUnitName,
-                    onSelect = { counterUnitName = it },
-                )
-                ChoiceSection(
-                    label = stringResource(R.string.project_starting_value),
-                    options =
-                        listOf(
-                            "0" to stringResource(R.string.project_start_zero),
-                            "1" to stringResource(R.string.project_start_one),
-                        ),
-                    selected = startValue.toString(),
-                    onSelect = { startValue = it.toInt() },
-                )
-                ToggleNumberField(
-                    checked = targetEnabled,
-                    onCheckedChange = { targetEnabled = it },
-                    value = targetText,
-                    onValueChange = { targetText = it },
-                    isValid = validation.targetValid,
-                    config =
-                        ToggleNumberFieldConfig(
-                            switchLabel = stringResource(R.string.project_target_enabled),
-                            fieldLabel = stringResource(R.string.project_target_label),
-                            errorText =
-                                stringResource(
-                                    R.string.project_target_error,
-                                    ProjectValidation.MIN_TARGET_COUNT,
-                                    CounterConstants.MAX_COUNT,
-                                ),
-                            imeAction = ImeAction.Next,
-                        ),
-                )
-                ToggleNumberField(
-                    checked = repeatEnabled,
-                    onCheckedChange = { repeatEnabled = it },
-                    value = repeatText,
-                    onValueChange = { repeatText = it },
-                    isValid = validation.repeatValid,
-                    config =
-                        ToggleNumberFieldConfig(
-                            switchLabel = stringResource(R.string.project_repeat_enabled),
-                            fieldLabel = stringResource(R.string.project_repeat_label),
-                            errorText =
-                                stringResource(
-                                    R.string.project_repeat_error,
-                                    ProjectValidation.MIN_REPEAT_LENGTH,
-                                    ProjectValidation.MAX_REPEAT_LENGTH,
-                                ),
-                            imeAction = ImeAction.Done,
-                        ),
-                )
+                Column(
+                    modifier =
+                        Modifier
+                            .then(
+                                if (copyState !=
+                                    null
+                                ) {
+                                    Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(RowToolDimens.Space24)
+                                } else {
+                                    Modifier
+                                },
+                            ),
+                    verticalArrangement = Arrangement.spacedBy(RowToolDimens.Space16),
+                ) {
+                    Text(
+                        text =
+                            stringResource(
+                                if (copyState !=
+                                    null
+                                ) {
+                                    R.string.copy_title
+                                } else if (project ==
+                                    null
+                                ) {
+                                    R.string.project_new_title
+                                } else {
+                                    R.string.project_edit_title
+                                },
+                            ),
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = AlertDialogDefaults.titleContentColor,
+                        modifier = Modifier.semantics { heading() },
+                    )
+                    copyState?.snapshot?.let { snapshot ->
+                        Text(stringResource(R.string.copy_source, snapshot.sourceName))
+                        Text(stringResource(R.string.copy_excluded), style = MaterialTheme.typography.bodyMedium)
+                        if (snapshot.counters.isNotEmpty()) {
+                            Text(stringResource(R.string.additional_counters), style = MaterialTheme.typography.titleSmall)
+                            snapshot.counters.forEach { counter ->
+                                Text(
+                                    counter.name + ": " +
+                                        stringResource(
+                                            if (counter.followsMain) R.string.additional_following else R.string.additional_manual,
+                                        ),
+                                )
+                            }
+                        }
+                    }
+                    copyState?.error?.let { Text(stringResource(it), color = MaterialTheme.colorScheme.error) }
+                    ProjectNameField(
+                        value = name,
+                        onValueChange = { name = it },
+                        validation = validation,
+                    )
+                    ChoiceSection(
+                        label = stringResource(R.string.project_counter_type),
+                        options =
+                            listOf(
+                                CounterUnit.ROWS.name to stringResource(R.string.project_rows),
+                                CounterUnit.ROUNDS.name to stringResource(R.string.project_rounds),
+                            ),
+                        selected = counterUnitName,
+                        onSelect = { counterUnitName = it },
+                    )
+                    ChoiceSection(
+                        label = stringResource(R.string.project_starting_value),
+                        options =
+                            listOf(
+                                "0" to stringResource(R.string.project_start_zero),
+                                "1" to stringResource(R.string.project_start_one),
+                            ),
+                        selected = startValue.toString(),
+                        onSelect = { startValue = it.toInt() },
+                    )
+                    ToggleNumberField(
+                        checked = targetEnabled,
+                        onCheckedChange = { targetEnabled = it },
+                        value = targetText,
+                        onValueChange = { targetText = it },
+                        isValid = validation.targetValid,
+                        config =
+                            ToggleNumberFieldConfig(
+                                switchLabel = stringResource(R.string.project_target_enabled),
+                                fieldLabel = stringResource(R.string.project_target_label),
+                                errorText =
+                                    stringResource(
+                                        R.string.project_target_error,
+                                        ProjectValidation.MIN_TARGET_COUNT,
+                                        CounterConstants.MAX_COUNT,
+                                    ),
+                                imeAction = ImeAction.Next,
+                            ),
+                    )
+                    RepeatSettingsFields(
+                        counterUnit = counterUnit,
+                        enabled = repeatEnabled,
+                        onEnabledChange = { repeatEnabled = it },
+                        lengthText = repeatText,
+                        onLengthChange = { repeatText = it },
+                        startText = repeatStartText,
+                        onStartChange = { repeatStartText = it },
+                        validation = validateRepeatSettingsInput(repeatEnabled, repeatText, repeatStartText),
+                    )
+                }
                 FlowRow(
-                    modifier = Modifier.fillMaxWidth().padding(top = RowToolDimens.Space8),
+                    modifier =
+                        Modifier.fillMaxWidth().then(
+                            if (copyState == null) {
+                                Modifier.padding(top = RowToolDimens.Space8)
+                            } else {
+                                Modifier.padding(horizontal = RowToolDimens.Space24, vertical = RowToolDimens.Space8)
+                            },
+                        ),
                     horizontalArrangement = Arrangement.spacedBy(RowToolDimens.Space8, Alignment.End),
                     verticalArrangement = Arrangement.spacedBy(RowToolDimens.Space12),
                 ) {
                     TextButton(
-                        onClick = onDismiss,
+                        onClick = dismiss,
+                        modifier = if (copyState != null) Modifier.heightIn(min = 48.dp) else Modifier,
+                        enabled = copyState?.saving != true,
                         colors = ordinaryDialogActionColors(),
                     ) {
                         Text(stringResource(R.string.action_cancel))
                     }
                     TextButton(
-                        enabled = validation.canSave,
+                        modifier = if (copyState != null) Modifier.heightIn(min = 48.dp) else Modifier,
+                        enabled = validation.canSave && copyState?.saving != true && copyState?.completedId == null,
                         colors = ordinaryDialogActionColors(),
                         onClick = {
                             onSave(
@@ -204,15 +279,76 @@ fun ProjectEditorDialog(
                                     startValue = startValue,
                                     targetCount = validation.targetCount,
                                     repeatLength = validation.repeatLength,
+                                    repeatStartCount = validation.repeatStartCount,
                                 ),
                             )
                         },
                     ) {
-                        Text(stringResource(R.string.action_save))
+                        Text(stringResource(if (copyState != null) R.string.copy_create else R.string.action_save))
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+internal fun RepeatSettingsFields(
+    counterUnit: CounterUnit,
+    enabled: Boolean,
+    onEnabledChange: (Boolean) -> Unit,
+    lengthText: String,
+    onLengthChange: (String) -> Unit,
+    startText: String,
+    onStartChange: (String) -> Unit,
+    validation: RepeatSettingsInputValidation,
+) {
+    ToggleNumberField(
+        checked = enabled,
+        onCheckedChange = onEnabledChange,
+        value = lengthText,
+        onValueChange = onLengthChange,
+        isValid = validation.repeatValid,
+        config =
+            ToggleNumberFieldConfig(
+                switchLabel = stringResource(R.string.project_repeat_enabled),
+                fieldLabel = stringResource(R.string.project_repeat_label),
+                errorText =
+                    stringResource(
+                        R.string.project_repeat_error,
+                        ProjectValidation.MIN_REPEAT_LENGTH,
+                        ProjectValidation.MAX_REPEAT_LENGTH,
+                    ),
+                imeAction = ImeAction.Next,
+            ),
+    )
+    if (enabled) {
+        TextField(
+            value = startText,
+            onValueChange = onStartChange,
+            modifier = Modifier.fillMaxWidth(),
+            label = {
+                Text(
+                    stringResource(
+                        if (counterUnit == CounterUnit.ROWS) R.string.repeat_start_row else R.string.repeat_start_round,
+                    ),
+                )
+            },
+            singleLine = true,
+            isError = !validation.repeatStartValid,
+            shape = MaterialTheme.shapes.large,
+            colors = projectEditorTextFieldColors(),
+            supportingText = {
+                Text(
+                    if (validation.repeatStartValid) {
+                        stringResource(R.string.repeat_start_explanation)
+                    } else {
+                        stringResource(R.string.repeat_start_error, CounterConstants.MAX_COUNT)
+                    },
+                )
+            },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+        )
     }
 }
 

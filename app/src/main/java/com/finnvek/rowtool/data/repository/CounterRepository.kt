@@ -1,6 +1,7 @@
 package com.finnvek.rowtool.data.repository
 
 import androidx.room.withTransaction
+import com.finnvek.rowtool.data.local.CounterHistoryEffectEntity
 import com.finnvek.rowtool.data.local.CounterHistoryEntity
 import com.finnvek.rowtool.data.local.ProjectEntity
 import com.finnvek.rowtool.data.local.RowToolDatabase
@@ -14,6 +15,7 @@ import com.finnvek.rowtool.domain.model.HistoryChangeReason
 import com.finnvek.rowtool.domain.model.ProjectValidation
 import com.finnvek.rowtool.domain.model.ProjectValidationError
 import com.finnvek.rowtool.domain.model.ProjectValidationResult
+import com.finnvek.rowtool.domain.model.ReminderRules
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
@@ -27,7 +29,27 @@ class CounterRepository(
 ) {
     private val projectDao = database.projectDao()
     private val historyDao = database.counterHistoryDao()
+    private val additionalDao = database.additionalCounterDao()
+    private val effectDao = database.counterHistoryEffectDao()
     private val mutationMutex = Mutex()
+
+    val additionalCounters = AdditionalCounterStore(database, mutationMutex, clock, idGenerator)
+    val repeatSettings = RepeatSettingsStore(database, mutationMutex, clock)
+    val reminders = ReminderStore(database, mutationMutex, idGenerator)
+    val notes = ProjectNoteStore(database, mutationMutex, clock)
+    val history = RecentHistoryStore(historyDao)
+    val copySetups =
+        CopySetupStore(database, mutationMutex, idGenerator) { values, id ->
+            insertNewProject(
+                values.name,
+                values.counterUnit,
+                values.startValue,
+                values.targetCount,
+                values.repeatLength,
+                values.repeatStartCount,
+                id,
+            )
+        }
 
     val projects: Flow<List<CounterProject>> =
         projectDao
@@ -52,39 +74,54 @@ class CounterRepository(
         startValue: Int,
         targetCount: Long?,
         repeatLength: Int?,
+        repeatStartCount: Long? = if (repeatLength != null) 1L else null,
     ): CounterProject =
         mutationMutex.withLock {
             database.withTransaction {
-                if (projectDao.count() >= CounterConstants.MAX_PROJECTS_IN_BACKUP) {
-                    throw ProjectLimitReachedException()
-                }
-                val validated =
-                    requireValid(
-                        name = name,
-                        counterUnit = counterUnit,
-                        count = startValue.toLong(),
-                        startValue = startValue,
-                        targetCount = targetCount,
-                        repeatLength = repeatLength,
-                    )
-                val timestamp = clock()
-                val entity =
-                    ProjectEntity(
-                        id = idGenerator(),
-                        name = validated.name,
-                        counterUnit = validated.counterUnit.name,
-                        count = validated.count,
-                        startValue = validated.startValue,
-                        targetCount = validated.targetCount,
-                        repeatLength = validated.repeatLength,
-                        isArchived = false,
-                        createdAt = timestamp,
-                        updatedAt = timestamp,
-                    )
-                projectDao.insert(entity)
-                entity.toDomain()
+                insertNewProject(name, counterUnit, startValue, targetCount, repeatLength, repeatStartCount)
             }
         }
+
+    private suspend fun insertNewProject(
+        name: String,
+        counterUnit: CounterUnit,
+        startValue: Int,
+        targetCount: Long?,
+        repeatLength: Int?,
+        repeatStartCount: Long?,
+        id: String = idGenerator(),
+    ): CounterProject {
+        if (projectDao.count() >= CounterConstants.MAX_PROJECTS_IN_BACKUP) {
+            throw ProjectLimitReachedException()
+        }
+        val validated =
+            requireValid(
+                name = name,
+                counterUnit = counterUnit,
+                count = startValue.toLong(),
+                startValue = startValue,
+                targetCount = targetCount,
+                repeatLength = repeatLength,
+                repeatStartCount = repeatStartCount,
+            )
+        val timestamp = clock()
+        val entity =
+            ProjectEntity(
+                id = id,
+                name = validated.name,
+                counterUnit = validated.counterUnit.name,
+                count = validated.count,
+                startValue = validated.startValue,
+                targetCount = validated.targetCount,
+                repeatLength = validated.repeatLength,
+                isArchived = false,
+                createdAt = timestamp,
+                updatedAt = timestamp,
+                repeatStartCount = validated.repeatStartCount,
+            )
+        projectDao.insert(entity)
+        return entity.toDomain()
+    }
 
     suspend fun updateProject(
         id: String,
@@ -93,6 +130,7 @@ class CounterRepository(
         startValue: Int,
         targetCount: Long?,
         repeatLength: Int?,
+        repeatStartCount: Long? = if (repeatLength != null) 1L else null,
     ): CounterProject? =
         mutationMutex.withLock {
             database.withTransaction {
@@ -105,6 +143,7 @@ class CounterRepository(
                         startValue = startValue,
                         targetCount = targetCount,
                         repeatLength = repeatLength,
+                        repeatStartCount = repeatStartCount,
                     )
                 val candidate =
                     current.copy(
@@ -113,6 +152,7 @@ class CounterRepository(
                         startValue = validated.startValue,
                         targetCount = validated.targetCount,
                         repeatLength = validated.repeatLength,
+                        repeatStartCount = validated.repeatStartCount,
                     )
                 if (candidate == current) {
                     return@withTransaction current.toDomain()
@@ -146,6 +186,7 @@ class CounterRepository(
     suspend fun mutate(
         id: String,
         mutation: CounterMutation,
+        counterId: String? = null,
     ): CounterMutationResult =
         mutationMutex.withLock {
             database.withTransaction {
@@ -156,28 +197,47 @@ class CounterRepository(
                     return@withTransaction CounterMutationResult.ProjectArchived
                 }
 
-                val next = calculateMutation(project, mutation)
+                val counter = counterId?.let { additionalDao.getById(id, it)?.takeUnless { item -> item.isDeleted } }
+                if (counterId != null && counter == null) return@withTransaction CounterMutationResult.CounterMissing
+                val previousCount = counter?.count ?: project.count
+                val next = calculateMutation(previousCount, if (counter == null) project.startValue.toLong() else 0L, mutation)
                 if (next is CalculatedMutation.Invalid) {
                     return@withTransaction CounterMutationResult.Invalid(next.errors)
                 }
                 next as CalculatedMutation.Valid
-                if (next.newCount == project.count) {
-                    return@withTransaction CounterMutationResult.NoOp(project.count)
+                if (next.newCount == previousCount) {
+                    return@withTransaction CounterMutationResult.NoOp(previousCount)
                 }
 
                 val timestamp = clock()
-                historyDao.insert(
-                    CounterHistoryEntity(
-                        projectId = id,
-                        previousCount = project.count,
-                        newCount = next.newCount,
-                        changeReason = next.reason.name,
-                        createdAt = timestamp,
-                    ),
-                )
-                projectDao.update(project.copy(count = next.newCount, updatedAt = timestamp))
+                val mainCount = if (counter == null) next.newCount else project.count
+                val historyId =
+                    historyDao.insert(
+                        CounterHistoryEntity(
+                            projectId = id,
+                            previousCount = project.count,
+                            newCount = mainCount,
+                            changeReason = next.reason.name,
+                            createdAt = timestamp,
+                        ),
+                    )
+                val effects =
+                    if (counter != null) {
+                        listOf(CounterHistoryEffectEntity(historyId, counter.id, counter.count, next.newCount))
+                    } else {
+                        val delta = mainCount - project.count
+                        additionalDao.getActive(id).filter { it.followsMain }.mapNotNull { item ->
+                            val newCount = (item.count + delta).coerceIn(CounterConstants.MIN_COUNT, CounterConstants.MAX_COUNT)
+                            if (newCount == item.count) null else CounterHistoryEffectEntity(historyId, item.id, item.count, newCount)
+                        }
+                    }
+                effectDao.insertAll(effects)
+                effects.forEach { additionalDao.setCount(it.counterId, it.newCount) }
+                projectDao.update(project.copy(count = mainCount, updatedAt = timestamp))
                 historyDao.trimToNewest(id, CounterConstants.MAX_HISTORY_ENTRIES)
-                CounterMutationResult.Changed(project.count, next.newCount, next.reason)
+                additionalDao.deleteUnreferenced()
+                val reminderReached = database.reachesReminder(id, next.newCount, next.reason, counterId)
+                changedWithFeedback(previousCount, next.newCount, next.reason, project, counterId, reminderReached)
             }
         }
 
@@ -197,33 +257,36 @@ class CounterRepository(
                     HistoryChangeReason.entries.firstOrNull { it.name == history.changeReason }
                         ?: HistoryChangeReason.MANUAL_SET
                 projectDao.update(project.copy(count = history.previousCount, updatedAt = clock()))
+                effectDao.getForHistory(history.id).forEach { additionalDao.setCount(it.counterId, it.previousCount) }
                 historyDao.deleteById(history.id)
+                additionalDao.deleteUnreferenced()
                 CounterMutationResult.Changed(project.count, history.previousCount, reason)
             }
         }
 
     private fun calculateMutation(
-        project: ProjectEntity,
+        count: Long,
+        resetValue: Long,
         mutation: CounterMutation,
     ): CalculatedMutation =
         when (mutation) {
             CounterMutation.Increment -> {
                 CalculatedMutation.Valid(
-                    newCount = (project.count + 1).coerceAtMost(CounterConstants.MAX_COUNT),
+                    newCount = (count + 1).coerceAtMost(CounterConstants.MAX_COUNT),
                     reason = HistoryChangeReason.INCREMENT,
                 )
             }
 
             CounterMutation.Decrement -> {
                 CalculatedMutation.Valid(
-                    newCount = (project.count - 1).coerceAtLeast(CounterConstants.MIN_COUNT),
+                    newCount = (count - 1).coerceAtLeast(CounterConstants.MIN_COUNT),
                     reason = HistoryChangeReason.DECREMENT,
                 )
             }
 
             CounterMutation.Reset -> {
                 CalculatedMutation.Valid(
-                    newCount = project.startValue.toLong(),
+                    newCount = resetValue,
                     reason = HistoryChangeReason.RESET,
                 )
             }
@@ -236,31 +299,6 @@ class CounterRepository(
                 }
             }
         }
-
-    private fun requireValid(
-        name: String,
-        counterUnit: CounterUnit,
-        count: Long,
-        startValue: Int,
-        targetCount: Long?,
-        repeatLength: Int?,
-    ) = when (
-        val result =
-            ProjectValidation.validate(
-                name = name,
-                counterUnit = counterUnit,
-                count = count,
-                startValue = startValue,
-                targetCount = targetCount,
-                repeatLength = repeatLength,
-            )
-    ) {
-        is ProjectValidationResult.Valid -> result.value
-
-        is ProjectValidationResult.Invalid -> throw IllegalArgumentException(
-            "Invalid project values: ${result.errors.joinToString()}",
-        )
-    }
 
     private sealed interface CalculatedMutation {
         data class Valid(
@@ -275,3 +313,62 @@ class CounterRepository(
 }
 
 internal class ProjectLimitReachedException : IllegalStateException("Project limit reached")
+
+private suspend fun RowToolDatabase.reachesReminder(
+    projectId: String,
+    newCount: Long,
+    reason: HistoryChangeReason,
+    counterId: String?,
+): Boolean {
+    if (counterId != null || reason != HistoryChangeReason.INCREMENT) return false
+    return reminderDao().getForProject(projectId).any { reminder ->
+        ReminderRules.status(reminder.toDomain(), newCount).dueCount == newCount
+    }
+}
+
+private fun changedWithFeedback(
+    previousCount: Long,
+    newCount: Long,
+    reason: HistoryChangeReason,
+    project: ProjectEntity,
+    counterId: String?,
+    reminderReached: Boolean,
+): CounterMutationResult.Changed {
+    val main = project.takeIf { counterId == null }
+    return CounterMutationResult.Changed(
+        previousCount = previousCount,
+        newCount = newCount,
+        reason = reason,
+        repeatLength = main?.repeatLength,
+        repeatStartCount = main?.repeatStartCount,
+        targetCount = main?.targetCount,
+        reminderReached = reminderReached,
+    )
+}
+
+private fun requireValid(
+    name: String,
+    counterUnit: CounterUnit,
+    count: Long,
+    startValue: Int,
+    targetCount: Long?,
+    repeatLength: Int?,
+    repeatStartCount: Long?,
+) = when (
+    val result =
+        ProjectValidation.validate(
+            name = name,
+            counterUnit = counterUnit,
+            count = count,
+            startValue = startValue,
+            targetCount = targetCount,
+            repeatLength = repeatLength,
+            repeatStartCount = repeatStartCount,
+        )
+) {
+    is ProjectValidationResult.Valid -> result.value
+
+    is ProjectValidationResult.Invalid -> throw IllegalArgumentException(
+        "Invalid project values: ${result.errors.joinToString()}",
+    )
+}

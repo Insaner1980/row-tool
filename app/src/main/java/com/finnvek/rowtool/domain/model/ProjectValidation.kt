@@ -7,6 +7,7 @@ enum class ProjectValidationError {
     INVALID_START_VALUE,
     INVALID_TARGET,
     INVALID_REPEAT_LENGTH,
+    INVALID_REPEAT_START,
 }
 
 data class ValidatedProjectValues(
@@ -16,6 +17,7 @@ data class ValidatedProjectValues(
     val startValue: Int,
     val targetCount: Long?,
     val repeatLength: Int?,
+    val repeatStartCount: Long?,
 )
 
 sealed interface ProjectValidationResult {
@@ -51,6 +53,16 @@ object ProjectValidation {
 
     internal fun isRepeatValid(repeatLength: Int?): Boolean = repeatLength == null || repeatLength in MIN_REPEAT_LENGTH..MAX_REPEAT_LENGTH
 
+    internal fun isRepeatStartValid(
+        repeatLength: Int?,
+        repeatStartCount: Long?,
+    ): Boolean =
+        if (repeatLength == null) {
+            repeatStartCount == null
+        } else {
+            repeatStartCount != null && repeatStartCount in 1L..CounterConstants.MAX_COUNT
+        }
+
     fun validate(
         name: String,
         counterUnit: CounterUnit,
@@ -58,6 +70,7 @@ object ProjectValidation {
         startValue: Int,
         targetCount: Long?,
         repeatLength: Int?,
+        repeatStartCount: Long? = if (repeatLength != null) 1L else null,
     ): ProjectValidationResult {
         val trimmedName = normalizeName(name)
         val errors =
@@ -70,6 +83,7 @@ object ProjectValidation {
                     add(ProjectValidationError.INVALID_START_VALUE)
                 }
                 addAll(optionalValueErrors(targetCount, repeatLength))
+                if (!isRepeatStartValid(repeatLength, repeatStartCount)) add(ProjectValidationError.INVALID_REPEAT_START)
             }
 
         return if (errors.isEmpty()) {
@@ -81,6 +95,7 @@ object ProjectValidation {
                     startValue = startValue,
                     targetCount = targetCount,
                     repeatLength = repeatLength,
+                    repeatStartCount = repeatStartCount,
                 ),
             )
         } else {

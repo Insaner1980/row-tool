@@ -55,6 +55,12 @@ android {
         buildConfig = false
     }
 
+    bundle {
+        language {
+            enableSplit = false
+        }
+    }
+
     packaging {
         resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
     }
@@ -152,6 +158,17 @@ tasks.withType<Detekt>().configureEach {
     }
 }
 
+// Yksi lähde OWASP-tietokannan polulle: security-check antaa sen
+// DEPENDENCY_CHECK_DATA_DIRECTORY-muuttujassa, muuten käytetään projektin omaa oletusta.
+val dependencyCheckDataDirectory: String =
+    providers
+        .environmentVariable("DEPENDENCY_CHECK_DATA_DIRECTORY")
+        .orElse(
+            rootProject.layout.projectDirectory
+                .dir(".gradle/dependency-check-data")
+                .asFile.absolutePath,
+        ).get()
+
 dependencyCheck {
     formats = listOf("HTML", "JSON", "SARIF")
     outputDirectory = rootProject.layout.projectDirectory.dir("reports")
@@ -163,14 +180,7 @@ dependencyCheck {
         )
     failBuildOnUnusedSuppressionRule = true
     data {
-        directory =
-            providers
-                .environmentVariable("DEPENDENCY_CHECK_DATA_DIRECTORY")
-                .orElse(
-                    rootProject.layout.projectDirectory
-                        .dir(".gradle/dependency-check-data")
-                        .asFile.absolutePath,
-                ).get()
+        directory = dependencyCheckDataDirectory
     }
     autoUpdate =
         providers
@@ -211,11 +221,21 @@ dependencyCheck {
     }
 }
 
+// Plugin 13.0.0: DataExtension asettaa hakemiston jo konstruktorissaan set()-kutsulla, joten
+// ConfiguredTaskin convention(defaults.data.directory) ei pure eikä yllä oleva data.directory
+// mene perille — tietokanta päätyisi polkuun $GRADLE_USER_HOME/dependency-check-data/11.0.
+// Asetetaan sama polku suoraan taskeille. Korjattu upstreamissa, poistettavissa kun julkaistaan.
+tasks.withType<org.owasp.dependencycheck.gradle.tasks.ConfiguredTask>().configureEach {
+    data.directory.set(dependencyCheckDataDirectory)
+}
+
 dependencies {
     detektPlugins(libs.compose.rules.detekt)
     ktlintRuleset(libs.compose.rules.ktlint)
     lintChecks(libs.android.security.lints)
 
+    implementation(libs.androidx.glance.appwidget)
+    implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
