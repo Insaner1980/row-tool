@@ -16,13 +16,13 @@
     "deepsec:report:custom": "pnpm run deepsec:report"
   },
   "dependencies": {
-    "deepsec": "2.3.9"
+    "deepsec": "2.3.10"
   },
   "pnpm": {
     "overrides": {
-      "fast-uri": "3.1.7",
+      "fast-uri": "3.1.8",
       "qs": "6.16.0",
-      "undici@8.5.0": "8.10.0"
+      "undici@8.5.0": "8.11.2"
     }
   }
 }
