@@ -10,14 +10,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.finnvek.rowtool.RowToolApplication
-import com.finnvek.rowtool.domain.model.CounterUnit
 import com.finnvek.rowtool.ui.screens.counter.CounterRoute
 import com.finnvek.rowtool.ui.screens.counter.CounterViewModel
+import com.finnvek.rowtool.ui.screens.counter.recoveryProjectRule
 import com.finnvek.rowtool.ui.theme.RowToolTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.RuleChain
 import org.junit.rules.TestRule
 import org.junit.runner.RunWith
 
@@ -30,13 +29,7 @@ class CounterRouteNavigationTest {
     private var returnAttempts = 0
 
     @get:Rule
-    val rules: TestRule =
-        RuleChain
-            .outerRule(
-                PrepareApplicationStateRule {
-                    projectId = container.counterRepository.createProject("Recovery", CounterUnit.ROWS, 0, null, null).id
-                },
-            ).around(composeRule)
+    val rules: TestRule = recoveryProjectRule(composeRule) { projectId = it }
 
     @Test
     fun deletionRetriesAfterCompositionRecreationWhenFirstNavigationDidNotComplete() {

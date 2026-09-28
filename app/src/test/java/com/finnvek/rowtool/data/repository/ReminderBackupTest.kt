@@ -10,16 +10,7 @@ class ReminderBackupTest {
     private val project = CounterProject("p", "Work", CounterUnit.ROWS, 0, 0, null, null, false, 1, 1)
 
     @Test fun v4RoundTripAndAcknowledgementAboveCurrentCount() {
-        val file =
-            BackupFile(
-                4,
-                "RowTool",
-                10,
-                listOf(BackupProject("p", "Work", "ROWS", 0, 0, null, null, false, 1, 1)),
-                emptyList(),
-                emptyList(),
-                listOf(BackupReminder("r", "p", "Check", 32, 6, true, 50, 2)),
-            )
+        val file = backupFile(listOf(BackupReminder("r", "p", "Check", 32, 6, true, 50, 2)))
         val decoded = BackupCodec.decode(BackupCodec.encode(file).encodeToByteArray()) as BackupDecodeResult.Valid
         assertEquals(
             50L,
@@ -30,16 +21,7 @@ class ReminderBackupTest {
     }
 
     @Test fun invalidReminderRejectsWholeImport() {
-        val base =
-            BackupFile(
-                4,
-                "RowTool",
-                10,
-                listOf(BackupProject("p", "Work", "ROWS", 0, 0, null, null, false, 1, 1)),
-                emptyList(),
-                emptyList(),
-                emptyList(),
-            )
+        val base = backupFile(emptyList())
         val invalid =
             listOf(
                 BackupReminder("r", "missing", "Check", 32, 6, true, null, 1),
@@ -68,4 +50,15 @@ class ReminderBackupTest {
         val result = ValidatedBackup.create(1, listOf(project)) as BackupDecodeResult.Valid
         assertTrue(result.backup.reminders.isEmpty())
     }
+
+    private fun backupFile(reminders: List<BackupReminder>) =
+        BackupFile(
+            4,
+            "RowTool",
+            10,
+            listOf(BackupProject("p", "Work", "ROWS", 0, 0, null, null, false, 1, 1)),
+            emptyList(),
+            emptyList(),
+            reminders,
+        )
 }

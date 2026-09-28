@@ -41,6 +41,7 @@ import com.finnvek.rowtool.data.repository.BackupImportResult
 import com.finnvek.rowtool.domain.model.CounterMutation
 import com.finnvek.rowtool.domain.model.CounterProject
 import com.finnvek.rowtool.domain.model.CounterUnit
+import com.finnvek.rowtool.domain.model.ReminderValues
 import com.finnvek.rowtool.ui.captureAssertionFailure
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -77,11 +78,7 @@ class WidgetHostTest {
         val locales = context.getSystemService(android.app.LocaleManager::class.java)
         val first = runBlocking { container.counterRepository.createProject("Locale widget", CounterUnit.ROWS, 0, null, null) }
         val other = runBlocking { container.counterRepository.createProject("Other project", CounterUnit.ROWS, 0, null, null) }
-        ActivityScenario.launch(WidgetTestHostActivity::class.java).use { host ->
-            val id = allocate(host)
-            configure(id, first.name)
-            attach(host, id)
-            val binding = runBlocking { container.widgetBindings.read(id) }
+        withHostedWidget(first) { host, id, binding ->
             for (tag in listOf("fi", "sv", "")) {
                 var previousHost = 0
                 host.onActivity { previousHost = System.identityHashCode(it) }
@@ -100,7 +97,6 @@ class WidgetHostTest {
             click(host, id, "+")
             waitCount(first.id, 1)
             assertEquals(other, runBlocking { container.counterRepository.getProject(other.id) })
-            host.onActivity { it.host.deleteAppWidgetId(id) }
         }
     }
 
@@ -109,11 +105,7 @@ class WidgetHostTest {
     fun defaultLanguageReadinessRejectsHostBeforeQueuedRecreation() {
         val locales = context.getSystemService(android.app.LocaleManager::class.java)
         val project = runBlocking { container.counterRepository.createProject("Readiness fixture", CounterUnit.ROWS, 0, null, null) }
-        ActivityScenario.launch(WidgetTestHostActivity::class.java).use { host ->
-            val id = allocate(host)
-            configure(id, project.name)
-            attach(host, id)
-            val binding = runBlocking { container.widgetBindings.read(id) }
+        withHostedWidget(project) { host, id, binding ->
             var previousHost = 0
             host.onActivity { previousHost = System.identityHashCode(it) }
             locales.applicationLocales = android.os.LocaleList.forLanguageTags("fi")
@@ -132,9 +124,7 @@ class WidgetHostTest {
                 assertFalse(it.recreatedWidgetReady(previousHost, id, systemLanguage, "Rows"))
             }
             compose.awaitRecreatedWidget(host, previousHost, id, systemLanguage, "Rows")
-            assertEquals(binding, runBlocking { container.widgetBindings.read(id) })
-            assertEquals(project, runBlocking { container.counterRepository.getProject(project.id) })
-            host.onActivity { it.host.deleteAppWidgetId(id) }
+            assertHostedProjectUnchanged(id, binding, project)
         }
     }
 
@@ -142,11 +132,7 @@ class WidgetHostTest {
     @androidx.test.filters.SdkSuppress(minSdkVersion = 33)
     fun recreatedWidgetReadinessRequiresAttachedMatchingContentAndReportsTimeout() {
         val project = runBlocking { container.counterRepository.createProject("Attachment fixture", CounterUnit.ROWS, 0, null, null) }
-        ActivityScenario.launch(WidgetTestHostActivity::class.java).use { host ->
-            val id = allocate(host)
-            configure(id, project.name)
-            attach(host, id)
-            val binding = runBlocking { container.widgetBindings.read(id) }
+        withHostedWidget(project) { host, id, binding ->
             var previousHost = 0
             var language = ""
             host.onActivity {
@@ -182,9 +168,7 @@ class WidgetHostTest {
             }
             instrumentation.runOnMainSync { reattach() }
             compose.awaitRecreatedWidget(host, previousHost, id, language, "Rows")
-            assertEquals(binding, runBlocking { container.widgetBindings.read(id) })
-            assertEquals(project, runBlocking { container.counterRepository.getProject(project.id) })
-            host.onActivity { it.host.deleteAppWidgetId(id) }
+            assertHostedProjectUnchanged(id, binding, project)
         }
     }
 
@@ -205,11 +189,7 @@ class WidgetHostTest {
                     .count
             }
         assertEquals(0L, linkedCount)
-        ActivityScenario.launch(WidgetTestHostActivity::class.java).use { host ->
-            val id = allocate(host)
-            configure(id, first.name)
-            attach(host, id)
-            val binding = runBlocking { container.widgetBindings.read(id) }
+        withHostedWidget(first) { host, id, binding ->
             ActivityScenario.launch(MainActivity::class.java).use {
                 for ((tag, label) in listOf("fi" to "Kerrokset", "sv" to "Varv", "" to "Rows")) {
                     instrumentation.runOnMainSync {
@@ -246,7 +226,6 @@ class WidgetHostTest {
                 }
             assertEquals(0L, linkedAfterMinus)
             assertEquals(other, runBlocking { container.counterRepository.getProject(other.id) })
-            host.onActivity { it.host.deleteAppWidgetId(id) }
         }
     }
 
@@ -260,7 +239,7 @@ class WidgetHostTest {
         val name = "A very long synthetic project name for the minimum widget"
         val project = runBlocking { repo.createProject(name, CounterUnit.ROUNDS, 0, null, null) }
         runBlocking { repo.mutate(project.id, CounterMutation.ManualSet(999999)) }
-        runBlocking { repo.reminders.save(project.id, null, null, "Maximum reminder", 999999, null, true) }
+        runBlocking { repo.reminders.save(project.id, null, null, ReminderValues("Maximum reminder", 999999, null, true)) }
         ActivityScenario.launch(WidgetTestHostActivity::class.java).use { host ->
             val id = allocate(host)
             configure(id, name)
@@ -325,7 +304,7 @@ class WidgetHostTest {
         val repo = container.counterRepository
         val first = runBlocking { repo.createProject("Widget target", CounterUnit.ROWS, 0, null, null) }
         val second = runBlocking { repo.createProject("Other target", CounterUnit.ROUNDS, 0, null, null) }
-        val reminder = runBlocking { repo.reminders.save(first.id, null, null, "Read this reminder", 1, null, true)!! }
+        val reminder = runBlocking { repo.reminders.save(first.id, null, null, ReminderValues("Read this reminder", 1, null, true))!! }
         runBlocking { container.preferencesRepository.setLastActiveProjectId(second.id) }
         ActivityScenario.launch(WidgetTestHostActivity::class.java).use { host ->
             val id = allocate(host)
@@ -913,6 +892,32 @@ class WidgetHostTest {
             assertEquals(before, runBlocking { container.widgetBindings.read(id) })
             host.onActivity { it.host.deleteAppWidgetId(id) }
         }
+    }
+
+    private fun withHostedWidget(
+        project: CounterProject,
+        check: (ActivityScenario<WidgetTestHostActivity>, Int, WidgetBinding?) -> Unit,
+    ) {
+        ActivityScenario.launch(WidgetTestHostActivity::class.java).use { host ->
+            val id = allocate(host)
+            try {
+                configure(id, project.name)
+                attach(host, id)
+                val binding = runBlocking { container.widgetBindings.read(id) }
+                check(host, id, binding)
+            } finally {
+                host.onActivity { it.host.deleteAppWidgetId(id) }
+            }
+        }
+    }
+
+    private fun assertHostedProjectUnchanged(
+        id: Int,
+        binding: WidgetBinding?,
+        project: CounterProject,
+    ) {
+        assertEquals(binding, runBlocking { container.widgetBindings.read(id) })
+        assertEquals(project, runBlocking { container.counterRepository.getProject(project.id) })
     }
 
     private fun allocate(scenario: ActivityScenario<WidgetTestHostActivity>): Int {

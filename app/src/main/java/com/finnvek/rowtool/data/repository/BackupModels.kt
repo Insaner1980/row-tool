@@ -164,7 +164,7 @@ private fun validateBackupReminders(
     projects: List<CounterProject>,
     reminders: List<BackupReminder>,
 ): BackupValidationError? {
-    val projectIds = projects.mapTo(mutableSetOf()) { it.id }
+    val projectIds = projects.map { it.id }.toSet()
     val duplicateIds = reminders.map { it.id }.toSet().size != reminders.size
     val invalidReminder =
         reminders.any {

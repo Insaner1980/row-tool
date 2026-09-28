@@ -25,6 +25,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.finnvek.rowtool.domain.model.CounterProject
 import com.finnvek.rowtool.domain.model.CounterUnit
 import com.finnvek.rowtool.domain.model.Reminder
+import com.finnvek.rowtool.domain.model.ReminderValues
 import com.finnvek.rowtool.ui.assertTextFits
 import com.finnvek.rowtool.ui.theme.RowToolTheme
 import org.junit.Assert.assertEquals
@@ -93,7 +94,7 @@ class ReminderUiTest {
                     ReminderDialogs(
                         project,
                         emptyList(),
-                        actions(onSave = { _, _, _, _, _, _, _, _ ->
+                        actions(onSave = { _, _, _, _, _ ->
                             attempts++
                             attempts > 1
                         }),
@@ -155,7 +156,7 @@ class ReminderUiTest {
     }
 
     private fun actions(
-        onSave: suspend (String, String?, Long?, String, Long, Long?, Boolean, String?) -> Boolean = { _, _, _, _, _, _, _, _ -> true },
+        onSave: suspend (String, String?, Long?, ReminderValues, String?) -> Boolean = { _, _, _, _, _ -> true },
         onAcknowledge: suspend (String, String, Long, Long) -> Boolean = { _, _, _, _ -> true },
     ) = ReminderActions(onSave, onAcknowledge, { _, _, _ -> true }, { _, _, _ -> true })
 }

@@ -72,6 +72,8 @@ With an emulator or device connected:
 .\gradlew.bat :app:connectedDebugAndroidTest
 ```
 
+`WidgetLauncherProbeTest` accompanies a manually prepared launcher session and is excluded from the default suite. To run it with that session's `operation` and expected counts, use `adb shell am instrument` with `-e class com.finnvek.rowtool.widget.WidgetLauncherProbeTest` and the required arguments; the Gradle default exclusion does not apply to direct instrumentation runs.
+
 CI runs the debug build, JVM tests, debug lint, and Android-test compilation from [`.github/workflows/android.yml`](.github/workflows/android.yml).
 
 ## Product assets and typography

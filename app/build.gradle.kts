@@ -27,6 +27,8 @@ android {
         versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // This probe requires a separately prepared, manual launcher session.
+        testInstrumentationRunnerArguments["notClass"] = "com.finnvek.rowtool.widget.WidgetLauncherProbeTest"
         vectorDrawables.useSupportLibrary = true
     }
 
@@ -87,12 +89,12 @@ room {
 }
 
 val jacocoAnt = configurations.create("jacocoOfflineAnt")
-dependencies.add(jacocoAnt.name, "org.jacoco:org.jacoco.ant:0.8.14")
+dependencies.add(jacocoAnt.name, "org.jacoco:org.jacoco.ant:0.8.15")
 val dataCoverageClasses = layout.buildDirectory.dir("jacoco/data-classes")
 val instrumentDataForCoverage =
     tasks.register("instrumentDataForCoverage") {
         group = "verification"
-        description = "Instruments data classes for Robolectric coverage"
+        description = "Instruments app classes loaded by Robolectric for coverage"
         notCompatibleWithConfigurationCache("Uses the Ant JaCoCo instrumenter at execution time")
         dependsOn("compileDebugKotlin")
         val compiledClasses =
@@ -110,6 +112,9 @@ val instrumentDataForCoverage =
                 "instrument"("destdir" to dataCoverageClasses.get().asFile.path) {
                     "fileset"("dir" to compiledClasses.get().asFile.path) {
                         "include"("name" to "com/finnvek/rowtool/data/**/*.class")
+                        "include"("name" to "com/finnvek/rowtool/domain/**/*.class")
+                        "include"("name" to "com/finnvek/rowtool/widget/**/*.class")
+                        "include"("name" to "com/finnvek/rowtool/AppLocaleStartup*.class")
                     }
                 }
             }

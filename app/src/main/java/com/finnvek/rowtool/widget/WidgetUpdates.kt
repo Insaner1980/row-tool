@@ -23,10 +23,13 @@ internal fun requestWidgetUpdate(context: Context) {
     val provider = ComponentName(context, CounterWidgetReceiver::class.java)
     val ids = AppWidgetManager.getInstance(context).getAppWidgetIds(provider)
     if (ids.isEmpty()) return
+    // AndroidX Core declares and requests this signature permission in the merged manifest.
     context.sendBroadcast(
-        Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE)
-            .setComponent(provider)
+        Intent(context, CounterWidgetReceiver::class.java)
+            .setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE)
+            .setPackage(context.packageName)
             .putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids),
+        "${context.packageName}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION",
     )
 }
 

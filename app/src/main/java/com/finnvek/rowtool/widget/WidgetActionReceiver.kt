@@ -44,32 +44,7 @@ class WidgetActionReceiver : BroadcastReceiver() {
         val pending = goAsync()
         scope.launch {
             try {
-                val container = context.widgetContainer()
-                if (operation == "refresh") {
-                    container.widgetBindings.setFailed(id, false)
-                } else {
-                    try {
-                        container.widgetBindings.withBinding(id, token.orEmpty()) {
-                            if (!context.ownsWidget(id)) return@withBinding
-                            container.counterRepository.mutate(
-                                it,
-                                if (operation ==
-                                    "plus"
-                                ) {
-                                    CounterMutation.Increment
-                                } else {
-                                    CounterMutation.Decrement
-                                },
-                            )
-                        }
-                    } catch (_: java.io.IOException) {
-                        container.widgetBindings.setFailed(id, true)
-                    } catch (_: android.database.SQLException) {
-                        container.widgetBindings.setFailed(id, true)
-                    }
-                }
-                // Refresh is separate from mutation: a render failure never repeats a count.
-                requestWidgetUpdate(context)
+                performWidgetAction(context, id, operation, token)
             } catch (failure: java.io.IOException) {
                 CounterWidget().onCompositionError(
                     context,
@@ -97,4 +72,38 @@ class WidgetActionReceiver : BroadcastReceiver() {
     private companion object {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     }
+}
+
+internal suspend fun performWidgetAction(
+    context: Context,
+    id: Int,
+    operation: String?,
+    token: String?,
+) {
+    val container = context.widgetContainer()
+    if (operation == "refresh") {
+        container.widgetBindings.setFailed(id, false)
+    } else {
+        try {
+            container.widgetBindings.withBinding(id, token.orEmpty()) {
+                if (!context.ownsWidget(id)) return@withBinding
+                container.counterRepository.mutate(
+                    it,
+                    if (operation ==
+                        "plus"
+                    ) {
+                        CounterMutation.Increment
+                    } else {
+                        CounterMutation.Decrement
+                    },
+                )
+            }
+        } catch (_: java.io.IOException) {
+            container.widgetBindings.setFailed(id, true)
+        } catch (_: android.database.SQLException) {
+            container.widgetBindings.setFailed(id, true)
+        }
+    }
+// Refresh is separate from mutation: a render failure never repeats a count.
+    requestWidgetUpdate(context)
 }

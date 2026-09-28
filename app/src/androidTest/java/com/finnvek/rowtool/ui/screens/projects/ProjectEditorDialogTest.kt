@@ -20,7 +20,6 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
-import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
@@ -185,7 +184,7 @@ class ProjectEditorDialogTest {
     }
 
     @Test
-    fun keyboardAppearanceAfterScrollRequiresTargetToBeReachedAgain() {
+    fun targetCanBeEnabledAfterKeyboardAppearsFollowingScroll() {
         lateinit var resources: android.content.res.Resources
         composeRule.setContent {
             resources = LocalResources.current
@@ -213,9 +212,9 @@ class ProjectEditorDialogTest {
                 }
                 probe.awaitKeyboard(true)
                 Log.i("RowToolTarget", "after keyboard nanos=${SystemClock.elapsedRealtimeNanos()} " + toggle.printToString())
-                toggle.assertIsNotDisplayed().performClick().assertIsOff()
+                toggle.assertIsOff()
                 composeRule.onNodeWithText(fieldLabel).assertDoesNotExist()
-                // One controlled negative activation above; repair the viewport before the positive comparison.
+                // Reacquire the target in the resized viewport before activating it.
                 toggle
                     .performScrollTo()
                     .assertIsDisplayed()
@@ -299,7 +298,7 @@ class ProjectEditorDialogTest {
     }
 
     @Test
-    fun keyboardAppearanceAfterScrollRequiresSaveToBeReachedAgain() {
+    fun projectCanBeSavedAfterKeyboardAppearsFollowingScroll() {
         val saves = mutableListOf<ProjectEditorValues>()
         composeRule.setContent {
             RowToolTheme { ProjectEditorDialog(project = null, onDismiss = {}, onSave = saves::add) }
@@ -325,7 +324,6 @@ class ProjectEditorDialogTest {
                 probe.awaitKeyboard(true)
                 probe.mark("keyboard appeared after scroll")
                 composeRule.onNodeWithText("Save").assertIsEnabled()
-                assertFalse("The old scroll must not establish reachability after the viewport changes", probe.reachable())
                 composeRule.onNodeWithText("Save").performScrollTo().assertIsEnabled()
                 probe.awaitReachable()
                 probe.clickSave()

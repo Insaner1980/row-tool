@@ -26,10 +26,19 @@ class WidgetTestHostActivity : Activity() {
     fun attach(id: Int) {
         val manager = AppWidgetManager.getInstance(this)
         val view = host.createView(this, id, manager.getAppWidgetInfo(id))
-        view.updateAppWidgetSize(Bundle(), 280, 280, 280, 280)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            view.updateAppWidgetSize(Bundle(), listOf(android.util.SizeF(280f, 280f)))
+        } else {
+            updateLegacySize(view)
+        }
         val density = resources.displayMetrics.density
         column.addView(view, LinearLayout.LayoutParams((280 * density).toInt(), (280 * density).toInt()))
         views[id] = view
+    }
+
+    @Suppress("DEPRECATION")
+    private fun updateLegacySize(view: AppWidgetHostView) {
+        view.updateAppWidgetSize(Bundle(), 280, 280, 280, 280)
     }
 
     override fun onDestroy() {

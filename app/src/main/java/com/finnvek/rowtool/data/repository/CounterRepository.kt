@@ -190,54 +190,9 @@ class CounterRepository(
     ): CounterMutationResult =
         mutationMutex.withLock {
             database.withTransaction {
-                val project =
-                    projectDao.getById(id)
-                        ?: return@withTransaction CounterMutationResult.ProjectMissing
-                if (project.isArchived) {
-                    return@withTransaction CounterMutationResult.ProjectArchived
-                }
-
-                val counter = counterId?.let { additionalDao.getById(id, it)?.takeUnless { item -> item.isDeleted } }
-                if (counterId != null && counter == null) return@withTransaction CounterMutationResult.CounterMissing
-                val previousCount = counter?.count ?: project.count
-                val next = calculateMutation(previousCount, if (counter == null) project.startValue.toLong() else 0L, mutation)
-                if (next is CalculatedMutation.Invalid) {
-                    return@withTransaction CounterMutationResult.Invalid(next.errors)
-                }
-                next as CalculatedMutation.Valid
-                if (next.newCount == previousCount) {
-                    return@withTransaction CounterMutationResult.NoOp(previousCount)
-                }
-
-                val timestamp = clock()
-                val mainCount = if (counter == null) next.newCount else project.count
-                val historyId =
-                    historyDao.insert(
-                        CounterHistoryEntity(
-                            projectId = id,
-                            previousCount = project.count,
-                            newCount = mainCount,
-                            changeReason = next.reason.name,
-                            createdAt = timestamp,
-                        ),
-                    )
-                val effects =
-                    if (counter != null) {
-                        listOf(CounterHistoryEffectEntity(historyId, counter.id, counter.count, next.newCount))
-                    } else {
-                        val delta = mainCount - project.count
-                        additionalDao.getActive(id).filter { it.followsMain }.mapNotNull { item ->
-                            val newCount = (item.count + delta).coerceIn(CounterConstants.MIN_COUNT, CounterConstants.MAX_COUNT)
-                            if (newCount == item.count) null else CounterHistoryEffectEntity(historyId, item.id, item.count, newCount)
-                        }
-                    }
-                effectDao.insertAll(effects)
-                effects.forEach { additionalDao.setCount(it.counterId, it.newCount) }
-                projectDao.update(project.copy(count = mainCount, updatedAt = timestamp))
-                historyDao.trimToNewest(id, CounterConstants.MAX_HISTORY_ENTRIES)
-                additionalDao.deleteUnreferenced()
-                val reminderReached = database.reachesReminder(id, next.newCount, next.reason, counterId)
-                changedWithFeedback(previousCount, next.newCount, next.reason, project, counterId, reminderReached)
+                val project = projectDao.getById(id) ?: return@withTransaction CounterMutationResult.ProjectMissing
+                if (project.isArchived) return@withTransaction CounterMutationResult.ProjectArchived
+                database.applyMutation(project, mutation, counterId, clock)
             }
         }
 
@@ -263,53 +218,6 @@ class CounterRepository(
                 CounterMutationResult.Changed(project.count, history.previousCount, reason)
             }
         }
-
-    private fun calculateMutation(
-        count: Long,
-        resetValue: Long,
-        mutation: CounterMutation,
-    ): CalculatedMutation =
-        when (mutation) {
-            CounterMutation.Increment -> {
-                CalculatedMutation.Valid(
-                    newCount = (count + 1).coerceAtMost(CounterConstants.MAX_COUNT),
-                    reason = HistoryChangeReason.INCREMENT,
-                )
-            }
-
-            CounterMutation.Decrement -> {
-                CalculatedMutation.Valid(
-                    newCount = (count - 1).coerceAtLeast(CounterConstants.MIN_COUNT),
-                    reason = HistoryChangeReason.DECREMENT,
-                )
-            }
-
-            CounterMutation.Reset -> {
-                CalculatedMutation.Valid(
-                    newCount = resetValue,
-                    reason = HistoryChangeReason.RESET,
-                )
-            }
-
-            is CounterMutation.ManualSet -> {
-                if (mutation.count in CounterConstants.MIN_COUNT..CounterConstants.MAX_COUNT) {
-                    CalculatedMutation.Valid(mutation.count, HistoryChangeReason.MANUAL_SET)
-                } else {
-                    CalculatedMutation.Invalid(setOf(ProjectValidationError.INVALID_COUNT))
-                }
-            }
-        }
-
-    private sealed interface CalculatedMutation {
-        data class Valid(
-            val newCount: Long,
-            val reason: HistoryChangeReason,
-        ) : CalculatedMutation
-
-        data class Invalid(
-            val errors: Set<ProjectValidationError>,
-        ) : CalculatedMutation
-    }
 }
 
 internal class ProjectLimitReachedException : IllegalStateException("Project limit reached")
@@ -372,3 +280,118 @@ private fun requireValid(
         "Invalid project values: ${result.errors.joinToString()}",
     )
 }
+
+private fun calculateMutation(
+    count: Long,
+    resetValue: Long,
+    mutation: CounterMutation,
+): CalculatedMutation =
+    when (mutation) {
+        CounterMutation.Increment -> {
+            CalculatedMutation.Valid(
+                newCount = (count + 1).coerceAtMost(CounterConstants.MAX_COUNT),
+                reason = HistoryChangeReason.INCREMENT,
+            )
+        }
+
+        CounterMutation.Decrement -> {
+            CalculatedMutation.Valid(
+                newCount = (count - 1).coerceAtLeast(CounterConstants.MIN_COUNT),
+                reason = HistoryChangeReason.DECREMENT,
+            )
+        }
+
+        CounterMutation.Reset -> {
+            CalculatedMutation.Valid(
+                newCount = resetValue,
+                reason = HistoryChangeReason.RESET,
+            )
+        }
+
+        is CounterMutation.ManualSet -> {
+            if (mutation.count in CounterConstants.MIN_COUNT..CounterConstants.MAX_COUNT) {
+                CalculatedMutation.Valid(mutation.count, HistoryChangeReason.MANUAL_SET)
+            } else {
+                CalculatedMutation.Invalid(setOf(ProjectValidationError.INVALID_COUNT))
+            }
+        }
+    }
+
+private sealed interface CalculatedMutation {
+    data class Valid(
+        val newCount: Long,
+        val reason: HistoryChangeReason,
+    ) : CalculatedMutation
+
+    data class Invalid(
+        val errors: Set<ProjectValidationError>,
+    ) : CalculatedMutation
+}
+
+private suspend fun RowToolDatabase.applyMutation(
+    project: ProjectEntity,
+    mutation: CounterMutation,
+    counterId: String?,
+    clock: () -> Long,
+): CounterMutationResult {
+    val id = project.id
+    val additionalDao = additionalCounterDao()
+    val effectDao = counterHistoryEffectDao()
+    val projectDao = projectDao()
+    val historyDao = counterHistoryDao()
+    val counter = counterId?.let { additionalDao.getById(id, it)?.takeUnless { item -> item.isDeleted } }
+    val previousCount = counter?.count ?: project.count
+    val next = calculateMutation(previousCount, if (counter == null) project.startValue.toLong() else 0L, mutation)
+    return when {
+        counterId != null && counter == null -> {
+            CounterMutationResult.CounterMissing
+        }
+
+        next is CalculatedMutation.Invalid -> {
+            CounterMutationResult.Invalid(next.errors)
+        }
+
+        next is CalculatedMutation.Valid && next.newCount == previousCount -> {
+            CounterMutationResult.NoOp(previousCount)
+        }
+
+        else -> {
+            next as CalculatedMutation.Valid
+            val timestamp = clock()
+            val mainCount = if (counter == null) next.newCount else project.count
+            val historyId =
+                historyDao.insert(
+                    CounterHistoryEntity(
+                        projectId = id,
+                        previousCount = project.count,
+                        newCount = mainCount,
+                        changeReason = next.reason.name,
+                        createdAt = timestamp,
+                    ),
+                )
+            val effects =
+                if (counter != null) {
+                    listOf(CounterHistoryEffectEntity(historyId, counter.id, counter.count, next.newCount))
+                } else {
+                    followerEffects(id, historyId, mainCount - project.count)
+                }
+            effectDao.insertAll(effects)
+            effects.forEach { additionalDao.setCount(it.counterId, it.newCount) }
+            projectDao.update(project.copy(count = mainCount, updatedAt = timestamp))
+            historyDao.trimToNewest(id, CounterConstants.MAX_HISTORY_ENTRIES)
+            additionalDao.deleteUnreferenced()
+            val reminderReached = reachesReminder(id, next.newCount, next.reason, counterId)
+            changedWithFeedback(previousCount, next.newCount, next.reason, project, counterId, reminderReached)
+        }
+    }
+}
+
+private suspend fun RowToolDatabase.followerEffects(
+    id: String,
+    historyId: Long,
+    delta: Long,
+): List<CounterHistoryEffectEntity> =
+    additionalCounterDao().getActive(id).filter { it.followsMain }.mapNotNull { item ->
+        val newCount = (item.count + delta).coerceIn(CounterConstants.MIN_COUNT, CounterConstants.MAX_COUNT)
+        if (newCount == item.count) null else CounterHistoryEffectEntity(historyId, item.id, item.count, newCount)
+    }

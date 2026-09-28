@@ -1,6 +1,5 @@
 package com.finnvek.rowtool.ui.screens.counter
 
-import android.graphics.Bitmap
 import android.view.View
 import android.view.WindowInsets
 import androidx.compose.runtime.CompositionLocalProvider
@@ -28,12 +27,12 @@ import androidx.compose.ui.unit.Density
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.espresso.Espresso
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
-import com.finnvek.rowtool.RowToolApplication
 import com.finnvek.rowtool.domain.model.CounterUnit
 import com.finnvek.rowtool.ui.PrepareApplicationStateRule
+import com.finnvek.rowtool.ui.captureScreenshot
 import com.finnvek.rowtool.ui.screens.note.NoteEditorHost
 import com.finnvek.rowtool.ui.screens.note.NoteEditorViewModel
+import com.finnvek.rowtool.ui.testContainer
 import com.finnvek.rowtool.ui.theme.RowToolTheme
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -43,14 +42,11 @@ import org.junit.Test
 import org.junit.rules.RuleChain
 import org.junit.rules.TestRule
 import org.junit.runner.RunWith
-import java.io.File
 
 @RunWith(AndroidJUnit4::class)
 class ProjectNoteUiTest {
     private val compose = createComposeRule()
-    private val container get() =
-        (InstrumentationRegistry.getInstrumentation().targetContext.applicationContext as RowToolApplication)
-            .container
+    private val container get() = testContainer()
     private lateinit var id: String
 
     @get:Rule val rules: TestRule =
@@ -150,11 +146,6 @@ class ProjectNoteUiTest {
 
     private fun screenshot(name: String) {
         compose.waitForIdle()
-        val instrumentation = InstrumentationRegistry.getInstrumentation()
-        val bitmap = instrumentation.uiAutomation.takeScreenshot()
-        File(instrumentation.targetContext.getExternalFilesDir(null), "$name.png").outputStream().use {
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)
-        }
-        bitmap.recycle()
+        captureScreenshot(name)
     }
 }

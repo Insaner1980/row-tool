@@ -20,6 +20,7 @@ import com.finnvek.rowtool.MainActivity
 import com.finnvek.rowtool.RowToolApplication
 import com.finnvek.rowtool.domain.model.CounterMutation
 import com.finnvek.rowtool.domain.model.CounterUnit
+import com.finnvek.rowtool.domain.model.ReminderValues
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
@@ -83,29 +84,15 @@ class LegacyLanguageSelectionTest {
         val repository = container.counterRepository
         runBlocking {
             repository.mutate(projectId, CounterMutation.Increment)
-            val reminder = requireNotNull(repository.reminders.save(projectId, null, null, "Keep reminder", 1, null, true))
+            val reminder = requireNotNull(repository.reminders.save(projectId, null, null, ReminderValues("Keep reminder", 1, null, true)))
             check(repository.reminders.acknowledge(projectId, reminder.id, reminder.revision, 1))
             repository.notes.save(projectId, null, "Saved note", true)
         }
         val beforeHistory = runBlocking { container.database.counterHistoryDao().getAll() }
         val beforeReminders = runBlocking { container.database.reminderDao().getForProject(projectId) }
         val beforeNote = runBlocking { repository.notes.load(projectId).note }
-        val expected =
-            mapOf(
-                "en" to "Language",
-                "fi" to "Kieli",
-                "sv" to "Språk",
-                "de" to "Sprache",
-                "fr" to "Langue",
-                "es" to "Idioma",
-                "pt" to "Idioma",
-                "it" to "Lingua",
-                "nb" to "Språk",
-                "da" to "Sprog",
-                "nl" to "Taal",
-            )
         val before = runBlocking { repository.getProject(projectId) }
-        for ((tag, label) in expected) {
+        for ((tag, label) in packagedLanguageLabels) {
             compose.activityRule.scenario.onActivity {
                 AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(tag))
             }

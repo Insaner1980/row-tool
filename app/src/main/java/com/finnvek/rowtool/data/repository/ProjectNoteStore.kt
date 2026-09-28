@@ -56,16 +56,34 @@ class ProjectNoteStore(
         val normalized = ProjectNoteRules.normalize(text)
         return mutationMutex.withLock {
             database.withTransaction {
-                val project = database.projectDao().getById(projectId)
-                if (project == null || project.isArchived) return@withTransaction NoteWriteResult.Unavailable
-                val current = dao.get(projectId)
-                if (current?.version != expectedVersion) return@withTransaction NoteWriteResult.Conflict
-                if (normalized.isBlank()) {
-                    return@withTransaction if (current == null) NoteWriteResult.Success(null) else NoteWriteResult.DeletionRequired
-                }
-                if (current?.text == normalized && (current.savedCount != null) == attachCount) {
-                    return@withTransaction NoteWriteResult.Success(current.toDomain())
-                }
+                saveInTransaction(projectId, expectedVersion, normalized, attachCount)
+            }
+        }
+    }
+
+    private suspend fun saveInTransaction(
+        projectId: String,
+        expectedVersion: String?,
+        normalized: String,
+        attachCount: Boolean,
+    ): NoteWriteResult {
+        val project = database.projectDao().getById(projectId)
+        if (project == null || project.isArchived) return NoteWriteResult.Unavailable
+        val current = dao.get(projectId)
+        return when {
+            current?.version != expectedVersion -> {
+                NoteWriteResult.Conflict
+            }
+
+            normalized.isBlank() -> {
+                if (current == null) NoteWriteResult.Success(null) else NoteWriteResult.DeletionRequired
+            }
+
+            current?.text == normalized && (current.savedCount != null) == attachCount -> {
+                NoteWriteResult.Success(current.toDomain())
+            }
+
+            else -> {
                 val saved =
                     ProjectNoteEntity(projectId, UUID.randomUUID().toString(), normalized, clock(), project.count.takeIf { attachCount })
                 if (current == null) dao.insert(saved) else dao.update(saved)

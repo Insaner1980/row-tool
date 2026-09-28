@@ -94,9 +94,7 @@ class CopyCounterSetupTest {
 
     @Test fun repeatedSubmissionReturnsOneCommittedIdentity() =
         runTest {
-            val source = repository.createProject("Source", CounterUnit.ROWS, 0, null, null)
-            repository.additionalCounters.save(source.id, null, "Extra")
-            val draft = repository.copySetups.capture(source.id)
+            val draft = captureSourceWithExtra()
             val results = List(2) { async { repository.copySetups.create(draft, draft.settings.copy(name = "Copy")) } }.awaitAll()
             assertEquals(results[0], results[1])
             assertEquals(2, db.projectDao().count())
@@ -202,9 +200,7 @@ class CopyCounterSetupTest {
 
     @Test fun failedChildInsertRollsBackProjectAndAllowsRetry() =
         runTest {
-            val source = repository.createProject("Source", CounterUnit.ROWS, 0, null, null)
-            repository.additionalCounters.save(source.id, null, "Extra")
-            val draft = repository.copySetups.capture(source.id)
+            val draft = captureSourceWithExtra()
             db.openHelper.writableDatabase.execSQL(
                 "CREATE TRIGGER fail_copy BEFORE INSERT ON additional_counters " +
                     "BEGIN SELECT RAISE(ABORT, 'Injected failure'); END",
@@ -214,5 +210,11 @@ class CopyCounterSetupTest {
             db.openHelper.writableDatabase.execSQL("DROP TRIGGER fail_copy")
             val copy = repository.copySetups.create(draft, draft.settings.copy(name = "Copy"))
             assertEquals(1, db.additionalCounterDao().getActive(copy.id).size)
+        }
+
+    private suspend fun captureSourceWithExtra() =
+        repository.createProject("Source", CounterUnit.ROWS, 0, null, null).let { source ->
+            repository.additionalCounters.save(source.id, null, "Extra")
+            repository.copySetups.capture(source.id)
         }
 }

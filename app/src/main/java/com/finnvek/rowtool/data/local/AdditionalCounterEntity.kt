@@ -6,6 +6,7 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.finnvek.rowtool.domain.model.AdditionalCounter
 
+// CPD-OFF: Each Room entity declares its own table and project foreign key.
 @Entity(
     tableName = "additional_counters",
     foreignKeys = [
@@ -19,6 +20,7 @@ import com.finnvek.rowtool.domain.model.AdditionalCounter
     indices = [Index("projectId")],
 )
 data class AdditionalCounterEntity(
+    // CPD-ON
     @PrimaryKey val id: String,
     val projectId: String,
     val name: String,

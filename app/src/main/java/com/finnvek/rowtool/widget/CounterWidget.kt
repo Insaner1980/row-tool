@@ -162,7 +162,7 @@ class CounterWidgetReceiver : GlanceAppWidgetReceiver() {
 }
 
 @Composable
-private fun WidgetLayout(
+internal fun WidgetLayout(
     context: Context,
     id: Int,
     state: WidgetContent,
@@ -188,14 +188,7 @@ private fun WidgetLayout(
         GlanceModifier.fillMaxSize().background(background).padding(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        val title =
-            when {
-                state.loading -> context.getString(R.string.widget_loading)
-                state.error -> context.getString(R.string.widget_error)
-                binding == null -> context.getString(R.string.widget_choose)
-                project == null -> context.getString(R.string.widget_missing)
-                else -> project.name
-            }
+        val title = widgetTitle(context, state)
         Row(GlanceModifier.fillMaxWidth().height(48.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(
                 title,
@@ -221,29 +214,14 @@ private fun WidgetLayout(
             maxLines = 1,
         )
         Text(
-            if (project?.isArchived == true) {
-                context.getString(R.string.project_archived)
-            } else {
-                project
-                    ?.let {
-                        context.getString(if (it.counterUnit == CounterUnit.ROWS) R.string.project_rows else R.string.project_rounds)
-                    }.orEmpty()
-            },
+            widgetUnitLabel(context, project),
             GlanceModifier.height(32.dp),
             style = TextStyle(color = foreground, fontSize = 12.sp),
             maxLines = 1,
         )
         val reminderIntent = Intent(open).setData("rowtool-widget://reminders/$id/${binding?.token.orEmpty()}".toUri())
         Text(
-            if (state.error) {
-                context.getString(R.string.widget_retry)
-            } else if (state.due >
-                0
-            ) {
-                context.getString(R.string.widget_reminders, format.format(state.due))
-            } else {
-                ""
-            },
+            widgetReminderLabel(context, state, format),
             GlanceModifier
                 .height(
                     48.dp,
@@ -266,10 +244,8 @@ private fun WidgetLayout(
                 id,
                 "−",
                 "minus",
-                active,
-                binding,
+                state,
                 if (active) foreground else inactive,
-                project?.counterUnit == CounterUnit.ROUNDS,
                 GlanceModifier.defaultWeight(),
             )
             WidgetCountButton(
@@ -277,10 +253,8 @@ private fun WidgetLayout(
                 id,
                 "+",
                 "plus",
-                active,
-                binding,
+                state,
                 if (active) foreground else inactive,
-                project?.counterUnit == CounterUnit.ROUNDS,
                 GlanceModifier.defaultWeight(),
             )
         }
@@ -293,12 +267,13 @@ private fun WidgetCountButton(
     id: Int,
     label: String,
     operation: String,
-    active: Boolean,
-    binding: WidgetBinding?,
+    state: WidgetContent,
     foreground: ColorProvider,
-    rounds: Boolean,
     modifier: GlanceModifier = GlanceModifier,
 ) {
+    val binding = state.binding
+    val active = state.project != null && !state.project.isArchived && binding != null
+    val rounds = state.project?.counterUnit == CounterUnit.ROUNDS
     val description =
         context.getString(
             when {
@@ -311,7 +286,7 @@ private fun WidgetCountButton(
     val click =
         if (active) {
             modifier.clickable(
-                actionSendBroadcast(widgetActionIntent(context, id, binding!!.token, operation)),
+                actionSendBroadcast(widgetActionIntent(context, id, binding.token, operation)),
             )
         } else {
             modifier
@@ -330,4 +305,38 @@ private fun widgetColor(
         ThemeMode.LIGHT -> ColorProvider(light)
         ThemeMode.DARK -> ColorProvider(dark)
         ThemeMode.SYSTEM -> androidx.glance.color.ColorProvider(day = light, night = dark)
+    }
+
+internal fun widgetTitle(
+    context: Context,
+    state: WidgetContent,
+): String =
+    when {
+        state.loading -> context.getString(R.string.widget_loading)
+        state.error -> context.getString(R.string.widget_error)
+        state.binding == null -> context.getString(R.string.widget_choose)
+        state.project == null -> context.getString(R.string.widget_missing)
+        else -> state.project.name
+    }
+
+internal fun widgetUnitLabel(
+    context: Context,
+    project: CounterProject?,
+): String =
+    when {
+        project == null -> ""
+        project.isArchived -> context.getString(R.string.project_archived)
+        project.counterUnit == CounterUnit.ROWS -> context.getString(R.string.project_rows)
+        else -> context.getString(R.string.project_rounds)
+    }
+
+internal fun widgetReminderLabel(
+    context: Context,
+    state: WidgetContent,
+    format: NumberFormat,
+): String =
+    when {
+        state.error -> context.getString(R.string.widget_retry)
+        state.due > 0 -> context.getString(R.string.widget_reminders, format.format(state.due))
+        else -> ""
     }

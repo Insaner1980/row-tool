@@ -5,6 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.finnvek.rowtool.data.local.RowToolDatabase
 import com.finnvek.rowtool.domain.model.CounterMutation
 import com.finnvek.rowtool.domain.model.CounterUnit
+import com.finnvek.rowtool.domain.model.ReminderValues
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -67,7 +68,7 @@ class ProjectNoteStoreTest {
             counters.additionalCounters.save(id, null, "Following", true)
             counters.additionalCounters.save(id, null, "Manual", false)
             counters.mutate(id, CounterMutation.ManualSet(32))
-            val reminder = counters.reminders.save(id, null, null, "Check", 32, 6, true)!!
+            val reminder = counters.reminders.save(id, null, null, ReminderValues("Check", 32, 6, true))!!
             counters.reminders.acknowledge(id, reminder.id, reminder.revision, 32)
             val project = db.projectDao().getById(id)
             val additional = db.additionalCounterDao().getAll()
@@ -92,8 +93,7 @@ class ProjectNoteStoreTest {
 
     @Test fun emptyValidationOwnershipVersionsArchiveAndCascade() =
         runTest {
-            val a = counters.createProject("A", CounterUnit.ROWS, 0, null, null).id
-            val b = counters.createProject("B", CounterUnit.ROWS, 0, null, null).id
+            val (a, b) = createTwoProjects(counters)
             val store = counters.notes
             assertEquals(NoteWriteResult.Success(null), store.save(a, null, " \n\t", true))
             assertNull(store.load(a).note)

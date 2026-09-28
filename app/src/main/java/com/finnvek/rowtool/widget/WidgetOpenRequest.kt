@@ -17,7 +17,7 @@ data class WidgetOpenRequest(
             return if (validRoute && validIdentity &&
                 !token.isNullOrBlank()
             ) {
-                WidgetOpenRequest(requireNotNull(id), token, uri?.host == "reminders")
+                WidgetOpenRequest(id, token, uri.host == "reminders")
             } else {
                 null
             }

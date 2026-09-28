@@ -67,30 +67,43 @@ internal fun AdditionalCounterDialogs(
 
         AdditionalCounterDialog.RESET, AdditionalCounterDialog.DELETE -> {
             if (counter != null) {
-                val delete = dialog == AdditionalCounterDialog.DELETE
-                val message =
-                    stringResource(
-                        if (delete) R.string.additional_delete_message else R.string.additional_reset_message,
-                        counter.name,
-                    )
-                RowToolConfirmationDialog(
-                    title = stringResource(if (delete) R.string.additional_delete_title else R.string.counter_reset_title),
-                    message = if (saveFailed) message + "\n\n" + stringResource(R.string.error_database_write) else message,
-                    confirmLabel = stringResource(if (delete) R.string.action_delete else R.string.action_reset),
-                    isDestructive = delete,
-                    enabled = !isSaving,
-                    onDismiss = onDismiss,
-                    onConfirm = {
-                        save {
-                            if (delete) {
-                                actions.onDelete(counter.id)
-                            } else {
-                                actions.onSetCount(counter.id, CounterMutation.Reset)
-                            }
-                        }
-                    },
-                )
+                AdditionalCounterConfirmation(dialog, counter, actions, isSaving, saveFailed, onDismiss, save)
             }
         }
     }
+}
+
+@Composable
+private fun AdditionalCounterConfirmation(
+    dialog: AdditionalCounterDialog,
+    counter: AdditionalCounter,
+    actions: AdditionalCounterEditorActions,
+    isSaving: Boolean,
+    saveFailed: Boolean,
+    onDismiss: () -> Unit,
+    save: (suspend () -> Boolean) -> Unit,
+) {
+    val delete = dialog == AdditionalCounterDialog.DELETE
+    val message =
+        stringResource(
+            if (delete) R.string.additional_delete_message else R.string.additional_reset_message,
+            counter.name,
+        )
+    RowToolConfirmationDialog(
+        title = stringResource(if (delete) R.string.additional_delete_title else R.string.counter_reset_title),
+        message = if (saveFailed) message + "\n\n" + stringResource(R.string.error_database_write) else message,
+        confirmLabel = stringResource(if (delete) R.string.action_delete else R.string.action_reset),
+        isDestructive = delete,
+        enabled = !isSaving,
+        onDismiss = onDismiss,
+        onConfirm = {
+            save {
+                if (delete) {
+                    actions.onDelete(counter.id)
+                } else {
+                    actions.onSetCount(counter.id, CounterMutation.Reset)
+                }
+            }
+        },
+    )
 }

@@ -1,6 +1,5 @@
 package com.finnvek.rowtool.ui
 
-import android.graphics.Bitmap
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -16,7 +15,6 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.unit.Density
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
 import com.finnvek.rowtool.domain.model.HistoryCountChange
 import com.finnvek.rowtool.domain.model.RecentHistory
 import com.finnvek.rowtool.domain.model.RecentHistoryEntry
@@ -27,7 +25,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.io.File
 
 @RunWith(AndroidJUnit4::class)
 class HistoryLayoutTest {
@@ -103,11 +100,6 @@ class HistoryLayoutTest {
 
     private fun screenshot(name: String) {
         compose.waitForIdle()
-        val instrumentation = InstrumentationRegistry.getInstrumentation()
-        val bitmap = instrumentation.uiAutomation.takeScreenshot()
-        File(instrumentation.targetContext.getExternalFilesDir(null), "$name.png").outputStream().use {
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)
-        }
-        bitmap.recycle()
+        captureScreenshot(name)
     }
 }

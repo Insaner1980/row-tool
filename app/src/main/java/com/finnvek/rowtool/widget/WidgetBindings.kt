@@ -2,6 +2,8 @@ package com.finnvek.rowtool.widget
 
 import android.database.SQLException
 import android.util.AtomicFile
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.io.File
@@ -20,7 +22,8 @@ class WidgetBindings(
 ) {
     private val file = AtomicFile(file)
     private val mutex = Mutex()
-    val changes = kotlinx.coroutines.flow.MutableStateFlow(0L)
+    private val mutableChanges = MutableStateFlow(0L)
+    val changes = mutableChanges.asStateFlow()
 
     suspend fun read(id: Int): WidgetBinding? = mutex.withLock { binding(load(), id) }
 
@@ -121,7 +124,7 @@ class WidgetBindings(
         try {
             state.storeToXML(output, "Device-local widget bindings", "UTF-8")
             file.finishWrite(output)
-            changes.value += 1
+            mutableChanges.value += 1
         } catch (error: java.io.IOException) {
             file.failWrite(output)
             throw error

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
@@ -94,18 +95,7 @@ internal fun HistoryScreen(
                     items(state.history.entries, key = { it.id }) { entry -> HistoryEntry(entry) }
                 } else {
                     item {
-                        when (state) {
-                            HistoryUiState.Loading -> {
-                                CircularProgressIndicator(Modifier.testTag("history-loading"))
-                            }
-
-                            HistoryUiState.Error -> {
-                                Text(stringResource(R.string.history_error))
-                                TextButton(onClick = onRetry) { Text(stringResource(R.string.history_retry)) }
-                            }
-
-                            else -> {}
-                        }
+                        HistoryStatus(state, onRetry)
                     }
                 }
             }
@@ -143,5 +133,24 @@ private fun HistoryChange(change: HistoryCountChange) {
         if (change.deleted) Text(stringResource(R.string.history_deleted))
         Text(stringResource(R.string.history_before, numbers.format(change.before)))
         Text(stringResource(R.string.history_after, numbers.format(change.after)))
+    }
+}
+
+@Composable
+private fun LazyItemScope.HistoryStatus(
+    state: HistoryUiState,
+    onRetry: () -> Unit,
+) {
+    when (state) {
+        HistoryUiState.Loading -> {
+            CircularProgressIndicator(Modifier.testTag("history-loading"))
+        }
+
+        HistoryUiState.Error -> {
+            Text(stringResource(R.string.history_error))
+            TextButton(onClick = onRetry) { Text(stringResource(R.string.history_retry)) }
+        }
+
+        else -> {}
     }
 }

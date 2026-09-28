@@ -11,9 +11,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -59,18 +57,7 @@ internal fun AdditionalCounterEditorDialog(
                     enabled = !isSaving,
                     label = { Text(stringResource(R.string.additional_name)) },
                     isError = errors.isNotEmpty(),
-                    colors =
-                        OutlinedTextFieldDefaults.colors(
-                            focusedLabelColor = MaterialTheme.colorScheme.secondary,
-                            focusedBorderColor = MaterialTheme.colorScheme.secondary,
-                            cursorColor = MaterialTheme.colorScheme.secondary,
-                            errorContainerColor = MaterialTheme.colorScheme.errorContainer,
-                            errorTextColor = MaterialTheme.colorScheme.onErrorContainer,
-                            errorLabelColor = MaterialTheme.colorScheme.onErrorContainer,
-                            errorSupportingTextColor = MaterialTheme.colorScheme.onErrorContainer,
-                            errorBorderColor = MaterialTheme.colorScheme.onErrorContainer,
-                            errorCursorColor = MaterialTheme.colorScheme.onErrorContainer,
-                        ),
+                    colors = editorTextFieldColors(),
                     supportingText = {
                         when {
                             ProjectValidationError.NAME_TOO_LONG in errors -> {

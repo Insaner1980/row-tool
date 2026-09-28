@@ -86,3 +86,11 @@ object ReminderRules {
         }
     }
 }
+
+/** Editable reminder content, independent of its identity and revision. */
+data class ReminderValues(
+    val message: String,
+    val firstCount: Long,
+    val intervalCount: Long?,
+    val enabled: Boolean,
+)

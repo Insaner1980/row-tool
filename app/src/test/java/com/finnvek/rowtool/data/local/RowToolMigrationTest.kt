@@ -7,6 +7,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.finnvek.rowtool.data.repository.CounterRepository
 import com.finnvek.rowtool.domain.model.CounterMutation
 import com.finnvek.rowtool.domain.model.CounterUnit
+import com.finnvek.rowtool.domain.model.ReminderValues
 import kotlinx.coroutines.test.runTest
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
@@ -79,7 +80,7 @@ class RowToolMigrationTest {
                     repository.additionalCounters.save(projectId, null, "Visible", true)
                     repository.additionalCounters.save(projectId, null, "Hidden", true)
                     repository.mutate(projectId, CounterMutation.ManualSet(8))
-                    val reminder = repository.reminders.save(projectId, null, null, "Check", 8, null, true)!!
+                    val reminder = repository.reminders.save(projectId, null, null, ReminderValues("Check", 8, null, true))!!
                     assertTrue(repository.reminders.acknowledge(projectId, reminder.id, reminder.revision, 8))
                     repository.additionalCounters.delete(
                         projectId,
@@ -137,7 +138,7 @@ class RowToolMigrationTest {
                 open(context, name).useDatabase { db ->
                     val repository = CounterRepository(db)
                     val project = repository.createProject("Work", CounterUnit.ROWS, 0, null, null)
-                    repository.reminders.save(project.id, null, null, "Check", 1, null, true)
+                    repository.reminders.save(project.id, null, null, ReminderValues("Check", 1, null, true))
                     repository.deleteProject(project.id)
                     assertTrue(db.reminderDao().getAll().isEmpty())
                 }

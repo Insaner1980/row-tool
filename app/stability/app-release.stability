@@ -14,7 +14,7 @@ private fun com.finnvek.rowtool.ui.CounterPreview(project: com.finnvek.rowtool.d
 
 @Composable
 private fun com.finnvek.rowtool.ui.ProjectsPreview(activeProjects: kotlin.collections.List<com.finnvek.rowtool.domain.model.CounterProject>, archivedProjects: kotlin.collections.List<com.finnvek.rowtool.domain.model.CounterProject>, archivedExpanded: kotlin.Boolean): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - activeProjects: RUNTIME (requires runtime check)
@@ -22,16 +22,18 @@ private fun com.finnvek.rowtool.ui.ProjectsPreview(activeProjects: kotlin.collec
     - archivedExpanded: STABLE (primitive type)
 
 @Composable
-public fun com.finnvek.rowtool.ui.RowToolApp(container: com.finnvek.rowtool.AppContainer, startProjectId: kotlin.String?, modifier: androidx.compose.ui.Modifier): kotlin.Unit
-  skippable: false
+public fun com.finnvek.rowtool.ui.RowToolApp(container: com.finnvek.rowtool.AppContainer, startProjectId: kotlin.String?, modifier: androidx.compose.ui.Modifier, widgetRequest: com.finnvek.rowtool.widget.WidgetOpenRequest?, onWidgetConsume: kotlin.Function0<kotlin.Unit>): kotlin.Unit
+  skippable: true
   restartable: true
   params:
-    - container: RUNTIME (requires runtime check)
+    - container: UNSTABLE (has mutable properties or unstable members)
     - startProjectId: STABLE (class with no mutable properties)
     - modifier: STABLE (marked @Stable or @Immutable)
+    - widgetRequest: STABLE (class with no mutable properties)
+    - onWidgetConsume: STABLE (function type)
 
 @Composable
-internal fun com.finnvek.rowtool.ui.RowToolConfirmationDialog(title: kotlin.String, message: kotlin.String, confirmLabel: kotlin.String, onDismiss: kotlin.Function0<kotlin.Unit>, onConfirm: kotlin.Function0<kotlin.Unit>, isDestructive: kotlin.Boolean): kotlin.Unit
+internal fun com.finnvek.rowtool.ui.RowToolConfirmationDialog(title: kotlin.String, message: kotlin.String, confirmLabel: kotlin.String, onDismiss: kotlin.Function0<kotlin.Unit>, onConfirm: kotlin.Function0<kotlin.Unit>, isDestructive: kotlin.Boolean, enabled: kotlin.Boolean): kotlin.Unit
   skippable: true
   restartable: true
   params:
@@ -41,6 +43,7 @@ internal fun com.finnvek.rowtool.ui.RowToolConfirmationDialog(title: kotlin.Stri
     - onDismiss: STABLE (function type)
     - onConfirm: STABLE (function type)
     - isDestructive: STABLE (primitive type)
+    - enabled: STABLE (primitive type)
 
 @Composable
 internal fun com.finnvek.rowtool.ui.RowToolDropdownMenuItem(label: kotlin.String, iconRes: kotlin.Int, onClick: kotlin.Function0<kotlin.Unit>): kotlin.Unit
@@ -66,14 +69,16 @@ internal fun com.finnvek.rowtool.ui.destructiveDialogActionColors(): androidx.co
   params:
 
 @Composable
-public fun com.finnvek.rowtool.ui.navigation.RowToolNavHost(container: com.finnvek.rowtool.AppContainer, startProjectId: kotlin.String?, onMessage: kotlin.Function1<kotlin.Int, kotlin.Unit>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
-  skippable: false
+public fun com.finnvek.rowtool.ui.navigation.RowToolNavHost(container: com.finnvek.rowtool.AppContainer, startProjectId: kotlin.String?, onMessage: kotlin.Function1<kotlin.Int, kotlin.Unit>, modifier: androidx.compose.ui.Modifier, widgetRequest: com.finnvek.rowtool.widget.WidgetOpenRequest?, onWidgetConsume: kotlin.Function0<kotlin.Unit>): kotlin.Unit
+  skippable: true
   restartable: true
   params:
-    - container: RUNTIME (requires runtime check)
+    - container: UNSTABLE (has mutable properties or unstable members)
     - startProjectId: STABLE (class with no mutable properties)
     - onMessage: STABLE (function type)
     - modifier: STABLE (marked @Stable or @Immutable)
+    - widgetRequest: STABLE (class with no mutable properties)
+    - onWidgetConsume: STABLE (function type)
 
 @Composable
 internal fun com.finnvek.rowtool.ui.ordinaryDialogActionColors(): androidx.compose.material3.ButtonColors
@@ -89,13 +94,64 @@ internal fun com.finnvek.rowtool.ui.rememberSnackbarPresenter(snackbarHostState:
     - snackbarHostState: STABLE (marked @Stable or @Immutable)
 
 @Composable
-public fun com.finnvek.rowtool.ui.screens.counter.CountEditorDialog(currentCount: kotlin.Long, onDismiss: kotlin.Function0<kotlin.Unit>, onSave: kotlin.Function1<kotlin.Long, kotlin.Unit>): kotlin.Unit
+internal fun com.finnvek.rowtool.ui.screens.counter.AdditionalCounterDialogs(dialog: com.finnvek.rowtool.ui.screens.counter.AdditionalCounterDialog, counter: com.finnvek.rowtool.domain.model.AdditionalCounter?, actions: com.finnvek.rowtool.ui.screens.counter.AdditionalCounterEditorActions, onDismiss: kotlin.Function0<kotlin.Unit>): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - dialog: STABLE (class with no mutable properties)
+    - counter: STABLE (class with no mutable properties)
+    - actions: UNKNOWN (interface or non-final class; concrete implementation unknown)
+    - onDismiss: STABLE (function type)
+
+@Composable
+internal fun com.finnvek.rowtool.ui.screens.counter.AdditionalCounterEditorDialog(counter: com.finnvek.rowtool.domain.model.AdditionalCounter?, isSaving: kotlin.Boolean, saveFailed: kotlin.Boolean, onDismiss: kotlin.Function0<kotlin.Unit>, onSave: kotlin.Function2<kotlin.String, kotlin.Boolean, kotlin.Unit>): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - counter: STABLE (class with no mutable properties)
+    - isSaving: STABLE (primitive type)
+    - saveFailed: STABLE (primitive type)
+    - onDismiss: STABLE (function type)
+    - onSave: STABLE (function type)
+
+@Composable
+private fun com.finnvek.rowtool.ui.screens.counter.AdditionalCounterMenu(counter: com.finnvek.rowtool.domain.model.AdditionalCounter, actions: com.finnvek.rowtool.ui.screens.counter.AdditionalCounterActions, enabled: kotlin.Boolean): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - counter: STABLE (class with no mutable properties)
+    - actions: STABLE (class with no mutable properties)
+    - enabled: STABLE (primitive type)
+
+@Composable
+private fun com.finnvek.rowtool.ui.screens.counter.AdditionalCounterRow(counter: com.finnvek.rowtool.domain.model.AdditionalCounter, actions: com.finnvek.rowtool.ui.screens.counter.AdditionalCounterActions, enabled: kotlin.Boolean): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - counter: STABLE (class with no mutable properties)
+    - actions: STABLE (class with no mutable properties)
+    - enabled: STABLE (primitive type)
+
+@Composable
+internal fun com.finnvek.rowtool.ui.screens.counter.AdditionalCountersSection(counters: kotlin.collections.List<com.finnvek.rowtool.domain.model.AdditionalCounter>, actions: com.finnvek.rowtool.ui.screens.counter.AdditionalCounterActions, enabled: kotlin.Boolean, modifier: androidx.compose.ui.Modifier): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - counters: RUNTIME (requires runtime check)
+    - actions: STABLE (class with no mutable properties)
+    - enabled: STABLE (primitive type)
+    - modifier: STABLE (marked @Stable or @Immutable)
+
+@Composable
+public fun com.finnvek.rowtool.ui.screens.counter.CountEditorDialog(currentCount: kotlin.Long, onDismiss: kotlin.Function0<kotlin.Unit>, onSave: kotlin.Function1<kotlin.Long, kotlin.Unit>, isSaving: kotlin.Boolean, saveFailed: kotlin.Boolean): kotlin.Unit
   skippable: true
   restartable: true
   params:
     - currentCount: STABLE (primitive type)
     - onDismiss: STABLE (function type)
     - onSave: STABLE (function type)
+    - isSaving: STABLE (primitive type)
+    - saveFailed: STABLE (primitive type)
 
 @Composable
 private fun com.finnvek.rowtool.ui.screens.counter.CounterButtons(count: kotlin.Long, canUndo: kotlin.Boolean, archived: kotlin.Boolean, addDescription: kotlin.String, removeDescription: kotlin.String, actions: com.finnvek.rowtool.ui.screens.counter.CounterValueActions, modifier: androidx.compose.ui.Modifier): kotlin.Unit
@@ -111,14 +167,15 @@ private fun com.finnvek.rowtool.ui.screens.counter.CounterButtons(count: kotlin.
     - modifier: STABLE (marked @Stable or @Immutable)
 
 @Composable
-private fun com.finnvek.rowtool.ui.screens.counter.CounterDialogContent(dialog: com.finnvek.rowtool.ui.screens.counter.CounterDialog?, project: com.finnvek.rowtool.domain.model.CounterProject, actions: com.finnvek.rowtool.ui.screens.counter.CounterDialogActions, onDismiss: kotlin.Function0<kotlin.Unit>): kotlin.Unit
+private fun com.finnvek.rowtool.ui.screens.counter.CounterDialogContent(dialog: com.finnvek.rowtool.ui.screens.counter.CounterDialog?, project: com.finnvek.rowtool.domain.model.CounterProject, actions: com.finnvek.rowtool.ui.screens.counter.CounterDialogActions, onDismiss: kotlin.Function0<kotlin.Unit>, repeatProjectId: kotlin.String?): kotlin.Unit
   skippable: true
   restartable: true
   params:
     - dialog: STABLE (class with no mutable properties)
     - project: STABLE (class with no mutable properties)
-    - actions: STABLE (class with no mutable properties)
+    - actions: UNKNOWN (interface or non-final class; concrete implementation unknown)
     - onDismiss: STABLE (function type)
+    - repeatProjectId: STABLE (class with no mutable properties)
 
 @Composable
 public fun com.finnvek.rowtool.ui.screens.counter.CounterImageButton(imageRes: kotlin.Int, contentDescription: kotlin.String, layout: com.finnvek.rowtool.ui.screens.counter.CounterButtonLayout, enabled: kotlin.Boolean, onClick: kotlin.Function0<kotlin.Unit>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
@@ -142,26 +199,29 @@ private fun com.finnvek.rowtool.ui.screens.counter.CounterMenuItem(labelRes: kot
     - onClick: STABLE (function type)
 
 @Composable
-public fun com.finnvek.rowtool.ui.screens.counter.CounterRoute(viewModel: com.finnvek.rowtool.ui.screens.counter.CounterViewModel, onProjects: kotlin.Function0<kotlin.Unit>, onSettings: kotlin.Function0<kotlin.Unit>, onMessage: kotlin.Function1<kotlin.Int, kotlin.Unit>): kotlin.Unit
-  skippable: false
+public fun com.finnvek.rowtool.ui.screens.counter.CounterRoute(viewModel: com.finnvek.rowtool.ui.screens.counter.CounterViewModel, onProjects: kotlin.Function0<kotlin.Unit>, onSettings: kotlin.Function0<kotlin.Unit>, onMessage: kotlin.Function1<kotlin.Int, kotlin.Unit>, onHistory: kotlin.Function1<kotlin.String, kotlin.Unit>, openWidgetReminders: kotlin.Boolean, onWidgetRemindersOpen: kotlin.Function0<kotlin.Unit>): kotlin.Unit
+  skippable: true
   restartable: true
   params:
-    - viewModel: RUNTIME (requires runtime check)
+    - viewModel: UNSTABLE (has mutable properties or unstable members)
     - onProjects: STABLE (function type)
     - onSettings: STABLE (function type)
     - onMessage: STABLE (function type)
+    - onHistory: STABLE (function type)
+    - openWidgetReminders: STABLE (primitive type)
+    - onWidgetRemindersOpen: STABLE (function type)
 
 @Composable
 public fun com.finnvek.rowtool.ui.screens.counter.CounterScreenContent(state: com.finnvek.rowtool.ui.screens.counter.CounterUiState, actions: com.finnvek.rowtool.ui.screens.counter.CounterScreenActions, modifier: androidx.compose.ui.Modifier): kotlin.Unit
   skippable: true
   restartable: true
   params:
-    - state: STABLE (class with no mutable properties)
+    - state: RUNTIME (requires runtime check)
     - actions: STABLE (class with no mutable properties)
     - modifier: STABLE (marked @Stable or @Immutable)
 
 @Composable
-private fun com.finnvek.rowtool.ui.screens.counter.CounterWorkspace(project: com.finnvek.rowtool.domain.model.CounterProject, canUndo: kotlin.Boolean, actions: com.finnvek.rowtool.ui.screens.counter.CounterValueActions, viewportHeight: androidx.compose.ui.unit.Dp, modifier: androidx.compose.ui.Modifier): kotlin.Unit
+private fun com.finnvek.rowtool.ui.screens.counter.CounterWorkspace(project: com.finnvek.rowtool.domain.model.CounterProject, canUndo: kotlin.Boolean, actions: com.finnvek.rowtool.ui.screens.counter.CounterValueActions, viewportHeight: androidx.compose.ui.unit.Dp, additionalCounters: kotlin.collections.List<com.finnvek.rowtool.domain.model.AdditionalCounter>, additionalActions: com.finnvek.rowtool.ui.screens.counter.AdditionalCounterActions, reminders: kotlin.collections.List<com.finnvek.rowtool.domain.model.Reminder>, onReminders: kotlin.Function0<kotlin.Unit>, note: com.finnvek.rowtool.domain.model.ProjectNote?, onNote: kotlin.Function0<kotlin.Unit>, onRepeatEdit: kotlin.Function0<kotlin.Unit>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
   skippable: true
   restartable: true
   params:
@@ -169,7 +229,69 @@ private fun com.finnvek.rowtool.ui.screens.counter.CounterWorkspace(project: com
     - canUndo: STABLE (primitive type)
     - actions: STABLE (class with no mutable properties)
     - viewportHeight: STABLE (marked @Stable or @Immutable)
+    - additionalCounters: RUNTIME (requires runtime check)
+    - additionalActions: STABLE (class with no mutable properties)
+    - reminders: RUNTIME (requires runtime check)
+    - onReminders: STABLE (function type)
+    - note: STABLE (class with no mutable properties)
+    - onNote: STABLE (function type)
+    - onRepeatEdit: STABLE (function type)
     - modifier: STABLE (marked @Stable or @Immutable)
+
+@Composable
+private fun com.finnvek.rowtool.ui.screens.counter.ReminderAction(label: kotlin.Int, enabled: kotlin.Boolean, onClick: kotlin.Function0<kotlin.Unit>): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - label: STABLE (primitive type)
+    - enabled: STABLE (primitive type)
+    - onClick: STABLE (function type)
+
+@Composable
+internal fun com.finnvek.rowtool.ui.screens.counter.ReminderDialogs(project: com.finnvek.rowtool.domain.model.CounterProject, reminders: kotlin.collections.List<com.finnvek.rowtool.domain.model.Reminder>, actions: com.finnvek.rowtool.ui.screens.counter.ReminderActions, onDismiss: kotlin.Function0<kotlin.Unit>): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - project: STABLE (class with no mutable properties)
+    - reminders: RUNTIME (requires runtime check)
+    - actions: UNKNOWN (interface or non-final class; concrete implementation unknown)
+    - onDismiss: STABLE (function type)
+
+@Composable
+private fun com.finnvek.rowtool.ui.screens.counter.ReminderEditor(project: com.finnvek.rowtool.domain.model.CounterProject, reminder: com.finnvek.rowtool.domain.model.Reminder?, message: kotlin.String, onMessageChange: kotlin.Function1<kotlin.String, kotlin.Unit>, firstText: kotlin.String, onFirstChange: kotlin.Function1<kotlin.String, kotlin.Unit>, intervalText: kotlin.String, onIntervalChange: kotlin.Function1<kotlin.String, kotlin.Unit>, saving: kotlin.Boolean, failed: kotlin.Boolean, onCancel: kotlin.Function0<kotlin.Unit>, onSave: kotlin.Function3<kotlin.String, kotlin.Long, kotlin.Long?, kotlin.Unit>): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - project: STABLE (class with no mutable properties)
+    - reminder: STABLE (class with no mutable properties)
+    - message: STABLE (String is immutable)
+    - onMessageChange: STABLE (function type)
+    - firstText: STABLE (String is immutable)
+    - onFirstChange: STABLE (function type)
+    - intervalText: STABLE (String is immutable)
+    - onIntervalChange: STABLE (function type)
+    - saving: STABLE (primitive type)
+    - failed: STABLE (primitive type)
+    - onCancel: STABLE (function type)
+    - onSave: STABLE (function type)
+
+@Composable
+private fun com.finnvek.rowtool.ui.screens.counter.ReminderPanel(project: com.finnvek.rowtool.domain.model.CounterProject, reminders: kotlin.collections.List<com.finnvek.rowtool.domain.model.Reminder>, onOpen: kotlin.Function0<kotlin.Unit>): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - project: STABLE (class with no mutable properties)
+    - reminders: RUNTIME (requires runtime check)
+    - onOpen: STABLE (function type)
+
+@Composable
+internal fun com.finnvek.rowtool.ui.screens.counter.RepeatSettingsDialog(project: com.finnvek.rowtool.domain.model.CounterProject, onDismiss: kotlin.Function0<kotlin.Unit>, onSave: kotlin.coroutines.SuspendFunction3<kotlin.String, kotlin.Int?, kotlin.Long?, kotlin.Boolean>): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - project: STABLE (class with no mutable properties)
+    - onDismiss: STABLE (function type)
+    - onSave: UNKNOWN (interface or non-final class; concrete implementation unknown)
 
 @Composable
 private fun com.finnvek.rowtool.ui.screens.counter.ResponsiveCount(formattedCount: kotlin.String, enabled: kotlin.Boolean, onSetCount: kotlin.Function0<kotlin.Unit>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
@@ -182,6 +304,111 @@ private fun com.finnvek.rowtool.ui.screens.counter.ResponsiveCount(formattedCoun
     - modifier: STABLE (marked @Stable or @Immutable)
 
 @Composable
+internal fun com.finnvek.rowtool.ui.screens.counter.reminderCountLabel(unit: com.finnvek.rowtool.domain.model.CounterUnit, count: kotlin.Long, due: kotlin.Boolean): kotlin.String
+  skippable: false
+  restartable: false
+  params:
+    - unit: STABLE (class with no mutable properties)
+    - count: STABLE (primitive type)
+    - due: STABLE (primitive type)
+
+@Composable
+private fun com.finnvek.rowtool.ui.screens.history.HistoryChange(change: com.finnvek.rowtool.domain.model.HistoryCountChange): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - change: STABLE (class with no mutable properties)
+
+@Composable
+private fun com.finnvek.rowtool.ui.screens.history.HistoryEntry(entry: com.finnvek.rowtool.domain.model.RecentHistoryEntry): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - entry: RUNTIME (requires runtime check)
+
+@Composable
+internal fun com.finnvek.rowtool.ui.screens.history.HistoryRoute(projectId: kotlin.String, repository: com.finnvek.rowtool.data.repository.CounterRepository, onBack: kotlin.Function0<kotlin.Unit>, onMissing: kotlin.Function0<kotlin.Unit>, model: com.finnvek.rowtool.ui.screens.history.HistoryViewModel): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - projectId: STABLE (String is immutable)
+    - repository: UNSTABLE (has mutable properties or unstable members)
+    - onBack: STABLE (function type)
+    - onMissing: STABLE (function type)
+    - model: UNSTABLE (has mutable properties or unstable members)
+
+@Composable
+internal fun com.finnvek.rowtool.ui.screens.history.HistoryScreen(state: com.finnvek.rowtool.ui.screens.history.HistoryUiState, onBack: kotlin.Function0<kotlin.Unit>, onRetry: kotlin.Function0<kotlin.Unit>): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - state: UNKNOWN (interface or non-final class; concrete implementation unknown)
+    - onBack: STABLE (function type)
+    - onRetry: STABLE (function type)
+
+@Composable
+private fun com.finnvek.rowtool.ui.screens.note.NoteAction(label: kotlin.Int, onClick: kotlin.Function0<kotlin.Unit>): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - label: STABLE (primitive type)
+    - onClick: STABLE (function type)
+
+@Composable
+private fun com.finnvek.rowtool.ui.screens.note.NoteConfirmationDialog(state: com.finnvek.rowtool.ui.screens.note.NoteEditorState, onDismiss: kotlin.Function0<kotlin.Unit>, onConfirm: kotlin.Function0<kotlin.Unit>): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - state: STABLE (class with no mutable properties)
+    - onDismiss: STABLE (function type)
+    - onConfirm: STABLE (function type)
+
+@Composable
+private fun com.finnvek.rowtool.ui.screens.note.NoteEditorBody(state: com.finnvek.rowtool.ui.screens.note.NoteEditorState, onText: kotlin.Function1<kotlin.String, kotlin.Unit>, onAttach: kotlin.Function1<kotlin.Boolean, kotlin.Unit>, onDelete: kotlin.Function0<kotlin.Unit>): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - state: STABLE (class with no mutable properties)
+    - onText: STABLE (function type)
+    - onAttach: STABLE (function type)
+    - onDelete: STABLE (function type)
+
+@Composable
+private fun com.finnvek.rowtool.ui.screens.note.NoteEditorError(error: com.finnvek.rowtool.ui.screens.note.NoteError?): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - error: STABLE (class with no mutable properties)
+
+@Composable
+internal fun com.finnvek.rowtool.ui.screens.note.NoteEditorHost(projectId: kotlin.String, sessionId: kotlin.String, store: com.finnvek.rowtool.data.repository.ProjectNoteStore, readOnly: kotlin.Boolean, viewModel: com.finnvek.rowtool.ui.screens.note.NoteEditorViewModel, onDismiss: kotlin.Function0<kotlin.Unit>): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - projectId: STABLE (String is immutable)
+    - sessionId: STABLE (String is immutable)
+    - store: UNSTABLE (has mutable properties or unstable members)
+    - readOnly: STABLE (primitive type)
+    - viewModel: UNSTABLE (has mutable properties or unstable members)
+    - onDismiss: STABLE (function type)
+
+@Composable
+internal fun com.finnvek.rowtool.ui.screens.note.NotePreview(note: com.finnvek.rowtool.domain.model.ProjectNote, onOpen: kotlin.Function0<kotlin.Unit>): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - note: STABLE (class with no mutable properties)
+    - onOpen: STABLE (function type)
+
+@Composable
+internal fun com.finnvek.rowtool.ui.screens.note.NoteSavedDetails(savedAt: kotlin.Long?, savedCount: kotlin.Long?): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - savedAt: STABLE (class with no mutable properties)
+    - savedCount: STABLE (class with no mutable properties)
+
+@Composable
 private fun com.finnvek.rowtool.ui.screens.projects.ArchivedProjectsHeader(projectCount: kotlin.Int, expanded: kotlin.Boolean, onExpandedChange: kotlin.Function1<kotlin.Boolean, kotlin.Unit>): kotlin.Unit
   skippable: true
   restartable: true
@@ -192,13 +419,26 @@ private fun com.finnvek.rowtool.ui.screens.projects.ArchivedProjectsHeader(proje
 
 @Composable
 private fun com.finnvek.rowtool.ui.screens.projects.ChoiceSection(label: kotlin.String, options: kotlin.collections.List<kotlin.Pair<kotlin.String, kotlin.String>>, selected: kotlin.String, onSelect: kotlin.Function1<kotlin.String, kotlin.Unit>): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - label: STABLE (String is immutable)
     - options: RUNTIME (requires runtime check)
     - selected: STABLE (String is immutable)
     - onSelect: STABLE (function type)
+
+@Composable
+internal fun com.finnvek.rowtool.ui.screens.projects.CopySetupHost(sourceId: kotlin.String, session: kotlin.String, repository: com.finnvek.rowtool.data.repository.CounterRepository, preferences: com.finnvek.rowtool.data.preferences.PreferencesRepository, onDismiss: kotlin.Function0<kotlin.Unit>, onComplete: kotlin.Function1<kotlin.String, kotlin.Unit>, model: com.finnvek.rowtool.ui.screens.projects.CopySetupViewModel): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - sourceId: STABLE (String is immutable)
+    - session: STABLE (String is immutable)
+    - repository: UNSTABLE (has mutable properties or unstable members)
+    - preferences: UNKNOWN (interface or non-final class; concrete implementation unknown)
+    - onDismiss: STABLE (function type)
+    - onComplete: STABLE (function type)
+    - model: UNSTABLE (has mutable properties or unstable members)
 
 @Composable
 private fun com.finnvek.rowtool.ui.screens.projects.EmptyProjects(onNewProject: kotlin.Function0<kotlin.Unit>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
@@ -215,13 +455,14 @@ private fun com.finnvek.rowtool.ui.screens.projects.ProjectDivider(): kotlin.Uni
   params:
 
 @Composable
-public fun com.finnvek.rowtool.ui.screens.projects.ProjectEditorDialog(project: com.finnvek.rowtool.domain.model.CounterProject?, onDismiss: kotlin.Function0<kotlin.Unit>, onSave: kotlin.Function1<com.finnvek.rowtool.ui.screens.projects.ProjectEditorValues, kotlin.Unit>): kotlin.Unit
+public fun com.finnvek.rowtool.ui.screens.projects.ProjectEditorDialog(project: com.finnvek.rowtool.domain.model.CounterProject?, onDismiss: kotlin.Function0<kotlin.Unit>, onSave: kotlin.Function1<com.finnvek.rowtool.ui.screens.projects.ProjectEditorValues, kotlin.Unit>, copyState: com.finnvek.rowtool.ui.screens.projects.CopySetupState?): kotlin.Unit
   skippable: true
   restartable: true
   params:
     - project: STABLE (class with no mutable properties)
     - onDismiss: STABLE (function type)
     - onSave: STABLE (function type)
+    - copyState: RUNTIME (requires runtime check)
 
 @Composable
 private fun com.finnvek.rowtool.ui.screens.projects.ProjectNameField(value: kotlin.String, onValueChange: kotlin.Function1<kotlin.String, kotlin.Unit>, validation: com.finnvek.rowtool.ui.screens.projects.ProjectEditorInputValidation): kotlin.Unit
@@ -261,7 +502,7 @@ private fun com.finnvek.rowtool.ui.screens.projects.ProjectSummary(project: com.
 
 @Composable
 private fun com.finnvek.rowtool.ui.screens.projects.ProjectsBody(state: com.finnvek.rowtool.ui.screens.projects.ProjectsScreenState, actions: com.finnvek.rowtool.ui.screens.projects.ProjectsScreenActions, contentPadding: androidx.compose.foundation.layout.PaddingValues): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - state: RUNTIME (requires runtime check)
@@ -270,25 +511,26 @@ private fun com.finnvek.rowtool.ui.screens.projects.ProjectsBody(state: com.finn
 
 @Composable
 private fun com.finnvek.rowtool.ui.screens.projects.ProjectsList(state: com.finnvek.rowtool.ui.screens.projects.ProjectsScreenState, actions: com.finnvek.rowtool.ui.screens.projects.ProjectsScreenActions): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - state: RUNTIME (requires runtime check)
     - actions: STABLE (class with no mutable properties)
 
 @Composable
-public fun com.finnvek.rowtool.ui.screens.projects.ProjectsRoute(viewModel: com.finnvek.rowtool.ui.screens.projects.ProjectsViewModel, onOpenProject: kotlin.Function1<kotlin.String, kotlin.Unit>, onSettings: kotlin.Function0<kotlin.Unit>, onMessage: kotlin.Function1<kotlin.Int, kotlin.Unit>): kotlin.Unit
-  skippable: false
+public fun com.finnvek.rowtool.ui.screens.projects.ProjectsRoute(viewModel: com.finnvek.rowtool.ui.screens.projects.ProjectsViewModel, onOpenProject: kotlin.Function1<kotlin.String, kotlin.Unit>, onSettings: kotlin.Function0<kotlin.Unit>, onMessage: kotlin.Function1<kotlin.Int, kotlin.Unit>, onHistory: kotlin.Function1<kotlin.String, kotlin.Unit>): kotlin.Unit
+  skippable: true
   restartable: true
   params:
-    - viewModel: RUNTIME (requires runtime check)
+    - viewModel: UNSTABLE (has mutable properties or unstable members)
     - onOpenProject: STABLE (function type)
     - onSettings: STABLE (function type)
     - onMessage: STABLE (function type)
+    - onHistory: STABLE (function type)
 
 @Composable
 public fun com.finnvek.rowtool.ui.screens.projects.ProjectsScreenContent(state: com.finnvek.rowtool.ui.screens.projects.ProjectsScreenState, actions: com.finnvek.rowtool.ui.screens.projects.ProjectsScreenActions, modifier: androidx.compose.ui.Modifier): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - state: RUNTIME (requires runtime check)
@@ -296,8 +538,22 @@ public fun com.finnvek.rowtool.ui.screens.projects.ProjectsScreenContent(state: 
     - modifier: STABLE (marked @Stable or @Immutable)
 
 @Composable
+internal fun com.finnvek.rowtool.ui.screens.projects.RepeatSettingsFields(counterUnit: com.finnvek.rowtool.domain.model.CounterUnit, enabled: kotlin.Boolean, onEnabledChange: kotlin.Function1<kotlin.Boolean, kotlin.Unit>, lengthText: kotlin.String, onLengthChange: kotlin.Function1<kotlin.String, kotlin.Unit>, startText: kotlin.String, onStartChange: kotlin.Function1<kotlin.String, kotlin.Unit>, validation: com.finnvek.rowtool.ui.screens.projects.RepeatSettingsInputValidation): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - counterUnit: STABLE (class with no mutable properties)
+    - enabled: STABLE (primitive type)
+    - onEnabledChange: STABLE (function type)
+    - lengthText: STABLE (String is immutable)
+    - onLengthChange: STABLE (function type)
+    - startText: STABLE (String is immutable)
+    - onStartChange: STABLE (function type)
+    - validation: STABLE (class with no mutable properties)
+
+@Composable
 private fun com.finnvek.rowtool.ui.screens.projects.ToggleNumberField(checked: kotlin.Boolean, onCheckedChange: kotlin.Function1<kotlin.Boolean, kotlin.Unit>, value: kotlin.String, onValueChange: kotlin.Function1<kotlin.String, kotlin.Unit>, isValid: kotlin.Boolean, config: com.finnvek.rowtool.ui.screens.projects.ToggleNumberFieldConfig): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - checked: STABLE (primitive type)
@@ -314,13 +570,31 @@ private fun com.finnvek.rowtool.ui.screens.projects.projectEditorTextFieldColors
   params:
 
 @Composable
-private fun com.finnvek.rowtool.ui.screens.settings.ActionRow(title: kotlin.String, summary: kotlin.String, onClick: kotlin.Function0<kotlin.Unit>): kotlin.Unit
+internal fun com.finnvek.rowtool.ui.screens.settings.ActionRow(title: kotlin.String, summary: kotlin.String, onClick: kotlin.Function0<kotlin.Unit>): kotlin.Unit
   skippable: true
   restartable: true
   params:
     - title: STABLE (String is immutable)
     - summary: STABLE (String is immutable)
     - onClick: STABLE (function type)
+
+@Composable
+internal fun com.finnvek.rowtool.ui.screens.settings.LanguageDialog(actual: kotlin.String, pending: kotlin.String, failed: kotlin.Boolean, onSelect: kotlin.Function1<kotlin.String, kotlin.Unit>, onDismiss: kotlin.Function0<kotlin.Unit>, onApply: kotlin.Function0<kotlin.Unit>): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - actual: STABLE (String is immutable)
+    - pending: STABLE (String is immutable)
+    - failed: STABLE (primitive type)
+    - onSelect: STABLE (function type)
+    - onDismiss: STABLE (function type)
+    - onApply: STABLE (function type)
+
+@Composable
+internal fun com.finnvek.rowtool.ui.screens.settings.LanguageSetting(): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
 
 @Composable
 private fun com.finnvek.rowtool.ui.screens.settings.SectionDivider(): kotlin.Unit
@@ -346,10 +620,10 @@ private fun com.finnvek.rowtool.ui.screens.settings.SettingText(title: kotlin.St
 
 @Composable
 public fun com.finnvek.rowtool.ui.screens.settings.SettingsRoute(viewModel: com.finnvek.rowtool.ui.screens.settings.SettingsViewModel, onBack: kotlin.Function0<kotlin.Unit>, onMessage: kotlin.Function1<kotlin.Int, kotlin.Unit>, onImportComplete: kotlin.Function1<kotlin.String?, kotlin.Unit>): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
-    - viewModel: RUNTIME (requires runtime check)
+    - viewModel: UNSTABLE (has mutable properties or unstable members)
     - onBack: STABLE (function type)
     - onMessage: STABLE (function type)
     - onImportComplete: STABLE (function type)
@@ -390,3 +664,35 @@ public fun com.finnvek.rowtool.ui.theme.RowToolTheme(darkTheme: kotlin.Boolean, 
   params:
     - darkTheme: STABLE (primitive type)
     - content: STABLE (composable function type)
+
+@Composable
+private fun com.finnvek.rowtool.widget.WidgetConfigurationActivity.ConfigurationContent(id: kotlin.Int): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - id: STABLE (primitive type)
+
+@Composable
+private fun com.finnvek.rowtool.widget.WidgetCountButton(context: android.content.Context, id: kotlin.Int, label: kotlin.String, operation: kotlin.String, active: kotlin.Boolean, binding: com.finnvek.rowtool.widget.WidgetBinding?, foreground: androidx.glance.unit.ColorProvider, rounds: kotlin.Boolean, modifier: androidx.glance.GlanceModifier): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - context: UNSTABLE (Java class; stability cannot be inferred)
+    - id: STABLE (primitive type)
+    - label: STABLE (String is immutable)
+    - operation: STABLE (String is immutable)
+    - active: STABLE (primitive type)
+    - binding: STABLE (class with no mutable properties)
+    - foreground: UNKNOWN (interface or non-final class; concrete implementation unknown)
+    - rounds: STABLE (primitive type)
+    - modifier: STABLE (marked @Stable or @Immutable)
+
+@Composable
+private fun com.finnvek.rowtool.widget.WidgetLayout(context: android.content.Context, id: kotlin.Int, state: com.finnvek.rowtool.widget.WidgetContent, theme: com.finnvek.rowtool.data.preferences.ThemeMode): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - context: UNSTABLE (Java class; stability cannot be inferred)
+    - id: STABLE (primitive type)
+    - state: STABLE (class with no mutable properties)
+    - theme: STABLE (class with no mutable properties)

@@ -23,6 +23,7 @@ enum class CounterUnit {
 data class CounterProject(
     val id: String,
     val name: String,
+    // CPD-OFF: The domain model intentionally mirrors persisted project fields.
     val counterUnit: CounterUnit,
     val count: Long,
     val startValue: Int,
@@ -32,6 +33,7 @@ data class CounterProject(
     val createdAt: Long,
     val updatedAt: Long,
     val repeatStartCount: Long? = if (repeatLength != null) 1L else null,
+    // CPD-ON
 )
 
 enum class HistoryChangeReason {

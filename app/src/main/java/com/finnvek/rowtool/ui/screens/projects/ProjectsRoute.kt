@@ -46,10 +46,7 @@ fun ProjectsRoute(
 
     LaunchedEffect(viewModel) {
         viewModel.effects.collect { effect ->
-            when (effect) {
-                is ProjectsEffect.OpenProject -> currentOnOpenProject(effect.projectId)
-                is ProjectsEffect.ShowMessage -> currentOnMessage(effect.message)
-            }
+            handleProjectsEffect(effect, currentOnOpenProject, currentOnMessage)
         }
     }
 
@@ -145,5 +142,16 @@ fun ProjectsRoute(
                 viewModel.delete(project)
             },
         )
+    }
+}
+
+private fun handleProjectsEffect(
+    effect: ProjectsEffect,
+    onOpenProject: (String) -> Unit,
+    onMessage: (Int) -> Unit,
+) {
+    when (effect) {
+        is ProjectsEffect.OpenProject -> onOpenProject(effect.projectId)
+        is ProjectsEffect.ShowMessage -> onMessage(effect.message)
     }
 }

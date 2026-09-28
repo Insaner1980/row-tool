@@ -10,14 +10,12 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.finnvek.rowtool.RowToolApplication
 import com.finnvek.rowtool.domain.model.CounterMutation
 import com.finnvek.rowtool.domain.model.CounterUnit
 import com.finnvek.rowtool.ui.PrepareApplicationStateRule
-import com.finnvek.rowtool.ui.theme.RowToolTheme
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -46,16 +44,7 @@ class RepeatSettingsSaveTest {
     @Test
     fun menuOpensDisabledRepeatAndFailedSaveKeepsDraftUntilRetryAfterRestoration() {
         val restoration = StateRestorationTester(composeRule)
-        restoration.setContent {
-            RowToolTheme {
-                CounterRoute(
-                    viewModel(factory = CounterViewModel.factory(projectId, container.counterRepository, container.preferencesRepository)),
-                    onProjects = {},
-                    onSettings = {},
-                    onMessage = {},
-                )
-            }
-        }
+        restoration.setContent { RecoveryCounterRoute(projectId, container) }
         composeRule.waitUntil(5_000) { composeRule.onAllNodesWithText("REPEAT").fetchSemanticsNodes().isNotEmpty() }
         composeRule.onNodeWithContentDescription("More options").performClick()
         composeRule.onNodeWithText("Repeat").performClick()
@@ -68,12 +57,8 @@ class RepeatSettingsSaveTest {
                 "BEGIN SELECT RAISE(ABORT, 'test'); END",
         )
         try {
-            composeRule.onNodeWithText("Save").performScrollTo().performClick()
-            composeRule.waitUntil(5_000) {
-                composeRule.onAllNodesWithText("Could not save the change. Try again.").fetchSemanticsNodes().isNotEmpty()
-            }
-            restoration.emulateSavedInstanceStateRestore()
-            composeRule.onNodeWithText("First repeat row").assertTextContains("11").assertIsDisplayed()
+            assertFailedRepeatSaveAndRestore(composeRule, restoration)
+            composeRule.onNodeWithText("First repeat row").assertIsDisplayed()
             assertEquals(null, runBlocking { container.counterRepository.getProject(projectId)?.repeatLength })
         } finally {
             container.database.openHelper.writableDatabase

@@ -52,15 +52,10 @@ class LanguageSelectionTest {
     @Test fun pendingCancelApplyAndExternalResetPreserveSettingsAndProject() {
         val before = runBlocking { container.counterRepository.getProject(id) }
         compose.waitUntil(5000) { compose.onAllNodesWithText("LANGUAGE PROJECT").fetchSemanticsNodes().isNotEmpty() }
-        compose.onNodeWithContentDescription("Settings").performClick()
-        compose.onNodeWithText("Language").performClick()
-        compose.onNode(hasText("English") and isSelectable() and hasAnyAncestor(isDialog())).assertIsSelected()
-        compose.onNodeWithText("Suomi").performClick()
+        chooseFinnish()
         assertEquals("en", locales.applicationLocales.toLanguageTags())
         compose.onNodeWithText("Cancel").performClick()
-        compose.onNodeWithText("Language").performClick()
-        compose.onNode(hasText("English") and isSelectable() and hasAnyAncestor(isDialog())).assertIsSelected()
-        compose.onNodeWithText("Suomi").performClick()
+        chooseFinnish(openSettings = false)
         compose.onNodeWithTag("language-apply").performClick()
         awaitLanguage("fi")
         compose.onNodeWithText("Kieli").assertIsDisplayed()
@@ -113,21 +108,7 @@ class LanguageSelectionTest {
 
     @Test fun allPackagedLanguagesResolveAndBackupImportKeepsDestinationLanguage() {
         val before = runBlocking { container.counterRepository.getProject(id) }
-        val expected =
-            mapOf(
-                "en" to "Language",
-                "fi" to "Kieli",
-                "sv" to "Språk",
-                "de" to "Sprache",
-                "fr" to "Langue",
-                "es" to "Idioma",
-                "pt" to "Idioma",
-                "it" to "Lingua",
-                "nb" to "Språk",
-                "da" to "Sprog",
-                "nl" to "Taal",
-            )
-        for ((tag, label) in expected) {
+        for ((tag, label) in packagedLanguageLabels) {
             locales.applicationLocales = LocaleList.forLanguageTags(tag)
             compose.waitUntil(5000) {
                 var matches = false
@@ -152,6 +133,13 @@ class LanguageSelectionTest {
             },
         )
         assertEquals("nl", locales.applicationLocales.toLanguageTags())
+    }
+
+    private fun chooseFinnish(openSettings: Boolean = true) {
+        if (openSettings) compose.onNodeWithContentDescription("Settings").performClick()
+        compose.onNodeWithText("Language").performClick()
+        compose.onNode(hasText("English") and isSelectable() and hasAnyAncestor(isDialog())).assertIsSelected()
+        compose.onNodeWithText("Suomi").performClick()
     }
 
     private fun awaitLanguage(tag: String) {

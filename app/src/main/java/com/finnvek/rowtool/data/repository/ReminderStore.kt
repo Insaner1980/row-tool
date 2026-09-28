@@ -6,6 +6,7 @@ import com.finnvek.rowtool.data.local.RowToolDatabase
 import com.finnvek.rowtool.data.local.toDomain
 import com.finnvek.rowtool.domain.model.Reminder
 import com.finnvek.rowtool.domain.model.ReminderRules
+import com.finnvek.rowtool.domain.model.ReminderValues
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
@@ -26,49 +27,64 @@ class ReminderStore(
         projectId: String,
         id: String?,
         expectedRevision: Long?,
-        message: String,
-        firstCount: Long,
-        intervalCount: Long?,
-        enabled: Boolean,
+        values: ReminderValues,
         creationId: String? = null,
     ): Reminder? {
-        require(ReminderRules.validate(message, firstCount, intervalCount))
+        require(ReminderRules.validate(values.message, values.firstCount, values.intervalCount))
+        val normalized = values.copy(message = ReminderRules.normalizeMessage(values.message))
         return mutationMutex.withLock {
             database.withTransaction {
                 if (projects.getById(projectId)?.isArchived != false) return@withTransaction null
-                val normalized = ReminderRules.normalizeMessage(message)
                 if (id == null) {
-                    val newId = creationId ?: idGenerator()
-                    require(newId.isNotBlank())
-                    val existing = dao.getById(projectId, newId)
-                    if (existing != null) {
-                        return@withTransaction existing
-                            .takeIf {
-                                it.message == normalized && it.firstCount == firstCount && it.intervalCount == intervalCount &&
-                                    it.enabled == enabled
-                            }?.toDomain()
-                    }
-                    val created = ReminderEntity(newId, projectId, normalized, firstCount, intervalCount, enabled, null, 1)
-                    dao.insert(created)
-                    created.toDomain()
+                    create(projectId, creationId ?: idGenerator(), normalized)
                 } else {
-                    val current = dao.getById(projectId, id) ?: return@withTransaction null
-                    if (current.revision != expectedRevision) return@withTransaction null
-                    val changedSchedule = current.firstCount != firstCount || current.intervalCount != intervalCount
-                    val candidate =
-                        current.copy(
-                            message = normalized,
-                            firstCount = firstCount,
-                            intervalCount = intervalCount,
-                            enabled = enabled,
-                            acknowledgedThrough = if (changedSchedule) null else current.acknowledgedThrough,
-                        )
-                    if (candidate == current) return@withTransaction current.toDomain()
-                    val updated = candidate.copy(revision = current.revision + 1)
-                    dao.update(updated)
-                    updated.toDomain()
+                    update(projectId, id, expectedRevision, normalized)
                 }
             }
+        }
+    }
+
+    private suspend fun create(
+        projectId: String,
+        id: String,
+        values: ReminderValues,
+    ): Reminder? {
+        require(id.isNotBlank())
+        val existing = dao.getById(projectId, id)
+        if (existing != null) {
+            return existing
+                .takeIf {
+                    it.message == values.message && it.firstCount == values.firstCount &&
+                        it.intervalCount == values.intervalCount && it.enabled == values.enabled
+                }?.toDomain()
+        }
+        val created = ReminderEntity(id, projectId, values.message, values.firstCount, values.intervalCount, values.enabled, null, 1)
+        dao.insert(created)
+        return created.toDomain()
+    }
+
+    private suspend fun update(
+        projectId: String,
+        id: String,
+        expectedRevision: Long?,
+        values: ReminderValues,
+    ): Reminder? {
+        val current = dao.getById(projectId, id)?.takeIf { it.revision == expectedRevision } ?: return null
+        val changedSchedule = current.firstCount != values.firstCount || current.intervalCount != values.intervalCount
+        val candidate =
+            current.copy(
+                message = values.message,
+                firstCount = values.firstCount,
+                intervalCount = values.intervalCount,
+                enabled = values.enabled,
+                acknowledgedThrough = if (changedSchedule) null else current.acknowledgedThrough,
+            )
+        return if (candidate == current) {
+            current.toDomain()
+        } else {
+            val updated = candidate.copy(revision = current.revision + 1)
+            dao.update(updated)
+            updated.toDomain()
         }
     }
 
@@ -102,14 +118,9 @@ class ReminderStore(
         id: String,
         expectedRevision: Long,
     ): Boolean =
-        mutationMutex.withLock {
-            database.withTransaction {
-                if (projects.getById(projectId)?.isArchived != false) return@withTransaction false
-                val current = dao.getById(projectId, id) ?: return@withTransaction false
-                if (current.revision != expectedRevision) return@withTransaction false
-                dao.update(current.copy(acknowledgedThrough = null, revision = current.revision + 1))
-                true
-            }
+        mutateCurrent(projectId, id, expectedRevision) { current ->
+            dao.update(current.copy(acknowledgedThrough = null, revision = current.revision + 1))
+            true
         }
 
     suspend fun delete(
@@ -117,12 +128,22 @@ class ReminderStore(
         id: String,
         expectedRevision: Long,
     ): Boolean =
+        mutateCurrent(projectId, id, expectedRevision) {
+            dao.delete(projectId, id) == 1
+        }
+
+    private suspend fun mutateCurrent(
+        projectId: String,
+        id: String,
+        expectedRevision: Long,
+        mutation: suspend (ReminderEntity) -> Boolean,
+    ): Boolean =
         mutationMutex.withLock {
             database.withTransaction {
                 if (projects.getById(projectId)?.isArchived != false) return@withTransaction false
                 val current = dao.getById(projectId, id) ?: return@withTransaction false
                 if (current.revision != expectedRevision) return@withTransaction false
-                dao.delete(projectId, id) == 1
+                mutation(current)
             }
         }
 }

@@ -8,6 +8,7 @@ import com.finnvek.rowtool.data.local.RowToolDatabase
 import com.finnvek.rowtool.data.preferences.PreferencesRepository
 import com.finnvek.rowtool.domain.model.CounterMutation
 import com.finnvek.rowtool.domain.model.CounterUnit
+import com.finnvek.rowtool.domain.model.ReminderValues
 import com.finnvek.rowtool.test.InMemoryPreferencesDataStore
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -48,10 +49,10 @@ class AdditionalCounterBackupTest {
     fun v4RoundTripPreservesReminderStateAndLegacyV3ClearsIt() =
         runTest {
             val project = counters.createProject("Work", CounterUnit.ROWS, 0, null, null)
-            val reminder = counters.reminders.save(project.id, null, null, " Check ", 32, 6, true)!!
+            val reminder = counters.reminders.save(project.id, null, null, ReminderValues(" Check ", 32, 6, true))!!
             counters.mutate(project.id, CounterMutation.ManualSet(50))
             assertTrue(counters.reminders.acknowledge(project.id, reminder.id, reminder.revision, 50))
-            val off = counters.reminders.save(project.id, reminder.id, reminder.revision, "Check", 32, 6, false)!!
+            val off = counters.reminders.save(project.id, reminder.id, reminder.revision, ReminderValues("Check", 32, 6, false))!!
             counters.mutate(project.id, CounterMutation.Reset)
             val exported = backup.exportJson()
             val decoded = backup.prepareImport(exported.encodeToByteArray()) as BackupDecodeResult.Valid
@@ -83,9 +84,7 @@ class AdditionalCounterBackupTest {
     @Test
     fun invalidV4ReminderLeavesLiveDataUntouched() =
         runTest {
-            val project = counters.createProject("Work", CounterUnit.ROWS, 0, null, null)
-            counters.reminders.save(project.id, null, null, "Check", 32, 6, true)
-            val before = backup.exportJson()
+            val before = exportReminderFixture()
             val file = Json.decodeFromString<BackupFile>(before)
             val invalid = file.copy(reminders = file.reminders!!.map { it.copy(acknowledgedThrough = 33) })
             assertEquals(
@@ -98,9 +97,7 @@ class AdditionalCounterBackupTest {
     @Test
     fun reminderInsertFailureRollsBackAllTables() =
         runTest {
-            val project = counters.createProject("Work", CounterUnit.ROWS, 0, null, null)
-            counters.reminders.save(project.id, null, null, "Check", 32, 6, true)
-            val before = backup.exportJson()
+            val before = exportReminderFixture()
             val validated = (backup.prepareImport(before.encodeToByteArray()) as BackupDecodeResult.Valid).backup
             db.openHelper.writableDatabase.execSQL(
                 "CREATE TRIGGER fail_reminder_import BEFORE INSERT ON reminders BEGIN SELECT RAISE(ABORT, 'test'); END",
@@ -301,5 +298,11 @@ class AdditionalCounterBackupTest {
         counters.additionalCounters.save(project.id, null, "Counter", true)
         counters.mutate(project.id, CounterMutation.Increment)
         return Json.decodeFromString(backup.exportJson())
+    }
+
+    private suspend fun exportReminderFixture(): String {
+        val project = counters.createProject("Work", CounterUnit.ROWS, 0, null, null)
+        counters.reminders.save(project.id, null, null, ReminderValues("Check", 32, 6, true))
+        return backup.exportJson()
     }
 }

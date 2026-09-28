@@ -13,9 +13,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
 import com.finnvek.rowtool.MainActivity
-import com.finnvek.rowtool.RowToolApplication
 import com.finnvek.rowtool.domain.model.CounterMutation
 import com.finnvek.rowtool.domain.model.CounterUnit
 import kotlinx.coroutines.runBlocking
@@ -30,9 +28,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class ProjectNoteLifecycleTest {
     private val compose = createAndroidComposeRule<MainActivity>()
-    private val container get() =
-        (InstrumentationRegistry.getInstrumentation().targetContext.applicationContext as RowToolApplication)
-            .container
+    private val container get() = testContainer()
     private lateinit var id: String
 
     @get:Rule val rules: TestRule =
@@ -45,9 +41,7 @@ class ProjectNoteLifecycleTest {
             ).around(compose)
 
     @Test fun externalArchiveKeepsUnsavedEditorReadOnlyUntilConfirmedExit() {
-        compose.waitUntil(5000) { compose.onAllNodesWithText("NOTE LIFECYCLE").fetchSemanticsNodes().isNotEmpty() }
-        compose.onNodeWithContentDescription("More options").performClick()
-        compose.onNodeWithText("Note").performClick()
+        openNoteEditor()
         compose.onNodeWithTag("note-text").performTextReplacement("Unsaved work")
         runBlocking { container.counterRepository.setArchived(id, true) }
         compose.waitUntil(5000) { compose.onAllNodesWithTag("note-save").fetchSemanticsNodes().isEmpty() }
@@ -71,9 +65,7 @@ class ProjectNoteLifecycleTest {
     }
 
     @Test fun activityRecreationRetainsDraftAndSelectionButNeverReopensSavedDraft() {
-        compose.waitUntil(5000) { compose.onAllNodesWithText("NOTE LIFECYCLE").fetchSemanticsNodes().isNotEmpty() }
-        compose.onNodeWithContentDescription("More options").performClick()
-        compose.onNodeWithText("Note").performClick()
+        openNoteEditor()
         compose.onNodeWithTag("note-text").performTextReplacement("  Resume\n\n    🧶")
         compose.onNodeWithTag("note-attach").performScrollTo().performClick()
         compose.activityRule.scenario.recreate()
@@ -119,5 +111,11 @@ class ProjectNoteLifecycleTest {
         compose.onNodeWithText("Note lifecycle").performClick()
         compose.onNodeWithTag("note-preview").performScrollTo().performClick()
         compose.onNodeWithTag("note-save").assertIsDisplayed()
+    }
+
+    private fun openNoteEditor() {
+        compose.waitUntil(5000) { compose.onAllNodesWithText("NOTE LIFECYCLE").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithContentDescription("More options").performClick()
+        compose.onNodeWithText("Note").performClick()
     }
 }

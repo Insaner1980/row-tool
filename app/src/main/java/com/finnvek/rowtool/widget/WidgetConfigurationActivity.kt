@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -80,6 +81,17 @@ class WidgetConfigurationActivity : AppCompatActivity() {
     override fun dispatchTouchEvent(event: MotionEvent): Boolean =
         event.flags and MotionEvent.FLAG_WINDOW_IS_PARTIALLY_OBSCURED == 0 && super.dispatchTouchEvent(event)
 
+    private suspend fun saveSelection(
+        id: Int,
+        projectId: String,
+    ): Boolean {
+        if (bindWidget(this, id, projectId) == null) return false
+        requestWidgetUpdate(this)
+        setResult(RESULT_OK, Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id))
+        finish()
+        return true
+    }
+
     @Composable
     private fun ConfigurationContent(id: Int) {
         var selected by rememberSaveable { mutableStateOf<String?>(null) }
@@ -104,36 +116,7 @@ class WidgetConfigurationActivity : AppCompatActivity() {
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Text(stringResource(R.string.widget_choose), style = MaterialTheme.typography.headlineSmall)
-                when {
-                    error -> {
-                        Text(stringResource(R.string.widget_error))
-                        TextButton(onClick = { attempt++ }) { Text(stringResource(R.string.widget_retry)) }
-                    }
-
-                    projects == null -> {
-                        Text(stringResource(R.string.widget_loading))
-                    }
-
-                    projects!!.isEmpty() -> {
-                        Text(stringResource(R.string.widget_empty))
-                    }
-
-                    else -> {
-                        projects!!.forEach { project ->
-                            Row(
-                                Modifier
-                                    .fillMaxWidth()
-                                    .selectable(selected == project.id, enabled = !saving, role = Role.RadioButton) {
-                                        selected = project.id
-                                    }.padding(vertical = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                RadioButton(selected == project.id, onClick = null)
-                                Text(project.name, Modifier.padding(start = 12.dp))
-                            }
-                        }
-                    }
-                }
+                ConfigurationProjects(projects, error, saving, selected, { selected = it }, { attempt++ })
                 TextButton(
                     enabled = !saving && !error && projects?.any { it.id == selected } == true,
                     onClick = {
@@ -141,24 +124,7 @@ class WidgetConfigurationActivity : AppCompatActivity() {
                         saving = true
                         scope.launch {
                             try {
-                                val binding =
-                                    withContext(Dispatchers.IO) {
-                                        if (!ownsWidget(id)) {
-                                            null
-                                        } else {
-                                            widgetContainer().widgetBindings.bindIf(id, projectId) {
-                                                ownsWidget(id) &&
-                                                    widgetContainer().counterRepository.getProject(projectId)?.isArchived == false
-                                            }
-                                        }
-                                    }
-                                if (binding != null) {
-                                    requestWidgetUpdate(this@WidgetConfigurationActivity)
-                                    setResult(RESULT_OK, Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id))
-                                    finish()
-                                } else {
-                                    error = true
-                                }
+                                error = !saveSelection(id, projectId)
                             } catch (_: java.io.IOException) {
                                 error = true
                             } catch (_: android.database.SQLException) {
@@ -174,3 +140,58 @@ class WidgetConfigurationActivity : AppCompatActivity() {
         }
     }
 }
+
+@Composable
+private fun ColumnScope.ConfigurationProjects(
+    projects: List<CounterProject>?,
+    error: Boolean,
+    saving: Boolean,
+    selected: String?,
+    onSelect: (String) -> Unit,
+    onRetry: () -> Unit,
+) {
+    when {
+        error -> {
+            Text(stringResource(R.string.widget_error))
+            TextButton(onClick = { onRetry() }) { Text(stringResource(R.string.widget_retry)) }
+        }
+
+        projects == null -> {
+            Text(stringResource(R.string.widget_loading))
+        }
+
+        projects.isEmpty() -> {
+            Text(stringResource(R.string.widget_empty))
+        }
+
+        else -> {
+            projects.forEach { project ->
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .selectable(selected == project.id, enabled = !saving, role = Role.RadioButton) {
+                            onSelect(project.id)
+                        }.padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    RadioButton(selected == project.id, onClick = null)
+                    Text(project.name, Modifier.padding(start = 12.dp))
+                }
+            }
+        }
+    }
+}
+
+internal suspend fun bindWidget(
+    context: android.content.Context,
+    id: Int,
+    projectId: String,
+    dispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.IO,
+): WidgetBinding? =
+    withContext(dispatcher) {
+        if (!context.ownsWidget(id)) return@withContext null
+        val container = context.widgetContainer()
+        container.widgetBindings.bindIf(id, projectId) {
+            context.ownsWidget(id) && container.counterRepository.getProject(projectId)?.isArchived == false
+        }
+    }

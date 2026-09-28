@@ -5,7 +5,7 @@ buildscript {
                 requested.group == "org.bitbucket.b_c" && requested.name == "jose4j" ->
                     useVersion("0.9.6")
                 requested.group == "org.bouncycastle" && requested.name.endsWith("-jdk18on") ->
-                    useVersion("1.84")
+                    useVersion("1.86")
                 requested.group == "org.jdom" && requested.name == "jdom2" ->
                     useVersion("2.0.6.1")
             }
@@ -77,6 +77,7 @@ allprojects {
     configurations.configureEach {
         resolutionStrategy.eachDependency {
             when {
+                requested.group == "androidx.work" -> useVersion("2.12.0")
                 requested.group == "ch.qos.logback" -> useVersion("1.5.34")
                 requested.group == "io.netty" && requested.version?.startsWith("4.1.") == true ->
                     useVersion("4.1.137.Final")
@@ -85,7 +86,7 @@ allprojects {
                 requested.group == "org.apache.httpcomponents" && requested.name == "httpclient" ->
                     useVersion("4.5.14")
                 requested.group == "org.bouncycastle" && requested.name.endsWith("-jdk18on") ->
-                    useVersion("1.84")
+                    useVersion("1.86")
             }
         }
     }

@@ -8,6 +8,7 @@ import com.finnvek.rowtool.data.preferences.PreferencesRepository
 import com.finnvek.rowtool.data.repository.CounterRepository
 import com.finnvek.rowtool.domain.model.CounterProject
 import com.finnvek.rowtool.domain.model.CounterUnit
+import com.finnvek.rowtool.domain.model.ReminderValues
 import com.finnvek.rowtool.test.InMemoryPreferencesDataStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -163,7 +164,7 @@ class CounterViewModelTest {
     fun reminderAndTargetTogetherEmitOneStrongHapticAndAcknowledgedReminderDoesNotReplay() =
         runTest(dispatcher) {
             val fixture = createLoadedViewModel(targetCount = 1)
-            val reminder = fixture.repository.reminders.save(fixture.project.id, null, null, "Check", 1, null, true)!!
+            val reminder = fixture.repository.reminders.save(fixture.project.id, null, null, ReminderValues("Check", 1, null, true))!!
             val haptics = mutableListOf<CounterEffect.Haptic>()
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { fixture.viewModel.haptics.collect(haptics::add) }
             fixture.viewModel.increment()
@@ -184,7 +185,7 @@ class CounterViewModelTest {
     fun reminderOnlyIsStrongOnIncrementButManualSetAndResetAreSilent() =
         runTest(dispatcher) {
             val fixture = createLoadedViewModel()
-            val reminder = fixture.repository.reminders.save(fixture.project.id, null, null, "Check", 2, null, true)!!
+            val reminder = fixture.repository.reminders.save(fixture.project.id, null, null, ReminderValues("Check", 2, null, true))!!
             val haptics = mutableListOf<CounterEffect.Haptic>()
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { fixture.viewModel.haptics.collect(haptics::add) }
             fixture.viewModel.setCount(2)

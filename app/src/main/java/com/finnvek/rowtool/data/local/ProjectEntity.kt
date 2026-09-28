@@ -13,6 +13,7 @@ import androidx.room.PrimaryKey
 data class ProjectEntity(
     @PrimaryKey val id: String,
     val name: String,
+    // CPD-OFF: Persisted project fields intentionally mirror the domain model.
     val counterUnit: String,
     val count: Long,
     val startValue: Int,
@@ -22,4 +23,5 @@ data class ProjectEntity(
     val createdAt: Long,
     val updatedAt: Long,
     val repeatStartCount: Long? = if (repeatLength != null) 1L else null,
+    // CPD-ON
 )

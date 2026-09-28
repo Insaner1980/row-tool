@@ -134,9 +134,9 @@ class CounterViewModel(
 
     internal val reminderActions =
         ReminderActions(
-            onSave = { owner, id, revision, message, first, interval, enabled, creationId ->
+            onSave = { owner, id, revision, values, creationId ->
                 owner == projectId &&
-                    counterRepository.reminders.save(owner, id, revision, message, first, interval, enabled, creationId) != null
+                    counterRepository.reminders.save(owner, id, revision, values, creationId) != null
             },
             onAcknowledge = { owner, id, revision, target ->
                 owner == projectId && counterRepository.reminders.acknowledge(owner, id, revision, target)

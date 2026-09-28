@@ -55,12 +55,7 @@ class RepeatSettingsDialogTest {
         }
         composeRule.onNodeWithText("Start at next count").performScrollTo().performClick()
         composeRule.onNodeWithText("First repeat row").assertTextContains("11")
-        composeRule.onNodeWithText("Save").performScrollTo().performClick()
-        composeRule.waitUntil(5_000) {
-            composeRule.onAllNodesWithText("Could not save the change. Try again.").fetchSemanticsNodes().isNotEmpty()
-        }
-        restoration.emulateSavedInstanceStateRestore()
-        composeRule.onNodeWithText("First repeat row").assertTextContains("11")
+        assertFailedRepeatSaveAndRestore(composeRule, restoration)
         composeRule.onNodeWithText("Save").performClick()
         composeRule.waitUntil(5_000) { saves.size == 2 }
         assertEquals(listOf(11L, 11L), saves.map { it.third })

@@ -10,18 +10,13 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.finnvek.rowtool.RowToolApplication
-import com.finnvek.rowtool.domain.model.CounterUnit
-import com.finnvek.rowtool.ui.PrepareApplicationStateRule
-import com.finnvek.rowtool.ui.theme.RowToolTheme
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.RuleChain
 import org.junit.rules.TestRule
 import org.junit.runner.RunWith
 
@@ -33,27 +28,12 @@ class AdditionalCounterSaveTest {
         get() = (InstrumentationRegistry.getInstrumentation().targetContext.applicationContext as RowToolApplication).container
 
     @get:Rule
-    val rules: TestRule =
-        RuleChain
-            .outerRule(
-                PrepareApplicationStateRule {
-                    projectId = container.counterRepository.createProject("Recovery", CounterUnit.ROWS, 0, null, null).id
-                },
-            ).around(composeRule)
+    val rules: TestRule = recoveryProjectRule(composeRule) { projectId = it }
 
     @Test
     fun databaseFailureRetainsNewCounterDraftUntilSuccessfulRetryAfterRestoration() {
         val restoration = StateRestorationTester(composeRule)
-        restoration.setContent {
-            RowToolTheme {
-                CounterRoute(
-                    viewModel(factory = CounterViewModel.factory(projectId, container.counterRepository, container.preferencesRepository)),
-                    onProjects = {},
-                    onSettings = {},
-                    onMessage = {},
-                )
-            }
-        }
+        restoration.setContent { RecoveryCounterRoute(projectId, container) }
         composeRule.waitUntil(5_000) { composeRule.onAllNodesWithText("RECOVERY").fetchSemanticsNodes().isNotEmpty() }
         composeRule.onNodeWithText("Add counter").performScrollTo().performClick()
         composeRule.onNodeWithText("Counter name").performTextInput("Sleeve")

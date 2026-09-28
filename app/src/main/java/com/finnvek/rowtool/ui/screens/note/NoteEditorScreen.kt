@@ -95,44 +95,71 @@ internal fun NoteEditorHost(
             }
         }
         BackHandler(onBack = viewModel::requestExit)
-        Surface(Modifier.fillMaxSize().testTag("note-editor"), color = MaterialTheme.colorScheme.background) {
-            Column(Modifier.safeDrawingPadding().imePadding().padding(horizontal = RowToolDimens.Space16)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = viewModel::requestExit, enabled = !state.saving, modifier = Modifier.testTag("note-back")) {
-                        Icon(painterResource(R.drawable.ic_back), stringResource(R.string.action_back))
-                    }
-                    Text(stringResource(R.string.note_title), style = MaterialTheme.typography.headlineSmall)
+        NoteEditorContent(
+            state,
+            NoteEditorActions(
+                onExit = viewModel::requestExit,
+                onText = viewModel::editText,
+                onAttach = viewModel::attachCount,
+                onDelete = { viewModel.requestConfirmation(NoteConfirmation.DELETE) },
+                onRetry = viewModel::retryLoad,
+                onReload = { viewModel.requestConfirmation(NoteConfirmation.RELOAD) },
+                onSave = viewModel::save,
+            ),
+        )
+        NoteConfirmationDialog(state, viewModel::cancelConfirmation, viewModel::confirm)
+    }
+}
+
+@Composable
+private fun NoteEditorContent(
+    state: NoteEditorState,
+    actions: NoteEditorActions,
+) {
+    Surface(Modifier.fillMaxSize().testTag("note-editor"), color = MaterialTheme.colorScheme.background) {
+        Column(Modifier.safeDrawingPadding().imePadding().padding(horizontal = RowToolDimens.Space16)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = actions.onExit, enabled = !state.saving, modifier = Modifier.testTag("note-back")) {
+                    Icon(painterResource(R.drawable.ic_back), stringResource(R.string.action_back))
                 }
-                Column(
-                    Modifier.weight(1f).verticalScroll(rememberScrollState()).fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(RowToolDimens.Space12),
-                ) {
-                    Text(state.projectName, style = MaterialTheme.typography.titleMedium)
-                    if (state.loading) CircularProgressIndicator()
-                    if (state.ready) {
-                        NoteEditorBody(state, viewModel::editText, viewModel::attachCount) {
-                            viewModel.requestConfirmation(NoteConfirmation.DELETE)
-                        }
-                    }
-                    NoteEditorError(state.error)
-                    if (!state.ready && !state.loading) {
-                        NoteAction(R.string.note_retry, viewModel::retryLoad)
-                    }
-                    if (state.error == NoteError.CONFLICT || state.error == NoteError.UNAVAILABLE) {
-                        NoteAction(R.string.note_reload) { viewModel.requestConfirmation(NoteConfirmation.RELOAD) }
-                    }
-                }
-                if (state.ready && !state.readOnly) {
-                    TextButton(
-                        onClick = viewModel::save,
-                        enabled = !state.saving,
-                        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("note-save"),
-                        colors = ordinaryDialogActionColors(),
-                    ) { Text(stringResource(R.string.action_save)) }
-                }
+                Text(stringResource(R.string.note_title), style = MaterialTheme.typography.headlineSmall)
+            }
+            Column(
+                Modifier.weight(1f).verticalScroll(rememberScrollState()).fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(RowToolDimens.Space12),
+            ) {
+                NoteEditorStatus(state, actions)
+            }
+            if (state.ready && !state.readOnly) {
+                TextButton(
+                    onClick = actions.onSave,
+                    enabled = !state.saving,
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("note-save"),
+                    colors = ordinaryDialogActionColors(),
+                ) { Text(stringResource(R.string.action_save)) }
             }
         }
-        NoteConfirmationDialog(state, viewModel::cancelConfirmation, viewModel::confirm)
+    }
+}
+
+@Composable
+private fun ColumnScope.NoteEditorStatus(
+    state: NoteEditorState,
+    actions: NoteEditorActions,
+) {
+    Text(state.projectName, style = MaterialTheme.typography.titleMedium)
+    if (state.loading) CircularProgressIndicator()
+    if (state.ready) {
+        NoteEditorBody(state, actions.onText, actions.onAttach) {
+            actions.onDelete()
+        }
+    }
+    NoteEditorError(state.error)
+    if (!state.ready && !state.loading) {
+        NoteAction(R.string.note_retry, actions.onRetry)
+    }
+    if (state.error == NoteError.CONFLICT || state.error == NoteError.UNAVAILABLE) {
+        NoteAction(R.string.note_reload) { actions.onReload() }
     }
 }
 
@@ -268,3 +295,13 @@ private fun NoteConfirmationDialog(
         enabled = !state.saving,
     )
 }
+
+private data class NoteEditorActions(
+    val onExit: () -> Unit,
+    val onText: (String) -> Unit,
+    val onAttach: (Boolean) -> Unit,
+    val onDelete: () -> Unit,
+    val onRetry: () -> Unit,
+    val onReload: () -> Unit,
+    val onSave: () -> Unit,
+)

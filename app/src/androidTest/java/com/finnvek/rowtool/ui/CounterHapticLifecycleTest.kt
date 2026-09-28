@@ -57,12 +57,15 @@ class CounterHapticLifecycleTest {
         runBlocking {
             showCounter()
             application.container.counterRepository.reminders
-                .save(projectId, null, null, "Check", 1, null, true)
+                .save(
+                    projectId,
+                    null,
+                    null,
+                    com.finnvek.rowtool.domain.model
+                        .ReminderValues("Check", 1, null, true),
+                )
             composeRule.waitForIdle()
-            composeRule.runOnIdle { assertEquals(emptyList<Int>(), probe.feedback) }
-            composeRule.runOnIdle { counterViewModel.increment() }
-            composeRule.waitUntil(5_000) { composeRule.runOnIdle { probe.feedback.size == 1 } }
-            composeRule.runOnIdle { assertEquals(listOf(HapticFeedbackConstants.CONFIRM), probe.feedback) }
+            assertIncrementFeedback(HapticFeedbackConstants.CONFIRM)
             composeRule.runOnIdle { navController.navigate("settings") }
             waitForResumed("settings")
             composeRule.runOnIdle { navController.popBackStack() }
@@ -102,12 +105,7 @@ class CounterHapticLifecycleTest {
                 }
                 composeRule.runOnIdle { navController.popBackStack() }
                 waitForResumed("counter")
-                composeRule.runOnIdle { assertEquals(emptyList<Int>(), probe.feedback) }
-                composeRule.runOnIdle { counterViewModel.increment() }
-                composeRule.waitUntil(5_000) { composeRule.runOnIdle { probe.feedback.size == 1 } }
-                composeRule.runOnIdle {
-                    assertEquals(listOf(HapticFeedbackConstants.CLOCK_TICK), probe.feedback)
-                }
+                assertIncrementFeedback(HapticFeedbackConstants.CLOCK_TICK)
                 application.container.preferencesRepository.setHapticFeedbackEnabled(false)
                 composeRule.waitUntil(5_000) { !counterViewModel.preferences.value.hapticFeedbackEnabled }
                 composeRule.waitForIdle()
@@ -123,6 +121,13 @@ class CounterHapticLifecycleTest {
                 application.container.preferencesRepository.setHapticFeedbackEnabled(true)
             }
         }
+
+    private fun assertIncrementFeedback(expected: Int) {
+        composeRule.runOnIdle { assertEquals(emptyList<Int>(), probe.feedback) }
+        composeRule.runOnIdle { counterViewModel.increment() }
+        composeRule.waitUntil(5_000) { composeRule.runOnIdle { probe.feedback.size == 1 } }
+        composeRule.runOnIdle { assertEquals(listOf(expected), probe.feedback) }
+    }
 
     private fun showCounter() {
         composeRule.runOnUiThread { probe = HapticProbe(application) }

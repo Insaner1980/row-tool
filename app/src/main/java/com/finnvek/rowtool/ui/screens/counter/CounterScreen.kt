@@ -259,15 +259,8 @@ fun CounterScreenContent(
             } else {
                 CounterWorkspace(
                     project = project,
-                    canUndo = state.canUndo,
-                    actions = actions.value,
-                    additionalCounters = state.additionalCounters,
-                    additionalActions = actions.additional,
-                    reminders = state.reminders,
-                    onReminders = actions.project.onReminders,
-                    note = state.note,
-                    onNote = actions.project.onNote,
-                    onRepeatEdit = actions.project.onRepeatEdit,
+                    state = state,
+                    actions = actions,
                     viewportHeight = maxHeight,
                     modifier =
                         Modifier
@@ -282,16 +275,9 @@ fun CounterScreenContent(
 @Composable
 private fun CounterWorkspace(
     project: CounterProject,
-    canUndo: Boolean,
-    actions: CounterValueActions,
+    state: CounterUiState,
+    actions: CounterScreenActions,
     viewportHeight: Dp,
-    additionalCounters: List<AdditionalCounter>,
-    additionalActions: AdditionalCounterActions,
-    reminders: List<Reminder>,
-    onReminders: () -> Unit,
-    note: ProjectNote?,
-    onNote: () -> Unit,
-    onRepeatEdit: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val configuration = LocalConfiguration.current
@@ -310,7 +296,7 @@ private fun CounterWorkspace(
             TargetProgressCalculator.calculate(project.count, project.targetCount)
         }
     val visibleReminders =
-        reminders.filter {
+        state.reminders.filter {
             !project.isArchived &&
                 it.enabled &&
                 ReminderRules.status(it, project.count).let { status ->
@@ -345,7 +331,7 @@ private fun CounterWorkspace(
         ResponsiveCount(
             formattedCount = formattedCount,
             enabled = !project.isArchived,
-            onSetCount = actions.onSetCount,
+            onSetCount = actions.value.onSetCount,
             modifier =
                 Modifier
                     .fillMaxWidth()
@@ -381,67 +367,29 @@ private fun CounterWorkspace(
                 trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
             )
         }
-        repeatProgress?.let { repeat ->
-            Column(
-                modifier =
-                    Modifier
-                        .padding(top = RowToolDimens.Space16)
-                        .heightIn(min = 48.dp)
-                        .clickable(role = Role.Button, onClick = onRepeatEdit),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-            ) {
-                Text(
-                    text = stringResource(R.string.counter_repeat_progress, repeat.currentStep, repeat.repeatLength),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                )
-                if (project.repeatStartCount != null && project.repeatStartCount > 1) {
-                    Text(
-                        text =
-                            stringResource(
-                                if (project.counterUnit == CounterUnit.ROWS) R.string.repeat_starts_row else R.string.repeat_starts_round,
-                                project.repeatStartCount,
-                            ),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                    )
-                }
-                if (repeat.completedRepeats > 0) {
-                    Text(
-                        text = pluralStringResource(R.plurals.repeat_count, repeat.completedRepeats.toInt(), repeat.completedRepeats),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(top = RowToolDimens.Space4),
-                    )
-                }
-            }
-        }
+        repeatProgress?.let { repeat -> RepeatProgress(project, repeat, actions.project.onRepeatEdit) }
         CounterButtons(
             count = project.count,
-            canUndo = canUndo,
+            canUndo = state.canUndo,
             archived = project.isArchived,
             addDescription = addDescription,
             removeDescription = removeDescription,
-            actions = actions,
+            actions = actions.value,
             modifier =
                 Modifier
                     .fillMaxWidth()
                     .padding(top = RowToolDimens.Space32),
         )
         if (visibleReminders.isNotEmpty()) {
-            ReminderPanel(project, visibleReminders, onReminders)
+            ReminderPanel(project, visibleReminders, actions.project.onReminders)
         }
         AdditionalCountersSection(
-            counters = additionalCounters,
-            actions = additionalActions,
+            counters = state.additionalCounters,
+            actions = actions.additional,
             enabled = !project.isArchived,
             modifier = Modifier.fillMaxWidth().padding(top = RowToolDimens.Space24),
         )
-        if (note != null) NotePreview(note, onNote)
+        if (state.note != null) NotePreview(state.note, actions.project.onNote)
     }
 }
 
@@ -603,4 +551,49 @@ private fun CounterMenuItem(
         iconRes = iconRes,
         onClick = onClick,
     )
+}
+
+@Composable
+private fun RepeatProgress(
+    project: CounterProject,
+    repeat: com.finnvek.rowtool.domain.model.RepeatProgress,
+    onRepeatEdit: () -> Unit,
+) {
+    Column(
+        modifier =
+            Modifier
+                .padding(top = RowToolDimens.Space16)
+                .heightIn(min = 48.dp)
+                .clickable(role = Role.Button, onClick = onRepeatEdit),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Text(
+            text = stringResource(R.string.counter_repeat_progress, repeat.currentStep, repeat.repeatLength),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+        if (project.repeatStartCount != null && project.repeatStartCount > 1) {
+            Text(
+                text =
+                    stringResource(
+                        if (project.counterUnit == CounterUnit.ROWS) R.string.repeat_starts_row else R.string.repeat_starts_round,
+                        project.repeatStartCount,
+                    ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+        }
+        if (repeat.completedRepeats > 0) {
+            Text(
+                text = pluralStringResource(R.plurals.repeat_count, repeat.completedRepeats.toInt(), repeat.completedRepeats),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = RowToolDimens.Space4),
+            )
+        }
+    }
 }

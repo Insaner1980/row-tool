@@ -6,6 +6,7 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.finnvek.rowtool.domain.model.Reminder
 
+// CPD-OFF: Each Room entity declares its own table and project foreign key.
 @Entity(
     tableName = "reminders",
     foreignKeys = [
@@ -19,6 +20,7 @@ import com.finnvek.rowtool.domain.model.Reminder
     indices = [Index("projectId")],
 )
 data class ReminderEntity(
+    // CPD-ON
     @PrimaryKey val id: String,
     val projectId: String,
     val message: String,

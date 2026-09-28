@@ -8,7 +8,7 @@ internal fun validateBackupNotes(
     projects: List<CounterProject>,
     notes: List<BackupNote>,
 ): BackupValidationError? {
-    val owners = projects.mapTo(mutableSetOf()) { it.id }
+    val owners = projects.map { it.id }.toSet()
     val duplicate = notes.map { it.projectId }.toSet().size != notes.size
     val invalid =
         notes.any {

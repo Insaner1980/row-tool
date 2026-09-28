@@ -71,7 +71,6 @@ fun CounterRoute(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val preferences by viewModel.preferences.collectAsStateWithLifecycle()
     val view = LocalView.current
-    val lifecycle = LocalLifecycleOwner.current.lifecycle
     val currentHapticsEnabled by rememberUpdatedState(preferences.hapticFeedbackEnabled)
     val currentOnMessage by rememberUpdatedState(onMessage)
     val currentOnProjects by rememberUpdatedState(onProjects)
@@ -121,15 +120,7 @@ fun CounterRoute(
         }
     }
 
-    LaunchedEffect(viewModel, lifecycle, view) {
-        lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-            viewModel.haptics.collect { effect ->
-                if (lifecycle.currentState == Lifecycle.State.RESUMED && currentHapticsEnabled) {
-                    view.performHapticFeedback(hapticFeedbackConstant(effect.strong))
-                }
-            }
-        }
-    }
+    CounterHaptics(viewModel.haptics, currentHapticsEnabled)
 
     CounterScreenContent(
         state = state,
@@ -181,23 +172,17 @@ fun CounterRoute(
     }
 
     state.project?.let { project ->
-        if (reminderProjectId == project.id) {
-            key(project.id) {
-                ReminderDialogs(
-                    project = project,
-                    reminders = state.reminders,
-                    actions = viewModel.reminderActions,
-                    onDismiss = { if (reminderProjectId == project.id) reminderProjectId = null },
-                )
-            }
+        ReminderDialogHost(project, reminderProjectId, state.reminders, viewModel.reminderActions) { owner ->
+            if (reminderProjectId == owner) reminderProjectId = null
         }
-        val dialog = additionalDialog
-        val counter = state.additionalCounters.firstOrNull { it.id == additionalId }
-        val counterAvailable = dialog == AdditionalCounterDialog.ADD || counter != null
-        if (dialog != null && additionalProjectId == project.id && counterAvailable) {
-            key(project.id, dialog, additionalId) {
-                AdditionalCounterDialogs(dialog, counter, viewModel.additionalEditorActions, onDismiss = { additionalDialog = null })
-            }
+        AdditionalDialogHost(
+            project,
+            additionalProjectId,
+            additionalDialog,
+            state.additionalCounters.firstOrNull { it.id == additionalId },
+            viewModel.additionalEditorActions,
+        ) {
+            additionalDialog = null
         }
         CounterDialogContent(
             dialog = activeDialog,
@@ -311,5 +296,52 @@ private fun CounterDialogContent(
                 },
             )
         }
+    }
+}
+
+@Composable
+private fun CounterHaptics(
+    haptics: kotlinx.coroutines.flow.Flow<CounterEffect.Haptic>,
+    enabled: Boolean,
+) {
+    val view = LocalView.current
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val currentHapticsEnabled by rememberUpdatedState(enabled)
+    LaunchedEffect(haptics, lifecycle, view) {
+        lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            haptics.collect { effect ->
+                if (lifecycle.currentState == Lifecycle.State.RESUMED && currentHapticsEnabled) {
+                    view.performHapticFeedback(hapticFeedbackConstant(effect.strong))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReminderDialogHost(
+    project: CounterProject,
+    owner: String?,
+    reminders: List<com.finnvek.rowtool.domain.model.Reminder>,
+    actions: ReminderActions,
+    onDismiss: (String) -> Unit,
+) {
+    if (owner == project.id) {
+        key(project.id) { ReminderDialogs(project, reminders, actions, onDismiss = { onDismiss(project.id) }) }
+    }
+}
+
+@Composable
+private fun AdditionalDialogHost(
+    project: CounterProject,
+    owner: String?,
+    dialog: AdditionalCounterDialog?,
+    counter: com.finnvek.rowtool.domain.model.AdditionalCounter?,
+    actions: AdditionalCounterEditorActions,
+    onDismiss: () -> Unit,
+) {
+    val available = dialog == AdditionalCounterDialog.ADD || counter != null
+    if (dialog != null && owner == project.id && available) {
+        key(project.id, dialog, counter?.id) { AdditionalCounterDialogs(dialog, counter, actions, onDismiss) }
     }
 }
