@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.MotionEvent
 import android.view.animation.LinearInterpolator
+import android.widget.ImageView
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
@@ -108,6 +109,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val icon = splash.iconView
+        (icon as? ImageView)?.setImageDrawable(null)
         val logo = SplashLogoDrawable(BitmapFactory.decodeResource(resources, R.drawable.rowtool_logo))
         val insetX = (icon.width * SPLASH_LOGO_INSET).toInt()
         val insetY = (icon.height * SPLASH_LOGO_INSET).toInt()

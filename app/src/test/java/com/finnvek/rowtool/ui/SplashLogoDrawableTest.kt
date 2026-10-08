@@ -1,9 +1,12 @@
 package com.finnvek.rowtool.ui
 
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
+import android.util.TypedValue
+import android.view.ContextThemeWrapper
 import androidx.test.core.app.ApplicationProvider
 import com.finnvek.rowtool.R
 import org.junit.Assert.assertEquals
@@ -18,6 +21,37 @@ import org.robolectric.annotation.GraphicsMode
 @Config(sdk = [36])
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class SplashLogoDrawableTest {
+    @Test
+    fun startingThemeShowsLogoWhileWaitingForStartup() {
+        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+        for (nightMode in listOf(Configuration.UI_MODE_NIGHT_NO, Configuration.UI_MODE_NIGHT_YES)) {
+            for ((width, scale) in listOf(320 to 1f, 411 to 2f, 320 to 2f)) {
+                val configuration =
+                    Configuration(context.resources.configuration).apply {
+                        screenWidthDp = width
+                        fontScale = scale
+                        uiMode = (uiMode and Configuration.UI_MODE_NIGHT_MASK.inv()) or nightMode
+                    }
+                val themed =
+                    ContextThemeWrapper(context.createConfigurationContext(configuration), R.style.Theme_RowTool_Starting)
+                val icon = TypedValue()
+                assertTrue(
+                    themed.theme.resolveAttribute(androidx.core.splashscreen.R.attr.windowSplashScreenAnimatedIcon, icon, true),
+                )
+                val drawable = checkNotNull(themed.getDrawable(icon.resourceId))
+                val rendered = Bitmap.createBitmap(width, width, Bitmap.Config.ARGB_8888)
+                drawable.setBounds(0, 0, width, width)
+                drawable.draw(Canvas(rendered))
+                val pixels = IntArray(width * width)
+                rendered.getPixels(pixels, 0, width, 0, 0, width, width)
+                assertTrue(
+                    "Logo must be visible: night=$nightMode, width=$width, fontScale=$scale",
+                    pixels.any { Color.alpha(it) > 0 },
+                )
+            }
+        }
+    }
+
     @Test
     fun revealsOuterRingBeforeTextAndCenter() {
         val source = Bitmap.createBitmap(1254, 1254, Bitmap.Config.ARGB_8888).apply { eraseColor(Color.RED) }

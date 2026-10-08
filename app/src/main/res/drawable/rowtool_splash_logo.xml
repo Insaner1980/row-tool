@@ -1,9 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The original WebP is revealed by SplashLogoDrawable during the exit transition. -->
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="108dp"
-    android:height="108dp"
-    android:viewportWidth="288"
-    android:viewportHeight="288">
-    <path android:fillColor="#00000000" android:pathData="M0,0h288v288h-288z" />
-</vector>
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/rowtool_logo"
+    android:inset="10%" />
