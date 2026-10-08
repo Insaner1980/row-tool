@@ -75,7 +75,13 @@ internal fun ReminderDialogs(
     if (page in listOf("reset", "delete") && selected != null) {
         ReminderConfirmation(page == "delete", saving, failed, closePage) { deleting ->
             operate(
-                { changeReminder(actions, project.id, selected, deleting) },
+                {
+                    if (deleting) {
+                        actions.onDelete(project.id, selected.id, selected.revision)
+                    } else {
+                        actions.onReset(project.id, selected.id, selected.revision)
+                    }
+                },
                 closePage,
             )
         }
@@ -172,18 +178,6 @@ private suspend fun runReminderOperation(
     }
 }
 
-private suspend fun changeReminder(
-    actions: ReminderActions,
-    projectId: String,
-    reminder: Reminder,
-    deleting: Boolean,
-): Boolean =
-    if (deleting) {
-        actions.onDelete(projectId, reminder.id, reminder.revision)
-    } else {
-        actions.onReset(projectId, reminder.id, reminder.revision)
-    }
-
 @Composable
 private fun ReminderConfirmation(
     deleting: Boolean,
@@ -214,7 +208,6 @@ private data class ReminderListActions(
     val onDismiss: () -> Unit,
 )
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ColumnScope.ReminderList(
     project: CounterProject,
@@ -226,9 +219,7 @@ private fun ColumnScope.ReminderList(
     Text(stringResource(R.string.reminder_title), style = MaterialTheme.typography.headlineSmall)
     if (reminders.isEmpty()) Text(stringResource(R.string.reminder_empty))
     reminders.forEach { reminder -> ReminderRow(project, reminder, saving, actions) }
-    if (failed) Text(stringResource(R.string.error_database_write), color = MaterialTheme.colorScheme.error)
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(RowToolDimens.Space8)) {
-        ReminderAction(R.string.action_cancel, !saving, actions.onDismiss)
+    ReminderDialogActions(saving, failed, actions.onDismiss) {
         ReminderAction(R.string.reminder_add, !saving, actions.onAdd)
     }
 }
@@ -283,7 +274,6 @@ private data class ReminderEditorFields(
 )
 
 @Composable
-@OptIn(ExperimentalLayoutApi::class)
 private fun ReminderEditor(
     project: CounterProject,
     reminder: Reminder?,
@@ -319,9 +309,7 @@ private fun ReminderEditor(
         if (scheduleChanged && reminder.acknowledgedThrough != null) {
             Text(stringResource(R.string.reminder_schedule_reset), style = MaterialTheme.typography.bodySmall)
         }
-        if (failed) Text(stringResource(R.string.error_database_write), color = MaterialTheme.colorScheme.error)
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(RowToolDimens.Space8)) {
-            ReminderAction(R.string.action_cancel, !saving, onCancel)
+        ReminderDialogActions(saving, failed, onCancel) {
             ReminderAction(R.string.action_save, valid && !saving) { onSave(fields.message, first!!, interval) }
         }
     }
@@ -376,6 +364,21 @@ private fun ReminderCountField(
         enabled = enabled,
         modifier = Modifier.fillMaxWidth(),
     )
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ColumnScope.ReminderDialogActions(
+    saving: Boolean,
+    failed: Boolean,
+    onCancel: () -> Unit,
+    content: @Composable () -> Unit,
+) {
+    if (failed) Text(stringResource(R.string.error_database_write), color = MaterialTheme.colorScheme.error)
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(RowToolDimens.Space8)) {
+        ReminderAction(R.string.action_cancel, !saving, onCancel)
+        content()
+    }
 }
 
 @Composable
