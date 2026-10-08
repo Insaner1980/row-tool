@@ -2,6 +2,10 @@ buildscript {
     configurations.classpath {
         resolutionStrategy.eachDependency {
             when {
+                requested.group.startsWith("com.fasterxml.jackson") && requested.name != "jackson-annotations" ->
+                    useVersion("2.22.3")
+                requested.group == "org.jsoup" && requested.name == "jsoup" ->
+                    useVersion("1.23.2")
                 requested.group == "org.bitbucket.b_c" && requested.name == "jose4j" ->
                     useVersion("0.9.6")
                 requested.group == "org.bouncycastle" && requested.name.endsWith("-jdk18on") ->
